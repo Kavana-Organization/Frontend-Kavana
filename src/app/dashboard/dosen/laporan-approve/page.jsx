@@ -167,6 +167,7 @@ export default function LaporanApprovePage() {
                 const status = normalizeStatus(l.status);
                 const st = STATUS_MAP[status] || STATUS_MAP.submitted;
                 const laporanUrl = l.file_laporan || l.file_url;
+                const luaranUrl = l.file_luaran;
                 const display = getLaporanDisplay(l);
                 return (
                   <div key={l.id || l.mahasiswa_id} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
@@ -180,11 +181,18 @@ export default function LaporanApprovePage() {
                           <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{display.subtitle}</p>
                         ) : null}
                         <p className="text-sm text-[hsl(var(--ctp-text))]">{l.judul || '-'}</p>
-                        {laporanUrl && (
-                          <a href={laporanUrl} target="_blank" rel="noreferrer" className="text-xs text-[hsl(var(--ctp-blue))] hover:underline inline-flex items-center gap-1 mt-1">
-                            <ExternalLink className="h-3 w-3" /> Buka Laporan
-                          </a>
-                        )}
+                        <div className="mt-1 flex flex-wrap items-center gap-3">
+                          {laporanUrl && (
+                            <a href={laporanUrl} target="_blank" rel="noreferrer" className="text-xs text-[hsl(var(--ctp-blue))] hover:underline inline-flex items-center gap-1">
+                              <ExternalLink className="h-3 w-3" /> Buka Laporan
+                            </a>
+                          )}
+                          {luaranUrl && (
+                            <a href={luaranUrl} target="_blank" rel="noreferrer" className="text-xs text-[hsl(var(--ctp-teal))] hover:underline inline-flex items-center gap-1">
+                              <ExternalLink className="h-3 w-3" /> Buka Luaran
+                            </a>
+                          )}
+                        </div>
                       </div>
                       {isReviewableStatus(status) && (
                         <div className="flex gap-2 shrink-0">
