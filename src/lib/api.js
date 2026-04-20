@@ -7,6 +7,10 @@ const API_BASE_URL = (
     || 'https://asia-southeast2-renzip-478811.cloudfunctions.net/kavana'
 ).replace(/\/$/, '');
 
+const GET_CACHE_TTL = 30 * 1000;
+const getRequestCache = new Map();
+const inflightRequests = new Map();
+
 // ========================================
 // TOKEN MANAGEMENT
 // ========================================
@@ -28,6 +32,44 @@ export function isLoggedIn() {
     return !!getToken();
 }
 
+function getCacheIdentity() {
+    if (typeof window === 'undefined') return 'server';
+    const userId = sessionStorage.getItem('userId') || 'anon';
+    const role = sessionStorage.getItem('userRole') || 'public';
+    return `${role}:${userId}`;
+}
+
+function buildRequestCacheKey(endpoint, options = {}) {
+    const method = (options.method || 'GET').toUpperCase();
+    const credentials = options.credentials === 'include' ? 'cookie' : 'stateless';
+    return `${method}:${endpoint}:${credentials}:${getCacheIdentity()}`;
+}
+
+function clearExpiredRequestCache() {
+    const currentTime = Date.now();
+    for (const [key, entry] of getRequestCache.entries()) {
+        if (entry.expiresAt <= currentTime) {
+            getRequestCache.delete(key);
+        }
+    }
+}
+
+export function invalidateApiCache(prefixes = []) {
+    if (!Array.isArray(prefixes) || prefixes.length === 0) return;
+
+    for (const key of getRequestCache.keys()) {
+        if (prefixes.some((prefix) => key.includes(prefix))) {
+            getRequestCache.delete(key);
+        }
+    }
+
+    for (const key of inflightRequests.keys()) {
+        if (prefixes.some((prefix) => key.includes(prefix))) {
+            inflightRequests.delete(key);
+        }
+    }
+}
+
 // ========================================
 // BASE API REQUEST
 // ========================================
@@ -42,6 +84,10 @@ function generateTraceparent() {
 
 export async function apiRequest(endpoint, options = {}) {
     const token = getToken();
+    const method = (options.method || 'GET').toUpperCase();
+    const isGetRequest = method === 'GET';
+    const cacheKey = buildRequestCacheKey(endpoint, options);
+    const shouldUseCache = isGetRequest && !options.skipCache;
 
     // Only send credentials (cookies) when explicitly needed, to avoid
     // CORS issues with backends that use wildcard Access-Control-Allow-Origin
@@ -63,6 +109,20 @@ export async function apiRequest(endpoint, options = {}) {
         delete config.headers['Content-Type'];
     }
 
+    clearExpiredRequestCache();
+
+    if (shouldUseCache) {
+        const cached = getRequestCache.get(cacheKey);
+        if (cached && cached.expiresAt > Date.now()) {
+            return cached.value;
+        }
+
+        if (inflightRequests.has(cacheKey)) {
+            return inflightRequests.get(cacheKey);
+        }
+    }
+
+    const requestPromise = (async () => {
     try {
         const response = await fetch(`${API_BASE_URL}${endpoint}`, config);
         const data = await response.json();
@@ -75,11 +135,30 @@ export async function apiRequest(endpoint, options = {}) {
             return { ok: false, error: errorMsg, code: errorCode, status: response.status };
         }
 
-        return { ok: true, data };
+        const result = { ok: true, data };
+        if (shouldUseCache) {
+            getRequestCache.set(cacheKey, {
+                value: result,
+                expiresAt: Date.now() + (options.cacheTtl ?? GET_CACHE_TTL),
+            });
+        }
+
+        return result;
     } catch (err) {
         console.error(`API Error (${endpoint}):`, err);
         return { ok: false, error: err.message || 'Network error' };
+    } finally {
+        if (shouldUseCache) {
+            inflightRequests.delete(cacheKey);
+        }
     }
+    })();
+
+    if (shouldUseCache) {
+        inflightRequests.set(cacheKey, requestPromise);
+    }
+
+    return requestPromise;
 }
 
 // ========================================
@@ -115,6 +194,9 @@ export const authAPI = {
         apiRequest('/api/auth/profile', {
             method: 'PATCH',
             body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/auth/profile', '/api/mahasiswa/profile', '/api/dosen/profile', '/api/kaprodi/profile', '/api/koordinator/profile']);
+            return result;
         }),
 
     changePassword: (oldPassword, newPassword) =>
@@ -127,6 +209,7 @@ export const authAPI = {
         try {
             await apiRequest('/api/auth/logout', { method: 'POST' });
         } catch (_) { /* ignore - clear local state regardless */ }
+        invalidateApiCache(['/api/']);
         clearToken();
         sessionStorage.clear();
     },
@@ -178,6 +261,9 @@ export const mahasiswaAPI = {
         apiRequest('/api/mahasiswa/track', {
             method: 'PATCH',
             body: JSON.stringify({ track, partner_npm: partnerNpm }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            return result;
         }),
 
     getProposalStatus: () => apiRequest('/api/mahasiswa/profile'),
@@ -186,6 +272,9 @@ export const mahasiswaAPI = {
         apiRequest('/api/mahasiswa/proposal', {
             method: 'POST',
             body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            return result;
         }),
 
     getMyBimbingan: () => apiRequest('/api/mahasiswa/bimbingan'),
@@ -194,24 +283,36 @@ export const mahasiswaAPI = {
         apiRequest('/api/mahasiswa/bimbingan', {
             method: 'POST',
             body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/bimbingan', '/api/dosen/bimbingan', '/api/dosen/mahasiswa', '/api/dosen/stats', '/api/notifications/stats']);
+            return result;
         }),
 
     submitLaporan: (data) =>
         apiRequest('/api/mahasiswa/laporan', {
             method: 'POST',
             body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/laporan', '/api/mahasiswa/sidang', '/api/dosen/laporan', '/api/dosen/stats', '/api/notifications/stats']);
+            return result;
         }),
 
     createKelompok: (nama) =>
         apiRequest('/api/mahasiswa/kelompok', {
             method: 'POST',
             body: JSON.stringify({ nama }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/profile', '/api/mahasiswa/kelompok', '/api/koordinator/', '/api/kaprodi/']);
+            return result;
         }),
 
     joinKelompok: (kelompok_id) =>
         apiRequest('/api/mahasiswa/kelompok/join', {
             method: 'POST',
             body: JSON.stringify({ kelompok_id }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/profile', '/api/mahasiswa/kelompok', '/api/koordinator/', '/api/kaprodi/']);
+            return result;
         }),
 
     getMyKelompok: () => apiRequest('/api/mahasiswa/kelompok'),
@@ -236,6 +337,9 @@ export const dosenAPI = {
         apiRequest(`/api/dosen/bimbingan/${id}/status`, {
             method: 'PATCH',
             body: JSON.stringify({ status, catatan }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/dosen/bimbingan', '/api/dosen/mahasiswa', '/api/dosen/stats', '/api/mahasiswa/bimbingan', '/api/notifications/stats']);
+            return result;
         }),
 
     getLaporanList: () => apiRequest('/api/dosen/laporan'),
@@ -247,6 +351,9 @@ export const dosenAPI = {
                 status,
                 ...(note ? { note } : {}),
             }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/dosen/laporan', '/api/dosen/stats', '/api/mahasiswa/laporan', '/api/koordinator/sidang', '/api/notifications/stats']);
+            return result;
         }),
 };
 
@@ -263,6 +370,9 @@ export const koordinatorAPI = {
         apiRequest('/api/koordinator/proposal/validate', {
             method: 'PATCH',
             body: JSON.stringify({ mahasiswa_id: mahasiswaId, status, catatan }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            return result;
         }),
 
     getMahasiswaList: () => apiRequest('/api/koordinator/mahasiswa'),
@@ -276,12 +386,18 @@ export const koordinatorAPI = {
                 dosen_id: dosenId,
                 dosen_id_2: dosenId2 || null,
             }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/dosen/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            return result;
         }),
 
     scheduleSidang: (data) =>
         apiRequest('/api/koordinator/sidang/schedule', {
             method: 'POST',
             body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/koordinator/sidang', '/api/mahasiswa/sidang']);
+            return result;
         }),
 
     getJadwalList: () => apiRequest('/api/koordinator/jadwal'),
@@ -291,17 +407,26 @@ export const koordinatorAPI = {
         apiRequest('/api/koordinator/jadwal', {
             method: 'POST',
             body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/koordinator/jadwal', '/api/koordinator/jadwal/active', '/api/mahasiswa/periode-aktif']);
+            return result;
         }),
 
     updateJadwal: (id, data) =>
         apiRequest(`/api/koordinator/jadwal/${id}`, {
             method: 'PUT',
             body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/koordinator/jadwal', '/api/koordinator/jadwal/active', '/api/mahasiswa/periode-aktif']);
+            return result;
         }),
 
     completeJadwal: (id) =>
         apiRequest(`/api/koordinator/jadwal/${id}/complete`, {
             method: 'POST',
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/koordinator/jadwal', '/api/koordinator/jadwal/active', '/api/mahasiswa/periode-aktif']);
+            return result;
         }),
 
     getMySemester: () => apiRequest('/api/koordinator/my-semester'),

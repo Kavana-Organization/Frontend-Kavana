@@ -1,6 +1,11 @@
 import './globals.css';
+import dynamic from 'next/dynamic';
 import { Providers } from '@/components/providers';
-import { FloatingWhatsApp } from '@/components/shared/floating-whatsapp';
+
+const FloatingWhatsApp = dynamic(
+  () => import('@/components/shared/floating-whatsapp').then((mod) => mod.FloatingWhatsApp),
+  { ssr: false }
+);
 
 export const metadata = {
   title: 'Kavana - Sistem Bimbingan Online',
