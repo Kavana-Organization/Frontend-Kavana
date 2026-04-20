@@ -148,7 +148,7 @@ export const LANDING_CONTENT = {
         { label: 'Kontak', href: '#contact' },
     ],
     hero: {
-        badge: 'Portal Akademik Program Studi D4 Teknik Informatika Universitas Logistik dan Bisnis Internasional',
+        badge: 'Portal Akademik Program Studi D4TI ULBI',
         title: 'Bimbingan Akademik Lebih Tertata dan Transparan',
         description:
             'Platform terintegrasi untuk mahasiswa, dosen pembimbing, dan pengelola prodi D4 Teknik Informatika ULBI dalam proses proyek, internship, dan administrasi bimbingan.',
