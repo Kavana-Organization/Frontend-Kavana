@@ -14,7 +14,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { koordinatorAPI } from '@/lib/api';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
-const SEMESTER_OPTIONS = [2, 3, 5, 7, 8];
 const TIPE_OPTIONS = [
   { value: 'proyek', label: 'Proyek' },
   { value: 'internship', label: 'Internship' },
@@ -35,6 +34,11 @@ const EMPTY_FORM = {
   end_date: '',
   deskripsi: '',
 };
+
+function getTipeBySemester(semester) {
+  const normalizedSemester = Number(semester);
+  return [7, 8].includes(normalizedSemester) ? 'internship' : 'proyek';
+}
 
 function getDateOnly(value) {
   return typeof value === 'string' ? value.slice(0, 10) : '';
@@ -70,12 +74,16 @@ export default function KelolaPeriodePage() {
   const [form, setForm] = useState(EMPTY_FORM);
   const [submitting, setSubmitting] = useState(false);
   const [completingId, setCompletingId] = useState(null);
-  const [mySemester, setMySemester] = useState(null);
+  const [mySemesters, setMySemesters] = useState([]);
 
   const isEditMode = form.id !== null;
-  const assignedSemester = Number(mySemester || 0) || null;
-  const assignedTipe = assignedSemester ? SEMESTER_TIPE_MAP[assignedSemester] : null;
-  const isAssignmentRestricted = Boolean(assignedSemester && assignedTipe);
+  const assignedSemesterOptions = mySemesters
+    .map((value) => Number(value))
+    .filter((value, index, array) => Number.isInteger(value) && array.indexOf(value) === index)
+    .sort((a, b) => a - b);
+  const selectedSemester = form.semester ? Number(form.semester) : null;
+  const selectedTipe = selectedSemester ? (SEMESTER_TIPE_MAP[selectedSemester] || getTipeBySemester(selectedSemester)) : form.tipe;
+  const hasAssignments = assignedSemesterOptions.length > 0;
 
   useEffect(() => {
     if (role && !['koordinator', 'kaprodi'].includes(role)) {
@@ -100,10 +108,19 @@ export default function KelolaPeriodePage() {
       }
 
       if (semesterRes.ok && semesterRes.data?.assigned) {
-        const semesterValue = Number(semesterRes.data.semester ?? semesterRes.data.assigned_semester ?? 0);
-        setMySemester(semesterValue || null);
+        const semesters = Array.isArray(semesterRes.data.semesters)
+          ? semesterRes.data.semesters
+          : Array.isArray(semesterRes.data.assigned_semesters)
+            ? semesterRes.data.assigned_semesters
+            : [semesterRes.data.semester ?? semesterRes.data.assigned_semester].filter(Boolean);
+        setMySemesters(
+          semesters
+            .map((value) => Number(value))
+            .filter((value, index, array) => Number.isInteger(value) && array.indexOf(value) === index)
+            .sort((a, b) => a - b)
+        );
       } else {
-        setMySemester(null);
+        setMySemesters([]);
       }
     } catch (err) {
       console.error(err);
@@ -114,14 +131,15 @@ export default function KelolaPeriodePage() {
   };
 
   const openCreateModal = () => {
-    if (!assignedSemester || !assignedTipe) {
-      toast.error('Semester koordinator belum di-assign. Hubungi Kaprodi.');
+    if (!hasAssignments) {
+      toast.error('Track/semester koordinator belum di-assign. Hubungi Kaprodi.');
       return;
     }
+    const defaultSemester = assignedSemesterOptions[0];
     setForm({
       ...EMPTY_FORM,
-      semester: String(assignedSemester),
-      tipe: assignedTipe,
+      semester: String(defaultSemester),
+      tipe: getTipeBySemester(defaultSemester),
     });
     setShowModal(true);
   };
@@ -130,8 +148,8 @@ export default function KelolaPeriodePage() {
     setForm({
       id: periode.id,
       nama: periode.nama,
-      tipe: isAssignmentRestricted ? assignedTipe : (periode.tipe || 'proyek'),
-      semester: isAssignmentRestricted ? String(assignedSemester) : (periode.semester ? String(periode.semester) : ''),
+      tipe: periode.tipe || getTipeBySemester(periode.semester),
+      semester: periode.semester ? String(periode.semester) : '',
       start_date: getDateOnly(periode.start_date),
       end_date: getDateOnly(periode.end_date),
       deskripsi: periode.deskripsi || '',
@@ -148,26 +166,25 @@ export default function KelolaPeriodePage() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!form.nama || !form.tipe || !form.start_date || !form.end_date) {
+    if (!form.nama || !form.start_date || !form.end_date) {
       toast.error('Nama, tipe, tanggal mulai, dan tanggal selesai wajib diisi');
       return;
     }
-    if (!isEditMode && !form.semester) {
+    if (!form.semester) {
       toast.error('Semester wajib dipilih');
       return;
     }
-    if (!isEditMode && isAssignmentRestricted && String(form.semester) !== String(assignedSemester)) {
+    if (!assignedSemesterOptions.includes(Number(form.semester))) {
       toast.error('Semester harus sesuai assignment koordinator');
       return;
     }
-    if (isAssignmentRestricted && form.tipe !== assignedTipe) {
-      toast.error('Tipe harus sesuai assignment koordinator');
-      return;
-    }
+
+    const resolvedSemester = Number(form.semester);
+    const resolvedTipe = SEMESTER_TIPE_MAP[resolvedSemester] || getTipeBySemester(resolvedSemester);
 
     const payload = {
       nama: form.nama.trim(),
-      tipe: isAssignmentRestricted ? assignedTipe : form.tipe,
+      tipe: resolvedTipe,
       start_date: form.start_date,
       end_date: form.end_date,
       deskripsi: form.deskripsi.trim() || null,
@@ -186,7 +203,7 @@ export default function KelolaPeriodePage() {
       } else {
         const res = await koordinatorAPI.createJadwal({
           ...payload,
-          semester: isAssignmentRestricted ? assignedSemester : Number(form.semester),
+          semester: resolvedSemester,
         });
         if (!res.ok) {
           toast.error(res.error || 'Gagal membuat periode');
@@ -247,13 +264,29 @@ export default function KelolaPeriodePage() {
           </CardTitle>
           <Button
             onClick={openCreateModal}
-            disabled={!assignedSemester}
+            disabled={!hasAssignments}
             className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
           >
             <Plus className="mr-1 h-4 w-4" /> Buat Periode
           </Button>
         </CardHeader>
         <CardContent>
+          <div className="mb-4 flex flex-wrap gap-2">
+            {hasAssignments ? (
+              assignedSemesterOptions.map((semester) => (
+                <Badge
+                  key={`assignment-${semester}`}
+                  className="rounded-xl border border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]"
+                >
+                  Semester {semester} - {getTipeLabel(getTipeBySemester(semester))}
+                </Badge>
+              ))
+            ) : (
+              <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.25)] text-[hsl(var(--ctp-subtext0))]">
+                Belum ada assignment dari kaprodi
+              </Badge>
+            )}
+          </div>
           {periodes.length === 0 ? (
             <div className="py-12 text-center">
               <CalendarDays className="mx-auto mb-3 h-10 w-10 text-[hsl(var(--ctp-overlay1))]" />
@@ -353,15 +386,12 @@ export default function KelolaPeriodePage() {
           <div>
             <Label className="text-[hsl(var(--ctp-subtext1))]">Tipe</Label>
             <select
-              value={form.tipe}
-              disabled={isAssignmentRestricted}
-              onChange={(e) => setForm((prev) => ({ ...prev, tipe: e.target.value }))}
+              value={selectedTipe}
+              disabled
+              onChange={() => {}}
               className={`${inputCls} h-10 w-full rounded-md px-3 disabled:opacity-60`}
             >
-              {(isAssignmentRestricted
-                ? TIPE_OPTIONS.filter((item) => item.value === assignedTipe)
-                : TIPE_OPTIONS
-              ).map((tipe) => (
+              {TIPE_OPTIONS.filter((item) => item.value === selectedTipe).map((tipe) => (
                 <option key={tipe.value} value={tipe.value}>
                   {tipe.label}
                 </option>
@@ -373,14 +403,20 @@ export default function KelolaPeriodePage() {
             <Label className="text-[hsl(var(--ctp-subtext1))]">Semester</Label>
             <select
               value={form.semester}
-              disabled={isEditMode || isAssignmentRestricted}
-              onChange={(e) => setForm((prev) => ({ ...prev, semester: e.target.value }))}
+              disabled={isEditMode}
+              onChange={(e) =>
+                setForm((prev) => ({
+                  ...prev,
+                  semester: e.target.value,
+                  tipe: getTipeBySemester(e.target.value),
+                }))
+              }
               className={`${inputCls} h-10 w-full rounded-md px-3 disabled:opacity-60`}
             >
-              {!isAssignmentRestricted ? <option value="">Pilih semester</option> : null}
-              {(isAssignmentRestricted ? [assignedSemester] : SEMESTER_OPTIONS).map((semester) => (
+              <option value="">Pilih semester</option>
+              {assignedSemesterOptions.map((semester) => (
                 <option key={semester} value={semester}>
-                  Semester {semester}
+                  Semester {semester} - {getTipeLabel(getTipeBySemester(semester))}
                 </option>
               ))}
             </select>

@@ -447,16 +447,22 @@ export const kaprodiAPI = {
     getDosenList: () => apiRequest('/api/kaprodi/dosen'),
     getKoordinatorList: () => apiRequest('/api/kaprodi/koordinator'),
 
-    assignKoordinatorSemester: (koordinator_id, semester) =>
+    assignKoordinatorSemester: (koordinator_id, semesters) =>
         apiRequest('/api/kaprodi/koordinator/assign-semester', {
             method: 'POST',
-            body: JSON.stringify({ koordinator_id, semester }),
+            body: JSON.stringify({ koordinator_id, semesters }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/kaprodi/', '/api/koordinator/', '/api/notifications/stats']);
+            return result;
         }),
 
-    unassignKoordinatorSemester: (koordinator_id) =>
+    unassignKoordinatorSemester: (koordinator_id, semesters = []) =>
         apiRequest('/api/kaprodi/koordinator/unassign-semester', {
             method: 'POST',
-            body: JSON.stringify({ koordinator_id }),
+            body: JSON.stringify({ koordinator_id, semesters }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/kaprodi/', '/api/koordinator/', '/api/notifications/stats']);
+            return result;
         }),
 };
 

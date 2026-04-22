@@ -29,6 +29,8 @@ const SEMESTER_OPTIONS = [
   { value: '8', label: 'Internship 2 (Semester 8)' },
 ];
 
+const MAX_ASSIGNMENTS = 2;
+
 export default function KelolaKoordinatorPage() {
   const router = useRouter();
   const { role } = useAuthStore();
@@ -58,26 +60,51 @@ export default function KelolaKoordinatorPage() {
   };
 
   useEffect(() => {
-    setSelectedSemesterById((prev) => {
-      const next = { ...prev };
+    setSelectedSemesterById(() => {
+      const next = {};
       list.forEach((item) => {
-        if (!next[item.id]) {
-          next[item.id] = String(item.assigned_semester || 2);
-        }
+        next[item.id] = Array.isArray(item.assigned_semesters)
+          ? item.assigned_semesters.map((value) => String(value))
+          : item.assigned_semester
+            ? [String(item.assigned_semester)]
+            : [];
       });
       return next;
     });
   }, [list]);
 
   const handleSemesterChange = (dosenId, semester) => {
-    setSelectedSemesterById((prev) => ({ ...prev, [dosenId]: semester }));
+    setSelectedSemesterById((prev) => {
+      const current = Array.isArray(prev[dosenId]) ? prev[dosenId] : [];
+      const exists = current.includes(semester);
+
+      if (!exists && current.length >= MAX_ASSIGNMENTS) {
+        toast.error(`Koordinator maksimal ${MAX_ASSIGNMENTS} assignment track/semester`);
+        return prev;
+      }
+
+      return {
+        ...prev,
+        [dosenId]: exists
+          ? current.filter((value) => value !== semester)
+          : [...current, semester].sort((a, b) => Number(a) - Number(b)),
+      };
+    });
   };
 
   const handleAssign = async (dosen) => {
-    const semester = Number(selectedSemesterById[dosen.id] || dosen.assigned_semester || 2);
+    const selectedSemesters = Array.isArray(selectedSemesterById[dosen.id]) ? selectedSemesterById[dosen.id] : [];
+    if (selectedSemesters.length === 0) {
+      toast.error('Pilih minimal satu track/semester');
+      return;
+    }
+
     setSubmittingId(dosen.id);
     try {
-      const res = await kaprodiAPI.assignKoordinatorSemester(dosen.id, semester);
+      const res = await kaprodiAPI.assignKoordinatorSemester(
+        dosen.id,
+        selectedSemesters.map((value) => Number(value))
+      );
       if (res.ok) {
         toast.success(res.data?.message || 'Koordinator berhasil diassign');
         await loadData();
@@ -153,23 +180,51 @@ export default function KelolaKoordinatorPage() {
                   </div>
                   <div className="flex-1">
                     <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{k.nama || '-'}</p>
-                    <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                      {k.email || '-'} - {k.semester_label || (k.assigned_semester ? `Semester ${k.assigned_semester}` : '-')}
+                    <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{k.email || '-'}</p>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {(Array.isArray(k.assigned_semesters) && k.assigned_semesters.length > 0)
+                        ? k.assigned_semesters.map((semester) => {
+                            const option = SEMESTER_OPTIONS.find((item) => Number(item.value) === Number(semester));
+                            return (
+                              <Badge
+                                key={`${k.id}-assigned-${semester}`}
+                                className="rounded-xl border border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]"
+                              >
+                                {option?.label || `Semester ${semester}`}
+                              </Badge>
+                            );
+                          })
+                        : (
+                          <span className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum ada assignment</span>
+                        )}
+                    </div>
+                  </div>
+                  <div className="flex min-w-[320px] flex-col gap-2">
+                    <div className="flex flex-wrap gap-2">
+                      {SEMESTER_OPTIONS.map((opt) => {
+                        const selected = (selectedSemesterById[k.id] || []).includes(opt.value);
+                        return (
+                          <button
+                            key={`${k.id}-${opt.value}`}
+                            type="button"
+                            onClick={() => handleSemesterChange(k.id, opt.value)}
+                            disabled={submittingId === k.id}
+                            className={`rounded-xl border px-3 py-2 text-xs transition-colors disabled:opacity-50 ${
+                              selected
+                                ? 'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.15)] text-[hsl(var(--ctp-green))]'
+                                : 'border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0)/0.45)] text-[hsl(var(--ctp-subtext1))]'
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                    <p className="text-[11px] text-[hsl(var(--ctp-subtext0))]">
+                      Pilih maksimal {MAX_ASSIGNMENTS} track/semester per koordinator.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
-                    <select
-                      value={selectedSemesterById[k.id] || String(k.assigned_semester || 2)}
-                      onChange={(e) => handleSemesterChange(k.id, e.target.value)}
-                      disabled={submittingId === k.id}
-                      className="h-9 rounded-lg border border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0)/0.45)] px-2 text-xs text-[hsl(var(--ctp-text))] outline-none disabled:opacity-50"
-                    >
-                      {SEMESTER_OPTIONS.map((opt) => (
-                        <option key={opt.value} value={opt.value}>
-                          {opt.label}
-                        </option>
-                      ))}
-                    </select>
                     <Button
                       type="button"
                       size="sm"
