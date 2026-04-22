@@ -1,5 +1,6 @@
 'use client';
 
+import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import {
@@ -49,7 +50,7 @@ export default function LandingPage() {
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-3" aria-label="Kavana Home">
             <span className="grid h-11 w-11 place-items-center rounded-2xl bg-[linear-gradient(135deg,hsl(var(--ctp-blue)),hsl(var(--ctp-teal)))] text-white shadow-[0_18px_38px_-24px_hsl(var(--ctp-blue)/0.75)]">
-              <GraduationCap className="h-5 w-5" />
+              <Image src="/D4TI.png" alt="D4TI" width={20} height={20} className="h-5 w-5 object-contain" />
             </span>
             <span>
               <span className="block text-xl font-black tracking-tight">{LANDING_CONTENT.brand.name}</span>
