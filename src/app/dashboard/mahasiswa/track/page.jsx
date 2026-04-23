@@ -22,12 +22,16 @@ const TRACK_LABELS = {
   'proyek-1': 'Proyek 1', 'proyek-2': 'Proyek 2', 'proyek-3': 'Proyek 3',
   'internship-1': 'Internship 1', 'internship-2': 'Internship 2',
 };
+const API_TRACK_LABELS = {
+  proyek1: 'Proyek 1', proyek2: 'Proyek 2', proyek3: 'Proyek 3',
+  internship1: 'Internship 1', internship2: 'Internship 2',
+};
 const TRACKS = [
-  { id: 'proyek-1', name: 'Proyek 1', type: 'proyek', semester: 2, desc: 'Proyek kelompok semester 2', icon: Briefcase },
-  { id: 'proyek-2', name: 'Proyek 2', type: 'proyek', semester: 3, desc: 'Proyek kelompok semester 3', icon: Briefcase },
-  { id: 'proyek-3', name: 'Proyek 3', type: 'proyek', semester: 5, desc: 'Proyek kelompok semester 5', icon: Briefcase },
-  { id: 'internship-1', name: 'Internship 1', type: 'internship', semester: 7, desc: 'Magang industri semester 7', icon: Building2 },
-  { id: 'internship-2', name: 'Internship 2', type: 'internship', semester: 8, desc: 'Magang industri semester 8', icon: Building2 },
+  { id: 'proyek-1', apiId: 'proyek1', name: 'Proyek 1', type: 'proyek', semester: 2, desc: 'Proyek kelompok semester 2', icon: Briefcase },
+  { id: 'proyek-2', apiId: 'proyek2', name: 'Proyek 2', type: 'proyek', semester: 3, desc: 'Proyek kelompok semester 3', icon: Briefcase },
+  { id: 'proyek-3', apiId: 'proyek3', name: 'Proyek 3', type: 'proyek', semester: 5, desc: 'Proyek kelompok semester 5', icon: Briefcase },
+  { id: 'internship-1', apiId: 'internship1', name: 'Internship 1', type: 'internship', semester: 7, desc: 'Magang industri semester 7', icon: Building2 },
+  { id: 'internship-2', apiId: 'internship2', name: 'Internship 2', type: 'internship', semester: 8, desc: 'Magang industri semester 8', icon: Building2 },
 ];
 
 export default function TrackPage() {
@@ -35,7 +39,9 @@ export default function TrackPage() {
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [semester, setSemester] = useState(null);
+  const [jalur, setJalur] = useState('regular');
   const [periodeActive, setPeriodeActive] = useState(false);
+  const [availableTracks, setAvailableTracks] = useState([]);
   const [selectedTrack, setSelectedTrack] = useState(null);
   const [partnerNpm, setPartnerNpm] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -43,31 +49,36 @@ export default function TrackPage() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    const checkAndLoad = async () => {
+      try {
+        const profileRes = await mahasiswaAPI.getProfile();
+        if (profileRes.ok && profileRes.data?.track) {
+          toast.info(`Anda sudah memilih ${API_TRACK_LABELS[profileRes.data.track] || profileRes.data.track}`);
+          router.replace('/dashboard/mahasiswa');
+          return;
+        }
+        if (profileRes.ok) {
+          setJalur(profileRes.data?.jalur || 'regular');
+        }
+        const periodeRes = await mahasiswaAPI.getPeriodeAktif();
+        if (periodeRes.ok) {
+          setSemester(periodeRes.data.semester);
+          setPeriodeActive(!!periodeRes.data.active);
+          setJalur(periodeRes.data.jalur || profileRes.data?.jalur || 'regular');
+          setAvailableTracks(Array.isArray(periodeRes.data.available_tracks) ? periodeRes.data.available_tracks : []);
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
     if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
     checkAndLoad();
-  }, [role]);
+  }, [role, router]);
 
-  const checkAndLoad = async () => {
-    try {
-      const profileRes = await mahasiswaAPI.getProfile();
-      if (profileRes.ok && profileRes.data?.track) {
-        toast.info(`Anda sudah memilih ${TRACK_LABELS[profileRes.data.track] || profileRes.data.track}`);
-        router.replace('/dashboard/mahasiswa');
-        return;
-      }
-      const periodeRes = await mahasiswaAPI.getPeriodeAktif();
-      if (periodeRes.ok) {
-        setSemester(periodeRes.data.semester);
-        setPeriodeActive(!!periodeRes.data.active);
-      }
-    } catch (err) {
-      console.error(err);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const visibleTracks = TRACKS.filter(t => t.semester === semester && periodeActive);
+  const visibleTracks = TRACKS.filter(t => periodeActive && availableTracks.includes(t.apiId));
 
   const handleConfirm = async () => {
     if (!selectedTrack) return;
@@ -81,8 +92,7 @@ export default function TrackPage() {
 
     setSubmitting(true);
     try {
-      const trackValue = selectedTrack.replace('-', '');
-      const res = await mahasiswaAPI.setTrack(trackValue, partnerNpm || null);
+      const res = await mahasiswaAPI.setTrack(track.apiId, partnerNpm || null);
       if (res.ok) {
         toast.success(`${track.name} berhasil dipilih!`);
         if (track.type === 'proyek' && !res.data?.matched) {
@@ -122,7 +132,9 @@ export default function TrackPage() {
                 : 'Periode Proyek Belum Dibuka'}
             </h2>
             <p className="text-sm text-[hsl(var(--ctp-subtext0))] max-w-md">
-              {!semester || !SEMESTER_TRACK_MAP[semester]
+              {jalur === 'rpl'
+                ? 'Belum ada periode proyek atau internship aktif. Silakan tunggu koordinator membuka periode.'
+                : !semester || !SEMESTER_TRACK_MAP[semester]
                 ? `Semester ${semester || '-'} tidak memiliki proyek atau internship.`
                 : 'Koordinator belum membuka periode. Silakan tunggu pengumuman.'}
             </p>
@@ -130,6 +142,26 @@ export default function TrackPage() {
         </Card>
       ) : (
         <>
+          <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+            <CardContent className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
+                  Jalur {jalur === 'rpl' ? 'RPL' : 'Regular'}
+                </p>
+                <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
+                  {jalur === 'rpl'
+                    ? 'Anda dapat memilih track mana pun yang sedang dibuka koordinator.'
+                    : 'Pilihan track mengikuti semester berjalan dan periode yang dibuka koordinator.'}
+                </p>
+              </div>
+              {jalur === 'regular' && semester ? (
+                <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+                  Semester {semester}
+                </Badge>
+              ) : null}
+            </CardContent>
+          </Card>
+
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
             {visibleTracks.map((track) => {
               const Icon = track.icon;

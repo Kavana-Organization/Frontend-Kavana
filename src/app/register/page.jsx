@@ -99,6 +99,7 @@ export default function RegisterPage() {
     nama: '',
     npm: '',
     angkatan: '',
+    jalur: 'regular',
     email: '',
     whatsapp: '',
     password: '',
@@ -160,6 +161,7 @@ export default function RegisterPage() {
         nama: formData.nama.trim(),
         npm: formData.npm.trim(),
         angkatan: parseInt(formData.angkatan),
+        jalur: formData.jalur,
         email: formData.email.trim(),
         no_wa: formData.whatsapp.trim(),
         password: formData.password,
@@ -220,6 +222,7 @@ export default function RegisterPage() {
         nama: formData.nama.trim(),
         npm: formData.npm.trim(),
         angkatan: parseInt(formData.angkatan),
+        jalur: formData.jalur,
         email: formData.email.trim(),
         no_wa: formData.whatsapp.trim(),
         password: formData.password,
@@ -372,6 +375,22 @@ export default function RegisterPage() {
                         </Select>
                         <FieldError msg={errors.angkatan} />
                       </div>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label htmlFor="jalur" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Jalur Mahasiswa</Label>
+                      <Select value={formData.jalur} onValueChange={handleChange('jalur')}>
+                        <SelectTrigger id="jalur" className="h-12 rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.84)] text-[hsl(var(--ctp-text))]">
+                          <SelectValue placeholder="Pilih jalur" />
+                        </SelectTrigger>
+                        <SelectContent className="rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)]">
+                          <SelectItem value="regular">Regular</SelectItem>
+                          <SelectItem value="rpl">RPL</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <p className="text-xs leading-6 text-[hsl(var(--ctp-subtext0))]">
+                        Regular mengikuti semester akademik. RPL dapat memilih track yang sedang dibuka koordinator.
+                      </p>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
