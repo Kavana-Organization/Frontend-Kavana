@@ -1,8 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { GraduationCap, LogOut, Plus, LifeBuoy, Settings } from 'lucide-react';
+import { LogOut, Plus, LifeBuoy, Settings } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
@@ -120,8 +121,15 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
         {/* Brand */}
         <div className={cn("flex items-center gap-2 border-b border-[hsl(var(--ctp-surface1))] px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--ctp-blue)/0.18)] bg-[linear-gradient(135deg,hsl(var(--ctp-blue)/0.2),hsl(var(--ctp-teal)/0.16))]">
-              <GraduationCap className="h-5 w-5 text-[hsl(var(--ctp-blue))]" />
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--ctp-blue)/0.18)] bg-[linear-gradient(135deg,hsl(var(--ctp-blue)/0.14),hsl(var(--ctp-teal)/0.12))] shadow-[0_8px_24px_-18px_hsl(var(--ctp-sapphire)/0.45)]">
+              <Image
+                src="/D4TI.png"
+                alt="D4TI"
+                width={26}
+                height={26}
+                className="h-[26px] w-[26px] object-contain"
+                priority
+              />
             </div>
             {!collapsed && (
               <div className="leading-tight min-w-0">
