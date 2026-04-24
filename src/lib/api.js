@@ -483,18 +483,52 @@ export const adminAPI = {
     getProfile: () => apiRequest('/api/admin/profile'),
     getStats: () => apiRequest('/api/admin/stats'),
     getRecentActivity: () => apiRequest('/api/admin/activity'),
+    getAuditLogs: (params = {}) => {
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                query.set(key, value);
+            }
+        });
+        const suffix = query.toString() ? `?${query.toString()}` : '';
+        return apiRequest(`/api/admin/audit-logs${suffix}`);
+    },
     getAllUsers: () => apiRequest('/api/admin/users'),
 
     updateUserStatus: (userId, role, isActive) =>
         apiRequest(`/api/admin/users/${userId}/status`, {
             method: 'PATCH',
             body: JSON.stringify({ role, is_active: isActive }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/admin/users', '/api/admin/stats', '/api/admin/activity', '/api/admin/audit-logs']);
+            return result;
+        }),
+
+    updateUserProfile: (userId, payload) =>
+        apiRequest(`/api/admin/users/${userId}/profile`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/admin/users', '/api/admin/stats', '/api/admin/activity', '/api/admin/audit-logs']);
+            return result;
+        }),
+
+    resetUserPassword: (userId, payload) =>
+        apiRequest(`/api/admin/users/${userId}/password`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/admin/activity', '/api/admin/audit-logs']);
+            return result;
         }),
 
     deleteUser: (userId, role) =>
         apiRequest(`/api/admin/users/${userId}`, {
             method: 'DELETE',
             body: JSON.stringify({ role }),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/admin/users', '/api/admin/stats', '/api/admin/activity', '/api/admin/audit-logs']);
+            return result;
         }),
 
     getAllDosen: () => apiRequest('/api/admin/dosen'),
