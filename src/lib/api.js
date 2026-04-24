@@ -464,6 +464,15 @@ export const kaprodiAPI = {
             if (result.ok) invalidateApiCache(['/api/kaprodi/', '/api/koordinator/', '/api/notifications/stats']);
             return result;
         }),
+
+    setMahasiswaRepeatStatus: (payload) =>
+        apiRequest('/api/kaprodi/mahasiswa/repeat-status', {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/kaprodi/', '/api/koordinator/', '/api/mahasiswa/', '/api/notifications/stats']);
+            return result;
+        }),
 };
 
 // ========================================

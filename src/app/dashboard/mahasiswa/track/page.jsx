@@ -42,6 +42,8 @@ export default function TrackPage() {
   const [jalur, setJalur] = useState('regular');
   const [periodeActive, setPeriodeActive] = useState(false);
   const [availableTracks, setAvailableTracks] = useState([]);
+  const [eligibilityMessage, setEligibilityMessage] = useState('');
+  const [repeatInfo, setRepeatInfo] = useState({ repeat_required: false, repeat_track: null, next_allowed_track: null, eligibility_source: null });
   const [selectedTrack, setSelectedTrack] = useState(null);
   const [partnerNpm, setPartnerNpm] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -66,6 +68,13 @@ export default function TrackPage() {
           setPeriodeActive(!!periodeRes.data.active);
           setJalur(periodeRes.data.jalur || profileRes.data?.jalur || 'regular');
           setAvailableTracks(Array.isArray(periodeRes.data.available_tracks) ? periodeRes.data.available_tracks : []);
+          setEligibilityMessage(periodeRes.data.message || '');
+          setRepeatInfo({
+            repeat_required: !!periodeRes.data.repeat_required,
+            repeat_track: periodeRes.data.repeat_track || null,
+            next_allowed_track: periodeRes.data.next_allowed_track || null,
+            eligibility_source: periodeRes.data.eligibility_source || null,
+          });
         }
       } catch (err) {
         console.error(err);
@@ -132,7 +141,9 @@ export default function TrackPage() {
                 : 'Periode Proyek Belum Dibuka'}
             </h2>
             <p className="text-sm text-[hsl(var(--ctp-subtext0))] max-w-md">
-              {jalur === 'rpl'
+              {eligibilityMessage
+                ? eligibilityMessage
+                : jalur === 'rpl'
                 ? 'Belum ada periode proyek atau internship aktif. Silakan tunggu koordinator membuka periode.'
                 : !semester || !SEMESTER_TRACK_MAP[semester]
                 ? `Semester ${semester || '-'} tidak memiliki proyek atau internship.`
@@ -149,16 +160,30 @@ export default function TrackPage() {
                   Jalur {jalur === 'rpl' ? 'RPL' : 'Regular'}
                 </p>
                 <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                  {jalur === 'rpl'
+                  {eligibilityMessage
+                    ? eligibilityMessage
+                    : jalur === 'rpl'
                     ? 'Anda dapat memilih track mana pun yang sedang dibuka koordinator.'
                     : 'Pilihan track mengikuti semester berjalan dan periode yang dibuka koordinator.'}
                 </p>
               </div>
-              {jalur === 'regular' && semester ? (
-                <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-                  Semester {semester}
-                </Badge>
-              ) : null}
+              <div className="flex flex-wrap gap-2">
+                {jalur === 'regular' && semester ? (
+                  <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+                    Semester {semester}
+                  </Badge>
+                ) : null}
+                {repeatInfo.repeat_required && repeatInfo.repeat_track ? (
+                  <Badge className="rounded-xl border border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.12)] text-[hsl(var(--ctp-red))]">
+                    Wajib Ulang {API_TRACK_LABELS[repeatInfo.repeat_track] || repeatInfo.repeat_track}
+                  </Badge>
+                ) : null}
+                {!repeatInfo.repeat_required && repeatInfo.next_allowed_track ? (
+                  <Badge className="rounded-xl border border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]">
+                    Izin Lanjut {API_TRACK_LABELS[repeatInfo.next_allowed_track] || repeatInfo.next_allowed_track}
+                  </Badge>
+                ) : null}
+              </div>
             </CardContent>
           </Card>
 
