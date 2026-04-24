@@ -34,7 +34,7 @@ export function Providers({ children }) {
     <QueryClientProvider client={queryClient}>
       <AuthHydration>
         {children}
-        <Toaster richColors position="top-right" />
+        <Toaster richColors position="top-center" />
       </AuthHydration>
     </QueryClientProvider>
   );

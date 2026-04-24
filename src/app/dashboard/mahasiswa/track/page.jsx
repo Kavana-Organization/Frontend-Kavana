@@ -6,7 +6,7 @@ import {
   Briefcase, Building2, Users, Clock, CheckCircle2, AlertTriangle, ChevronRight,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';

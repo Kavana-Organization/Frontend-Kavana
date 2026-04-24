@@ -6,7 +6,7 @@ import {
   Shield, Pencil, KeyRound, ToggleLeft, ToggleRight, Trash2, Save, UserCog,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -18,6 +18,7 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { adminAPI } from '@/lib/api';
 
@@ -51,6 +52,7 @@ export default function KelolaUsersPage() {
   const [selectedUser, setSelectedUser] = useState(null);
   const [editOpen, setEditOpen] = useState(false);
   const [passwordOpen, setPasswordOpen] = useState(false);
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
   const [profileForm, setProfileForm] = useState(EMPTY_FORM);
   const [passwordForm, setPasswordForm] = useState(EMPTY_PASSWORD_FORM);
   const [saving, setSaving] = useState(false);
@@ -88,6 +90,7 @@ export default function KelolaUsersPage() {
     setPasswordForm(EMPTY_PASSWORD_FORM);
     setEditOpen(false);
     setPasswordOpen(false);
+    setDeleteDialogOpen(false);
   };
 
   const openEditDialog = (user) => {
@@ -143,21 +146,23 @@ export default function KelolaUsersPage() {
     }
   };
 
-  const handleDelete = async (user) => {
-    const confirmation = window.confirm(`Hapus user ${user.nama}? Aksi ini tidak bisa dibatalkan.`);
-    if (!confirmation) return;
-
+  const handleDelete = async () => {
+    if (!selectedUser) return;
     try {
-      const res = await adminAPI.deleteUser(user.id, user.role);
+      setSaving(true);
+      const res = await adminAPI.deleteUser(selectedUser.id, selectedUser.role);
       if (!res.ok) {
         toast.error(res.error || 'Gagal menghapus user');
         return;
       }
       toast.success('User berhasil dihapus');
+      resetDialogs();
       await loadData();
     } catch (err) {
       console.error(err);
       toast.error('Kesalahan jaringan');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -368,7 +373,10 @@ export default function KelolaUsersPage() {
                         type="button"
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleDelete(user)}
+                        onClick={() => {
+                          setSelectedUser(user);
+                          setDeleteDialogOpen(true);
+                        }}
                         className="rounded-xl border border-[hsl(var(--ctp-red)/0.28)] bg-[hsl(var(--ctp-red)/0.10)] text-[hsl(var(--ctp-red))]"
                       >
                         <Trash2 className="h-4 w-4 mr-1" />
@@ -485,6 +493,18 @@ export default function KelolaUsersPage() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ConfirmActionDialog
+        open={deleteDialogOpen}
+        onOpenChange={(open) => {
+          if (!saving && !open) resetDialogs();
+        }}
+        title="Hapus User"
+        description={selectedUser ? `Hapus user ${selectedUser.nama}? Aksi ini tidak dapat dibatalkan.` : 'Hapus user ini?'}
+        confirmLabel="Hapus"
+        onConfirm={handleDelete}
+        loading={saving}
+      />
     </motion.div>
   );
 }

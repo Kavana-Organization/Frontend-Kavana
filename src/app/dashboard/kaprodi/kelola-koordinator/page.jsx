@@ -4,12 +4,13 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserCog } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { useAuthStore } from '@/store/auth-store';
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { kaprodiAPI } from '@/lib/api';
 
 function getInitials(name) {
@@ -39,6 +40,8 @@ export default function KelolaKoordinatorPage() {
   const [search, setSearch] = useState('');
   const [selectedSemesterById, setSelectedSemesterById] = useState({});
   const [submittingId, setSubmittingId] = useState(null);
+  const [confirmUnassignOpen, setConfirmUnassignOpen] = useState(false);
+  const [targetKoordinator, setTargetKoordinator] = useState(null);
 
   useEffect(() => {
     if (role && role !== 'kaprodi') {
@@ -118,15 +121,15 @@ export default function KelolaKoordinatorPage() {
     }
   };
 
-  const handleUnassign = async (dosen) => {
-    const confirmed = window.confirm(`Hapus role koordinator dari ${dosen.nama}?`);
-    if (!confirmed) return;
-
-    setSubmittingId(dosen.id);
+  const handleUnassign = async () => {
+    if (!targetKoordinator) return;
+    setSubmittingId(targetKoordinator.id);
     try {
-      const res = await kaprodiAPI.unassignKoordinatorSemester(dosen.id);
+      const res = await kaprodiAPI.unassignKoordinatorSemester(targetKoordinator.id);
       if (res.ok) {
         toast.success(res.data?.message || 'Role koordinator berhasil dihapus');
+        setConfirmUnassignOpen(false);
+        setTargetKoordinator(null);
         await loadData();
       } else {
         toast.error(res.error || 'Gagal menghapus role koordinator');
@@ -239,7 +242,10 @@ export default function KelolaKoordinatorPage() {
                         type="button"
                         size="sm"
                         variant="ghost"
-                        onClick={() => handleUnassign(k)}
+                        onClick={() => {
+                          setTargetKoordinator(k);
+                          setConfirmUnassignOpen(true);
+                        }}
                         disabled={submittingId === k.id}
                         className="h-9 rounded-lg border border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.10)] text-[hsl(var(--ctp-red))] hover:bg-[hsl(var(--ctp-red)/0.18)]"
                       >
@@ -262,6 +268,20 @@ export default function KelolaKoordinatorPage() {
           )}
         </CardContent>
       </Card>
+
+      <ConfirmActionDialog
+        open={confirmUnassignOpen}
+        onOpenChange={(open) => {
+          if (submittingId !== null && open === false) return;
+          setConfirmUnassignOpen(open);
+          if (!open) setTargetKoordinator(null);
+        }}
+        title="Cabut Role Koordinator"
+        description={targetKoordinator ? `Hapus role koordinator dari ${targetKoordinator.nama}?` : 'Hapus role koordinator ini?'}
+        confirmLabel="Cabut Role"
+        onConfirm={handleUnassign}
+        loading={submittingId !== null}
+      />
     </motion.div>
   );
 }

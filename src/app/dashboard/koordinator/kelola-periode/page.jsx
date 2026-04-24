@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { CalendarDays, CheckCircle2, Pencil, Plus } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { toast } from 'sonner';
+import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -12,6 +12,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/auth-store';
 import { koordinatorAPI } from '@/lib/api';
+import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
 const TIPE_OPTIONS = [
@@ -75,6 +76,8 @@ export default function KelolaPeriodePage() {
   const [submitting, setSubmitting] = useState(false);
   const [completingId, setCompletingId] = useState(null);
   const [mySemesters, setMySemesters] = useState([]);
+  const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false);
+  const [targetPeriode, setTargetPeriode] = useState(null);
 
   const isEditMode = form.id !== null;
   const assignedSemesterOptions = mySemesters
@@ -223,19 +226,18 @@ export default function KelolaPeriodePage() {
     }
   };
 
-  const handleComplete = async (periode) => {
-    if (!window.confirm(`Akhiri periode "${periode.nama}"?`)) {
-      return;
-    }
-
+  const handleComplete = async () => {
+    if (!targetPeriode) return;
     try {
-      setCompletingId(periode.id);
-      const res = await koordinatorAPI.completeJadwal(periode.id);
+      setCompletingId(targetPeriode.id);
+      const res = await koordinatorAPI.completeJadwal(targetPeriode.id);
       if (!res.ok) {
         toast.error(res.error || 'Gagal mengakhiri periode');
         return;
       }
       toast.success('Periode berhasil diakhiri');
+      setConfirmCompleteOpen(false);
+      setTargetPeriode(null);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -347,7 +349,10 @@ export default function KelolaPeriodePage() {
                           <Button
                             type="button"
                             disabled={completingId === periode.id}
-                            onClick={() => handleComplete(periode)}
+                            onClick={() => {
+                              setTargetPeriode(periode);
+                              setConfirmCompleteOpen(true);
+                            }}
                             className="rounded-xl bg-[hsl(var(--ctp-peach)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-peach)/0.35)]"
                           >
                             <CheckCircle2 className="mr-1 h-4 w-4" />
@@ -470,6 +475,21 @@ export default function KelolaPeriodePage() {
           </div>
         </form>
       </DashboardDialog>
+
+      <ConfirmActionDialog
+        open={confirmCompleteOpen}
+        onOpenChange={(open) => {
+          if (completingId !== null && open === false) return;
+          setConfirmCompleteOpen(open);
+          if (!open) setTargetPeriode(null);
+        }}
+        title="Akhiri Periode"
+        description={targetPeriode ? `Akhiri periode "${targetPeriode.nama}"? Periode aktif akan ditutup.` : 'Akhiri periode ini?'}
+        confirmLabel="Akhiri"
+        onConfirm={handleComplete}
+        loading={completingId !== null}
+        tone="warning"
+      />
     </motion.div>
   );
 }
