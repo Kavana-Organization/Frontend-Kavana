@@ -2,6 +2,8 @@
 // API HELPER - Kavana Bimbingan Online
 // ========================================
 
+import { notifyRealtimeUpdate } from '@/lib/realtime';
+
 const API_BASE_URL = (
     process.env.NEXT_PUBLIC_API_BASE_URL
     || 'https://asia-southeast2-renzip-478811.cloudfunctions.net/kavana'
@@ -67,6 +69,10 @@ export function invalidateApiCache(prefixes = []) {
         if (prefixes.some((prefix) => key.includes(prefix))) {
             inflightRequests.delete(key);
         }
+    }
+
+    if (typeof window !== 'undefined') {
+        notifyRealtimeUpdate(prefixes, { source: 'api-cache-invalidated' });
     }
 }
 

@@ -8,6 +8,7 @@ import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { TITLE_MAP, ROLE_LABEL, ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
 import { notificationAPI } from '@/lib/api';
+import { subscribeRealtimeUpdates } from '@/lib/realtime';
 import { removeAcademicTitles } from '@/lib/validators';
 import { Button } from '@/components/ui/button';
 import {
@@ -84,6 +85,8 @@ function useFormattedDate() {
 }
 
 const iconBtnCls = "ctp-focus h-10 w-10 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.82)] shadow-[0_1px_0_hsl(0_0%_100%/0.45)_inset] transition-colors hover:bg-[hsl(var(--ctp-crust))]";
+const LIVE_REFRESH_INTERVAL = 20000;
+const LIVE_REFRESH_DEBOUNCE = 3500;
 
 function useIsHydrated() {
   return useSyncExternalStore(
@@ -117,6 +120,21 @@ function formatNotificationKey(key) {
     .join(' ');
 }
 
+function shouldDelayRealtimeRefresh() {
+  if (typeof document === 'undefined') return false;
+
+  const activeElement = document.activeElement;
+  if (!activeElement) return false;
+
+  const tagName = activeElement.tagName;
+  return (
+    activeElement.isContentEditable
+    || tagName === 'INPUT'
+    || tagName === 'TEXTAREA'
+    || tagName === 'SELECT'
+  );
+}
+
 export function DashboardLayout({ children, allowedRoles = [] }) {
   const role = useAuthStore((s) => s.role);
   const user = useAuthStore((s) => s.user);
@@ -133,6 +151,7 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
   const [notificationStats, setNotificationStats] = useState({});
   const [isNotificationLoading, setIsNotificationLoading] = useState(false);
   const [notificationError, setNotificationError] = useState('');
+  const [refreshVersion, setRefreshVersion] = useState(0);
 
   const pageTitle = useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
@@ -166,6 +185,61 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
     return () => {
       clearTimeout(initialFetch);
       clearInterval(interval);
+    };
+  }, [currentRole, loadNotificationStats]);
+
+  useEffect(() => {
+    if (!currentRole) return;
+
+    let pendingRefresh = false;
+    let lastRefreshAt = 0;
+
+    const applyRefresh = () => {
+      const now = Date.now();
+      if (now - lastRefreshAt < LIVE_REFRESH_DEBOUNCE) return;
+      lastRefreshAt = now;
+      pendingRefresh = false;
+      setRefreshVersion((prev) => prev + 1);
+      loadNotificationStats({ silent: true });
+    };
+
+    const requestRefresh = () => {
+      if (document.visibilityState !== 'visible') {
+        pendingRefresh = true;
+        return;
+      }
+
+      if (shouldDelayRealtimeRefresh()) {
+        pendingRefresh = true;
+        return;
+      }
+
+      applyRefresh();
+    };
+
+    const flushPendingRefresh = () => {
+      if (pendingRefresh && !shouldDelayRealtimeRefresh() && document.visibilityState === 'visible') {
+        applyRefresh();
+      }
+    };
+
+    const unsubscribeRealtime = subscribeRealtimeUpdates(() => {
+      requestRefresh();
+    });
+
+    const interval = window.setInterval(() => {
+      if (document.visibilityState !== 'visible') return;
+      requestRefresh();
+    }, LIVE_REFRESH_INTERVAL);
+
+    window.addEventListener('focus', flushPendingRefresh);
+    document.addEventListener('visibilitychange', flushPendingRefresh);
+
+    return () => {
+      unsubscribeRealtime();
+      window.clearInterval(interval);
+      window.removeEventListener('focus', flushPendingRefresh);
+      document.removeEventListener('visibilitychange', flushPendingRefresh);
     };
   }, [currentRole, loadNotificationStats]);
 
@@ -389,7 +463,9 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
 
             {/* Page Content */}
             <div className="px-4 pt-5 lg:px-6">
-              {children}
+              <div key={`${pathname}:${refreshVersion}`}>
+                {children}
+              </div>
             </div>
           </main>
         </div>
