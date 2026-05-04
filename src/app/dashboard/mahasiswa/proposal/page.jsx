@@ -24,6 +24,7 @@ export default function ProposalPage() {
   const { role, user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [dosenList, setDosenList] = useState([]);
+  const [kelompokMembers, setKelompokMembers] = useState([]);
   const [track, setTrack] = useState('');
   const [hasProposal, setHasProposal] = useState(false);
   const [proposalStatus, setProposalStatus] = useState('');
@@ -45,6 +46,17 @@ export default function ProposalPage() {
         if (['pending', 'approved'].includes(p.status_proposal)) {
           setHasProposal(true);
           setProposalStatus(p.status_proposal);
+        }
+
+        if (String(p.track || '').includes('proyek')) {
+          const kelompokRes = await mahasiswaAPI.getMyKelompok();
+          if (kelompokRes.ok && Array.isArray(kelompokRes.data?.anggota)) {
+            setKelompokMembers(kelompokRes.data.anggota);
+          } else {
+            setKelompokMembers([]);
+          }
+        } else {
+          setKelompokMembers([]);
         }
       }
       const dosenRes = await mahasiswaAPI.getDosenList();
@@ -100,6 +112,10 @@ export default function ProposalPage() {
   );
 
   const inputCls = "bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]";
+  const isProyek = String(track || '').includes('proyek');
+  const anggotaProposal = isProyek && kelompokMembers.length > 0
+    ? kelompokMembers
+    : [{ nama: form.nama, npm: form.npm }];
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
@@ -110,10 +126,27 @@ export default function ProposalPage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-              <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Nama</Label><Input value={form.nama} readOnly className={inputCls} /></div>
-              <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">NPM</Label><Input value={form.npm} readOnly className={inputCls} /></div>
-            </div>
+            {anggotaProposal.map((anggota, index) => (
+              <div key={`${anggota.npm || anggota.nama || 'anggota'}-${index}`} className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                <div className="space-y-2">
+                  <Label className="text-[hsl(var(--ctp-subtext1))]">
+                    {isProyek ? `Nama Anggota ${index + 1}` : 'Nama'}
+                  </Label>
+                  <Input value={anggota.nama || ''} readOnly className={inputCls} />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-[hsl(var(--ctp-subtext1))]">
+                    {isProyek ? `NPM Anggota ${index + 1}` : 'NPM'}
+                  </Label>
+                  <Input value={anggota.npm || ''} readOnly className={inputCls} />
+                </div>
+              </div>
+            ))}
+            {isProyek && (
+              <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
+                Untuk track proyek, proposal cukup disubmit satu kali oleh salah satu anggota kelompok dan akan berlaku untuk seluruh anggota.
+              </p>
+            )}
             <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Judul *</Label><Input value={form.judul} onChange={e => setForm({...form, judul: e.target.value})} placeholder="Judul proposal" className={inputCls} /></div>
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div className="space-y-2">
