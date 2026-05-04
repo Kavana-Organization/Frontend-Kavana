@@ -7,7 +7,7 @@ import { useAuthStore } from '@/store/auth-store';
 import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { TITLE_MAP, ROLE_LABEL, ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
-import { notificationAPI } from '@/lib/api';
+import { invalidateApiCache, notificationAPI } from '@/lib/api';
 import { subscribeRealtimeUpdates } from '@/lib/realtime';
 import { removeAcademicTitles } from '@/lib/validators';
 import { Button } from '@/components/ui/button';
@@ -192,18 +192,23 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
     if (!currentRole) return;
 
     let pendingRefresh = false;
+    let pendingPrefixes = ['/api/'];
     let lastRefreshAt = 0;
 
-    const applyRefresh = () => {
+    const applyRefresh = (prefixes = ['/api/']) => {
       const now = Date.now();
       if (now - lastRefreshAt < LIVE_REFRESH_DEBOUNCE) return;
       lastRefreshAt = now;
       pendingRefresh = false;
+      pendingPrefixes = ['/api/'];
+      invalidateApiCache(prefixes, { broadcast: false });
       setRefreshVersion((prev) => prev + 1);
       loadNotificationStats({ silent: true });
     };
 
-    const requestRefresh = () => {
+    const requestRefresh = (prefixes = ['/api/']) => {
+      pendingPrefixes = Array.isArray(prefixes) && prefixes.length > 0 ? prefixes : ['/api/'];
+
       if (document.visibilityState !== 'visible') {
         pendingRefresh = true;
         return;
@@ -214,22 +219,22 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
         return;
       }
 
-      applyRefresh();
+      applyRefresh(pendingPrefixes);
     };
 
     const flushPendingRefresh = () => {
       if (pendingRefresh && !shouldDelayRealtimeRefresh() && document.visibilityState === 'visible') {
-        applyRefresh();
+        applyRefresh(pendingPrefixes);
       }
     };
 
-    const unsubscribeRealtime = subscribeRealtimeUpdates(() => {
-      requestRefresh();
+    const unsubscribeRealtime = subscribeRealtimeUpdates((payload) => {
+      requestRefresh(payload?.prefixes);
     });
 
     const interval = window.setInterval(() => {
       if (document.visibilityState !== 'visible') return;
-      requestRefresh();
+      requestRefresh(['/api/']);
     }, LIVE_REFRESH_INTERVAL);
 
     window.addEventListener('focus', flushPendingRefresh);

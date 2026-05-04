@@ -56,8 +56,9 @@ function clearExpiredRequestCache() {
     }
 }
 
-export function invalidateApiCache(prefixes = []) {
+export function invalidateApiCache(prefixes = [], options = {}) {
     if (!Array.isArray(prefixes) || prefixes.length === 0) return;
+    const shouldBroadcast = options.broadcast !== false;
 
     for (const key of getRequestCache.keys()) {
         if (prefixes.some((prefix) => key.includes(prefix))) {
@@ -71,7 +72,7 @@ export function invalidateApiCache(prefixes = []) {
         }
     }
 
-    if (typeof window !== 'undefined') {
+    if (shouldBroadcast && typeof window !== 'undefined') {
         notifyRealtimeUpdate(prefixes, { source: 'api-cache-invalidated' });
     }
 }
