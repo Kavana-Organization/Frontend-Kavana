@@ -61,8 +61,11 @@ export default function ProposalPage() {
     setSubmitting(true);
     try {
       const res = await mahasiswaAPI.submitProposal({
-        judul: form.judul, dosen_id: form.dosen, dosen_id_2: form.dosen2 || null,
-        partner_nama: form.partnerNama || null, link: form.link,
+        judul_proyek: form.judul.trim(),
+        file_url: form.link.trim(),
+        usulan_dosen_id: form.dosen ? Number(form.dosen) : null,
+        dosen_id_2: form.dosen2 ? Number(form.dosen2) : null,
+        partner_nama: form.partnerNama || null,
       });
       if (res.ok) { toast.success('Proposal berhasil disubmit!'); router.push('/dashboard/mahasiswa'); }
       else toast.error(res.error || 'Gagal submit');
