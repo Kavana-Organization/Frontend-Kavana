@@ -77,7 +77,15 @@ export default function ApprovePembimbingPage() {
                 <div key={m.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-full bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-sm font-bold">{getInitials(m.nama)}</div>
-                    <div><p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{m.nama}</p><p className="text-xs text-[hsl(var(--ctp-subtext0))]">{m.npm} · {m.track || '-'}</p></div>
+                    <div>
+                      <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{m.nama}</p>
+                      <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{m.npm} · {m.track || '-'}</p>
+                      {m.usulan_dosen_nama ? (
+                        <p className="mt-1 text-xs text-[hsl(var(--ctp-blue))]">
+                          Usulan pembimbing: <span className="font-medium">{m.usulan_dosen_nama}</span>
+                        </p>
+                      ) : null}
+                    </div>
                   </div>
                   <Button size="sm" onClick={() => { setModal(m.id); setSelectedDosen(''); }} className="rounded-xl bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.35)]"><UserPlus className="h-4 w-4 mr-1" /> Assign</Button>
                 </div>
@@ -89,6 +97,11 @@ export default function ApprovePembimbingPage() {
 
       <DashboardDialog open={!!modal} onOpenChange={(open) => !open && setModal(null)}>
         <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-3">Pilih Dosen Pembimbing</h3>
+        {mahasiswa.find((item) => item.id === modal)?.usulan_dosen_nama ? (
+          <div className="mb-3 rounded-xl border border-[hsl(var(--ctp-blue)/0.30)] bg-[hsl(var(--ctp-blue)/0.10)] px-3 py-2 text-sm text-[hsl(var(--ctp-text))]">
+            Usulan mahasiswa: <span className="font-medium text-[hsl(var(--ctp-blue))]">{mahasiswa.find((item) => item.id === modal)?.usulan_dosen_nama}</span>
+          </div>
+        ) : null}
         <Select value={selectedDosen} onValueChange={setSelectedDosen}>
           <SelectTrigger className="w-full h-10 px-3 rounded-md text-sm bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]">
             <SelectValue placeholder="-- Pilih Dosen --" />
