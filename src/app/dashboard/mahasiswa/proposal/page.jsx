@@ -113,6 +113,7 @@ export default function ProposalPage() {
 
   const inputCls = "bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]";
   const isProyek = String(track || '').includes('proyek');
+  const isInternship = String(track || '').includes('internship');
   const anggotaProposal = isProyek && kelompokMembers.length > 0
     ? kelompokMembers
     : [{ nama: form.nama, npm: form.npm }];
@@ -148,7 +149,7 @@ export default function ProposalPage() {
               </p>
             )}
             <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Judul *</Label><Input value={form.judul} onChange={e => setForm({...form, judul: e.target.value})} placeholder="Judul proposal" className={inputCls} /></div>
-            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+            <div className={`grid grid-cols-1 gap-4 ${isInternship ? 'md:grid-cols-2' : ''}`}>
               <div className="space-y-2">
                 <Label className="text-[hsl(var(--ctp-subtext1))]">Dosen 1 *</Label>
                 <Select value={form.dosen} onValueChange={(value) => setForm({ ...form, dosen: value })}>
@@ -164,21 +165,23 @@ export default function ProposalPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label className="text-[hsl(var(--ctp-subtext1))]">Dosen 2</Label>
-                <Select value={form.dosen2} onValueChange={(value) => setForm({ ...form, dosen2: value })}>
-                  <SelectTrigger className="w-full h-10 px-3 rounded-md text-sm bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]">
-                    <SelectValue placeholder="-- Pilih --" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
-                    {dosenList.map((d) => (
-                      <SelectItem key={d.id} value={String(d.id)} className="text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)] focus:text-[hsl(var(--ctp-text))]">
-                        {d.nama}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+              {isInternship ? (
+                <div className="space-y-2">
+                  <Label className="text-[hsl(var(--ctp-subtext1))]">Dosen 2 *</Label>
+                  <Select value={form.dosen2} onValueChange={(value) => setForm({ ...form, dosen2: value })}>
+                    <SelectTrigger className="w-full h-10 px-3 rounded-md text-sm bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]">
+                      <SelectValue placeholder="-- Pilih --" />
+                    </SelectTrigger>
+                    <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
+                      {dosenList.map((d) => (
+                        <SelectItem key={d.id} value={String(d.id)} className="text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)] focus:text-[hsl(var(--ctp-text))]">
+                          {d.nama}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              ) : null}
             </div>
             <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Link Proposal *</Label><Input value={form.link} onChange={e => setForm({...form, link: e.target.value})} placeholder="https://drive.google.com/..." className={inputCls} /></div>
             <div className="flex gap-3 pt-2">
