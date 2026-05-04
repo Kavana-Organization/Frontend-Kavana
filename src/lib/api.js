@@ -381,7 +381,10 @@ export const koordinatorAPI = {
             return result;
         }),
 
-    getMahasiswaList: () => apiRequest('/api/koordinator/mahasiswa'),
+    getMahasiswaList: (options = {}) => {
+        const grouped = options.grouped !== false;
+        return apiRequest(`/api/koordinator/mahasiswa${grouped ? '' : '?grouped=false'}`);
+    },
     getDosenList: () => apiRequest('/api/koordinator/dosen'),
 
     assignDosen: (mahasiswaId, dosenId, dosenId2) =>
@@ -436,7 +439,10 @@ export const koordinatorAPI = {
         }),
 
     getMySemester: () => apiRequest('/api/koordinator/my-semester'),
-    getAllMahasiswa: () => apiRequest('/api/koordinator/mahasiswa'),
+    getAllMahasiswa: (options = {}) => {
+        const grouped = options.grouped !== false;
+        return apiRequest(`/api/koordinator/mahasiswa${grouped ? '' : '?grouped=false'}`);
+    },
     getAllSidang: () => apiRequest('/api/koordinator/sidang'),
     getPengujiList: () => apiRequest('/api/koordinator/penguji'),
 };
@@ -449,7 +455,10 @@ export const kaprodiAPI = {
     getProfile: () => apiRequest('/api/kaprodi/profile'),
     getStats: () => apiRequest('/api/kaprodi/stats'),
     getRecentActivities: () => apiRequest('/api/kaprodi/activities'),
-    getMahasiswaList: () => apiRequest('/api/kaprodi/mahasiswa'),
+    getMahasiswaList: (options = {}) => {
+        const grouped = options.grouped !== false;
+        return apiRequest(`/api/kaprodi/mahasiswa${grouped ? '' : '?grouped=false'}`);
+    },
     getDosenList: () => apiRequest('/api/kaprodi/dosen'),
     getKoordinatorList: () => apiRequest('/api/kaprodi/koordinator'),
 

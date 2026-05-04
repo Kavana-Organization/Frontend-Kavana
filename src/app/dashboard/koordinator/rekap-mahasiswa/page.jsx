@@ -73,8 +73,8 @@ export default function RekapMahasiswaPage() {
   const loadData = useCallback(async () => {
     try {
       const res = role === 'kaprodi'
-        ? await kaprodiAPI.getMahasiswaList()
-        : await koordinatorAPI.getMahasiswaList();
+        ? await kaprodiAPI.getMahasiswaList({ grouped: false })
+        : await koordinatorAPI.getMahasiswaList({ grouped: false });
       if (res.ok) setList(Array.isArray(res.data) ? res.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
