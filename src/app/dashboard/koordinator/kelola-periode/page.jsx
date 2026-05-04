@@ -19,6 +19,11 @@ const TIPE_OPTIONS = [
   { value: 'proyek', label: 'Proyek' },
   { value: 'internship', label: 'Internship' },
 ];
+const JALUR_SCOPE_OPTIONS = [
+  { value: 'regular', label: 'Regular saja' },
+  { value: 'rpl', label: 'RPL saja' },
+  { value: 'both', label: 'Regular & RPL' },
+];
 const SEMESTER_TIPE_MAP = {
   2: 'proyek',
   3: 'proyek',
@@ -31,6 +36,7 @@ const EMPTY_FORM = {
   nama: '',
   tipe: 'proyek',
   semester: '',
+  jalur_scope: 'both',
   start_date: '',
   end_date: '',
   deskripsi: '',
@@ -51,6 +57,7 @@ function normalizePeriode(item) {
     nama: item.nama || item.nama_periode || '-',
     tipe: String(item.tipe || 'proyek').toLowerCase(),
     semester: item.semester ?? '',
+    jalur_scope: item.jalur_scope || 'both',
     start_date: getDateOnly(item.start_date || item.tanggal_mulai || ''),
     end_date: getDateOnly(item.end_date || item.tanggal_selesai || ''),
     status: item.status || (item.is_active ? 'active' : 'completed'),
@@ -64,6 +71,12 @@ function isPeriodeActive(periode) {
 
 function getTipeLabel(tipe) {
   return tipe === 'internship' ? 'Internship' : 'Proyek';
+}
+
+function getJalurScopeLabel(jalurScope) {
+  if (jalurScope === 'regular') return 'Regular';
+  if (jalurScope === 'rpl') return 'RPL';
+  return 'Regular & RPL';
 }
 
 export default function KelolaPeriodePage() {
@@ -143,6 +156,7 @@ export default function KelolaPeriodePage() {
       ...EMPTY_FORM,
       semester: String(defaultSemester),
       tipe: getTipeBySemester(defaultSemester),
+      jalur_scope: 'both',
     });
     setShowModal(true);
   };
@@ -153,6 +167,7 @@ export default function KelolaPeriodePage() {
       nama: periode.nama,
       tipe: periode.tipe || getTipeBySemester(periode.semester),
       semester: periode.semester ? String(periode.semester) : '',
+      jalur_scope: periode.jalur_scope || 'both',
       start_date: getDateOnly(periode.start_date),
       end_date: getDateOnly(periode.end_date),
       deskripsi: periode.deskripsi || '',
@@ -188,6 +203,7 @@ export default function KelolaPeriodePage() {
     const payload = {
       nama: form.nama.trim(),
       tipe: resolvedTipe,
+      jalur_scope: form.jalur_scope || 'both',
       start_date: form.start_date,
       end_date: form.end_date,
       deskripsi: form.deskripsi.trim() || null,
@@ -319,6 +335,9 @@ export default function KelolaPeriodePage() {
                               Semester {periode.semester}
                             </Badge>
                           ) : null}
+                          <Badge className="rounded-xl bg-[hsl(var(--ctp-lavender)/0.15)] text-[hsl(var(--ctp-lavender))] border border-[hsl(var(--ctp-lavender)/0.35)]">
+                            {getJalurScopeLabel(periode.jalur_scope)}
+                          </Badge>
                           <Badge
                             className={`rounded-xl border ${
                               active
@@ -422,6 +441,21 @@ export default function KelolaPeriodePage() {
               {assignedSemesterOptions.map((semester) => (
                 <option key={semester} value={semester}>
                   Semester {semester} - {getTipeLabel(getTipeBySemester(semester))}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div>
+            <Label className="text-[hsl(var(--ctp-subtext1))]">Jalur</Label>
+            <select
+              value={form.jalur_scope}
+              onChange={(e) => setForm((prev) => ({ ...prev, jalur_scope: e.target.value }))}
+              className={`${inputCls} h-10 w-full rounded-md px-3`}
+            >
+              {JALUR_SCOPE_OPTIONS.map((option) => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
                 </option>
               ))}
             </select>
