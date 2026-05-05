@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LogOut, Plus, LifeBuoy, Settings } from 'lucide-react';
+import { LogOut, LifeBuoy, Settings } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { cn } from '@/lib/utils';
 import { useAuthStore } from '@/store/auth-store';
@@ -157,19 +157,6 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
             </button>
           )}
         </div>
-
-        {/* Quick Create */}
-        {!collapsed && (
-          <div className="border-b border-[hsl(var(--ctp-surface1))] px-4 py-4">
-            <Button
-              className="w-full justify-center gap-2 rounded-2xl border border-[hsl(var(--ctp-blue)/0.18)] bg-[linear-gradient(135deg,hsl(var(--ctp-blue)/0.16),hsl(var(--ctp-teal)/0.12))] text-[hsl(var(--ctp-text))] hover:bg-[linear-gradient(135deg,hsl(var(--ctp-blue)/0.22),hsl(var(--ctp-teal)/0.16))]"
-              variant="secondary"
-            >
-              <Plus className="h-4 w-4" />
-              Akses Cepat
-            </Button>
-          </div>
-        )}
 
         {/* Nav Items */}
         <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-4">
