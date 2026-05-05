@@ -86,6 +86,10 @@ function statusClass(status) {
   return 'bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border-[hsl(var(--ctp-blue)/0.35)]';
 }
 
+function isProyekTrack(track) {
+  return String(track || '').toLowerCase().includes('proyek');
+}
+
 export default function JadwalSidangPage() {
   const router = useRouter();
   const { role } = useAuthStore();
@@ -176,6 +180,63 @@ export default function JadwalSidangPage() {
   }, [mahasiswa, scheduledIds]);
 
   const hasRemainingCandidate = mahasiswaOptions.length > 0;
+
+  const groupedJadwal = useMemo(() => {
+    const raw = Array.isArray(jadwal) ? jadwal : [];
+    const result = [];
+    const kelompokMap = new Map();
+
+    raw.forEach((entry) => {
+      const proyekKelompok = isProyekTrack(entry?.track) && entry?.kelompok_id;
+
+      if (!proyekKelompok) {
+        result.push({
+          ...entry,
+          display_nama: entry?.mahasiswa_nama || entry?.nama || '-',
+          display_npm: entry?.npm || '-',
+          anggota_nama: [entry?.mahasiswa_nama || entry?.nama].filter(Boolean),
+        });
+        return;
+      }
+
+      const key = [
+        entry.kelompok_id,
+        entry.tanggal,
+        entry.waktu,
+        entry.ruangan,
+        entry.dosen_id,
+        entry.penguji_id,
+      ].join(':');
+
+      if (!kelompokMap.has(key)) {
+        kelompokMap.set(key, {
+          ...entry,
+          anggota_nama: [],
+          anggota_npm: [],
+        });
+      }
+
+      const grouped = kelompokMap.get(key);
+      if (entry?.mahasiswa_nama && !grouped.anggota_nama.includes(entry.mahasiswa_nama)) {
+        grouped.anggota_nama.push(entry.mahasiswa_nama);
+      }
+      if (entry?.npm && !grouped.anggota_npm.includes(entry.npm)) {
+        grouped.anggota_npm.push(entry.npm);
+      }
+    });
+
+    kelompokMap.forEach((entry) => {
+      result.push({
+        ...entry,
+        display_nama:
+          entry.kelompok_nama ||
+          `Kelompok ${entry.anggota_nama.join(' & ')}`,
+        display_npm: entry.anggota_npm.join(', '),
+      });
+    });
+
+    return result;
+  }, [jadwal]);
 
   const handleSchedule = async (e) => {
     e.preventDefault();
@@ -269,26 +330,31 @@ export default function JadwalSidangPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          {jadwal.length === 0 ? (
+          {groupedJadwal.length === 0 ? (
             <div className="text-center py-12">
               <CalendarClock className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada jadwal sidang</p>
             </div>
           ) : (
             <div className="space-y-2">
-              {jadwal.map((j, i) => (
+              {groupedJadwal.map((j, i) => (
                 <div
-                  key={j.id || i}
+                  key={`${j.kelompok_id || 'mhs'}:${j.id || i}:${j.tanggal || ''}:${j.waktu || ''}`}
                   className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3"
                 >
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
-                        {j.mahasiswa_nama || j.nama || '-'}
+                        {j.display_nama || '-'}
                       </p>
                       <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                        {j.npm || '-'} - {j.judul_proyek || '-'}
+                        {j.display_npm || '-'} - {j.judul_proyek || '-'}
                       </p>
+                      {isProyekTrack(j?.track) && Array.isArray(j?.anggota_nama) && j.anggota_nama.length > 1 ? (
+                        <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext1))]">
+                          Anggota: {j.anggota_nama.join(', ')}
+                        </p>
+                      ) : null}
                       <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[hsl(var(--ctp-subtext1))]">
                         <span className="inline-flex items-center gap-1">
                           <CalendarClock className="h-3.5 w-3.5" />
