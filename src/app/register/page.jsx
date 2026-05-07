@@ -25,7 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { authAPI } from '@/lib/api';
-import { validateEmail, validateNPM, validateWhatsApp, validatePassword } from '@/lib/validators';
+import { validateRegisterEmail, validateNPM, validateWhatsApp, validatePassword } from '@/lib/validators';
 
 function OTPInput({ value, onChange, disabled }) {
   const inputRefs = useRef([]);
@@ -139,7 +139,10 @@ export default function RegisterPage() {
     else if (!validateNPM(formData.npm.trim())) errs.npm = 'NPM harus berupa angka';
     if (!formData.angkatan) errs.angkatan = 'Pilih angkatan';
     if (!formData.email.trim()) errs.email = 'Email wajib diisi';
-    else if (!validateEmail(formData.email.trim())) errs.email = 'Format email tidak valid';
+    else {
+      const emailResult = validateRegisterEmail(formData.email.trim());
+      if (!emailResult.valid) errs.email = emailResult.error;
+    }
     if (!formData.whatsapp.trim()) errs.whatsapp = 'Nomor WhatsApp wajib diisi';
     else if (!validateWhatsApp(formData.whatsapp.trim())) errs.whatsapp = 'Format nomor tidak valid (contoh: 08123456789)';
     if (!formData.password) errs.password = 'Password wajib diisi';
