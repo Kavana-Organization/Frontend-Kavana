@@ -173,10 +173,10 @@ export async function apiRequest(endpoint, options = {}) {
 // ========================================
 
 export const authAPI = {
-    login: async (email, password) => {
+    login: async (email, password, turnstile_token) => {
         const result = await apiRequest('/api/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, turnstile_token }),
         });
 
         if (result.ok && result.data.token) {

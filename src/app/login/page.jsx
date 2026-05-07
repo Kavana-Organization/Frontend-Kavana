@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { useState } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
@@ -14,6 +14,9 @@ import { authAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { validateEmail, validateNPM } from '@/lib/validators';
 import { ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
+import Script from 'next/script';
+
+const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
 const highlights = [
   'Riwayat bimbingan tersimpan rapi dalam satu akun.',
@@ -28,6 +31,65 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({ identifier: '', password: '' });
+
+  // Turnstile state
+  const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileReady, setTurnstileReady] = useState(false);
+  const turnstileContainerRef = useRef(null);
+  const turnstileWidgetId = useRef(null);
+
+  // Render the Turnstile widget once the script is loaded
+  const renderTurnstile = useCallback(() => {
+    if (
+      !window.turnstile ||
+      !turnstileContainerRef.current ||
+      !TURNSTILE_SITE_KEY ||
+      turnstileWidgetId.current !== null
+    ) {
+      return;
+    }
+
+    turnstileWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
+      sitekey: TURNSTILE_SITE_KEY,
+      theme: 'auto',
+      callback: (token) => {
+        setTurnstileToken(token);
+        setErrors((prev) => {
+          const next = { ...prev };
+          delete next.turnstile;
+          return next;
+        });
+      },
+      'expired-callback': () => {
+        setTurnstileToken('');
+      },
+      'error-callback': () => {
+        setTurnstileToken('');
+        setErrors((prev) => ({ ...prev, turnstile: 'Verifikasi gagal. Silakan coba lagi.' }));
+      },
+    });
+
+    setTurnstileReady(true);
+  }, []);
+
+  // Clean up widget on unmount
+  useEffect(() => {
+    return () => {
+      if (turnstileWidgetId.current !== null && window.turnstile) {
+        try {
+          window.turnstile.remove(turnstileWidgetId.current);
+        } catch (_) { /* ignore */ }
+        turnstileWidgetId.current = null;
+      }
+    };
+  }, []);
+
+  const resetTurnstile = useCallback(() => {
+    if (turnstileWidgetId.current !== null && window.turnstile) {
+      window.turnstile.reset(turnstileWidgetId.current);
+      setTurnstileToken('');
+    }
+  }, []);
 
   const handleChange = (field) => (e) => {
     setFormData((prev) => ({ ...prev, [field]: e.target.value }));
@@ -48,6 +110,10 @@ export default function LoginPage() {
       errs.password = 'Password wajib diisi';
     }
 
+    if (TURNSTILE_SITE_KEY && !turnstileToken) {
+      errs.turnstile = 'Selesaikan verifikasi keamanan terlebih dahulu';
+    }
+
     setErrors(errs);
     return Object.keys(errs).length === 0;
   };
@@ -58,7 +124,11 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const result = await authAPI.login(formData.identifier.trim(), formData.password);
+      const result = await authAPI.login(
+        formData.identifier.trim(),
+        formData.password,
+        turnstileToken || undefined
+      );
 
       if (result.ok) {
         storeLogin(result.data.token, result.data.role, result.data.user_id, result.data.roles || []);
@@ -73,7 +143,14 @@ export default function LoginPage() {
           router.push(dashboardUrl);
         }, 500);
       } else {
-        if (result.status === 401) {
+        // Reset Turnstile on any login failure
+        resetTurnstile();
+
+        if (result.status === 403) {
+          // Turnstile verification failed
+          setErrors((prev) => ({ ...prev, turnstile: result.error || 'Verifikasi keamanan gagal. Silakan coba lagi.' }));
+          toast.error(result.error || 'Verifikasi keamanan gagal');
+        } else if (result.status === 401) {
           setErrors({ password: 'Email/NPM atau password salah' });
           toast.error('Email/NPM atau password salah');
         } else if (result.status === 404) {
@@ -85,6 +162,7 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
+      resetTurnstile();
       toast.error('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
     } finally {
       setLoading(false);
@@ -97,6 +175,15 @@ export default function LoginPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
+      {/* Load Cloudflare Turnstile script */}
+      {TURNSTILE_SITE_KEY && (
+        <Script
+          src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
+          strategy="afterInteractive"
+          onReady={renderTurnstile}
+        />
+      )}
+
       <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--ctp-sky)/0.18),transparent_28%),radial-gradient(circle_at_bottom_right,hsl(var(--ctp-lavender)/0.18),transparent_24%)]" />
 
       <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
@@ -204,7 +291,26 @@ export default function LoginPage() {
                   {errors.password ? <p className="text-xs text-[hsl(var(--ctp-red))]">{errors.password}</p> : null}
                 </div>
 
-                <Button type="submit" className="h-12 w-full text-base" size="lg" disabled={loading}>
+                {/* Cloudflare Turnstile Widget */}
+                {TURNSTILE_SITE_KEY && (
+                  <div className="space-y-2">
+                    <div
+                      ref={turnstileContainerRef}
+                      id="turnstile-widget"
+                      className="flex items-center justify-center"
+                    />
+                    {errors.turnstile ? (
+                      <p className="text-xs text-center text-[hsl(var(--ctp-red))]">{errors.turnstile}</p>
+                    ) : null}
+                  </div>
+                )}
+
+                <Button
+                  type="submit"
+                  className="h-12 w-full text-base"
+                  size="lg"
+                  disabled={loading || (TURNSTILE_SITE_KEY && !turnstileToken)}
+                >
                   {loading ? (
                     <span className="flex items-center gap-2">
                       <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
