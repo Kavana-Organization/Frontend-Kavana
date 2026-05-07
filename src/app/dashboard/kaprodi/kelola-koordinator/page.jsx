@@ -30,8 +30,6 @@ const SEMESTER_OPTIONS = [
   { value: '8', label: 'Internship 2 (Semester 8)' },
 ];
 
-const MAX_ASSIGNMENTS = 2;
-
 export default function KelolaKoordinatorPage() {
   const router = useRouter();
   const { role } = useAuthStore();
@@ -80,11 +78,6 @@ export default function KelolaKoordinatorPage() {
     setSelectedSemesterById((prev) => {
       const current = Array.isArray(prev[dosenId]) ? prev[dosenId] : [];
       const exists = current.includes(semester);
-
-      if (!exists && current.length >= MAX_ASSIGNMENTS) {
-        toast.error(`Koordinator maksimal ${MAX_ASSIGNMENTS} assignment track/semester`);
-        return prev;
-      }
 
       return {
         ...prev,
@@ -224,7 +217,7 @@ export default function KelolaKoordinatorPage() {
                       })}
                     </div>
                     <p className="text-[11px] text-[hsl(var(--ctp-subtext0))]">
-                      Pilih maksimal {MAX_ASSIGNMENTS} track/semester per koordinator.
+                      Pilih satu atau lebih track/semester untuk koordinator ini.
                     </p>
                   </div>
                   <div className="flex items-center gap-2">
