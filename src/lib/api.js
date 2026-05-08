@@ -666,6 +666,26 @@ export const notificationAPI = {
         // Backward-compat fallback for older backend route style.
         return apiRequest('/api/notifications');
     },
+    getAll: (params = {}) => {
+        const query = new URLSearchParams();
+        Object.entries(params).forEach(([key, value]) => {
+            if (value !== undefined && value !== null && value !== '') {
+                query.set(key, value);
+            }
+        });
+        const suffix = query.toString() ? `?${query.toString()}` : '';
+        return apiRequest(`/api/notifications${suffix}`, { skipCache: true });
+    },
+    markRead: (id) =>
+        apiRequest(`/api/notifications/${id}/read`, { method: 'PATCH' }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/notifications']);
+            return result;
+        }),
+    markAllRead: () =>
+        apiRequest('/api/notifications/read-all', { method: 'PATCH' }).then((result) => {
+            if (result.ok) invalidateApiCache(['/api/notifications']);
+            return result;
+        }),
 };
 
 // ========================================

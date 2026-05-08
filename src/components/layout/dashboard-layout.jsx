@@ -86,7 +86,7 @@ function useFormattedDate() {
 
 const iconBtnCls = "ctp-focus h-10 w-10 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.82)] shadow-[0_1px_0_hsl(0_0%_100%/0.45)_inset] transition-colors hover:bg-[hsl(var(--ctp-crust))]";
 const LIVE_REFRESH_DEBOUNCE = 1500;
-const NOTIFICATION_PREFIXES = ['/api/notifications/'];
+const NOTIFICATION_PREFIXES = ['/api/notifications'];
 
 function useIsHydrated() {
   return useSyncExternalStore(
@@ -98,19 +98,55 @@ function useIsHydrated() {
 
 const NOTIFICATION_LABELS = {
   'mahasiswa-bimbingan': 'Bimbingan menunggu persetujuan',
+  'bimbingan-approve': 'Bimbingan menunggu persetujuan',
   'laporan-approve': 'Laporan sidang menunggu review',
   'validasi-proposal': 'Proposal menunggu validasi',
   'approve-pembimbing': 'Mahasiswa belum di-assign pembimbing',
+  'upload-proposal': 'Proposal perlu revisi',
   proposal: 'Proposal perlu revisi',
-  laporan: 'Laporan perlu revisi',
+  'upload-laporan-sidang': 'Laporan sidang perlu revisi',
+  laporan: 'Laporan sidang perlu revisi',
+  'bimbingan-online': 'Update bimbingan online',
+  bimbingan: 'Update bimbingan online',
+  'nilai-hasil-akhir': 'Update sidang/hasil akhir',
+  hasil: 'Update sidang/hasil akhir',
+  'revisi-sidang': 'Revisi sidang perlu tindak lanjut',
+  'revisi-approve': 'Revisi sidang menunggu review',
+  'jadwal-sidang': 'Jadwal sidang aktif',
+  'kelola-users': 'User perlu perhatian admin',
+};
+
+const NOTIFICATION_ROUTE_OVERRIDES = {
+  mahasiswa: {
+    'upload-proposal': 'proposal',
+    'upload-laporan-sidang': 'laporan',
+    'bimbingan-online': 'bimbingan',
+    'nilai-hasil-akhir': 'hasil',
+    'proyek-internship': 'track',
+  },
+  dosen: {
+    'mahasiswa-bimbingan': 'bimbingan-approve',
+  },
+  koordinator: {
+    'mahasiswa-bimbingan': 'bimbingan-approve',
+  },
+  kaprodi: {
+    'mahasiswa-bimbingan': 'bimbingan-approve',
+  },
+  admin: {
+    'validasi-proposal': 'monitoring',
+    'laporan-approve': 'monitoring',
+    'jadwal-sidang': 'monitoring',
+  },
 };
 
 function getNotificationHref(role, menuId) {
   const rolePrefix = ROLE_DASHBOARD_ROUTE[role];
   if (!rolePrefix) return null;
-  if (menuId === 'profile') return '/dashboard/profile';
-  if (menuId === 'settings') return '/dashboard/settings';
-  return `${rolePrefix}/${menuId}`;
+  const resolvedMenuId = NOTIFICATION_ROUTE_OVERRIDES[role]?.[menuId] || menuId;
+  if (resolvedMenuId === 'profile') return '/dashboard/profile';
+  if (resolvedMenuId === 'settings') return '/dashboard/settings';
+  return `${rolePrefix}/${resolvedMenuId}`;
 }
 
 function formatNotificationKey(key) {
@@ -149,6 +185,7 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
   const todayDate = useFormattedDate();
   const isHydrated = useIsHydrated();
   const [notificationStats, setNotificationStats] = useState({});
+  const [notifications, setNotifications] = useState([]);
   const [isNotificationLoading, setIsNotificationLoading] = useState(false);
   const [notificationError, setNotificationError] = useState('');
   const [refreshVersion, setRefreshVersion] = useState(0);
@@ -166,11 +203,16 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
       setNotificationError('');
 
       const result = await notificationAPI.getStats();
+      const listResult = await notificationAPI.getAll?.({ limit: 8, unread: true });
 
       if (result.ok && result.data && typeof result.data === 'object') {
         setNotificationStats(result.data);
       } else if (!silent) {
         setNotificationError(result.error || 'Gagal memuat notifikasi');
+      }
+      if (listResult?.ok) {
+        const rows = Array.isArray(listResult.data?.data) ? listResult.data.data : [];
+        setNotifications(rows);
       }
 
       if (!silent) setIsNotificationLoading(false);
@@ -249,16 +291,30 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
   }, [currentRole, loadNotificationStats]);
 
   const notificationItems = useMemo(() => {
-    return Object.entries(notificationStats)
+    const detailedItems = notifications.map((item) => ({
+      key: `notification:${item.id}`,
+      id: item.id,
+      count: 1,
+      label: item.title || NOTIFICATION_LABELS[item.action_key] || formatNotificationKey(item.type || 'notifikasi'),
+      description: item.message || '',
+      href: item.action_url || getNotificationHref(currentRole, item.action_key),
+      isPersistent: true,
+    }));
+
+    const persistentActionKeys = new Set(notifications.map((item) => item.action_key).filter(Boolean));
+    const statsItems = Object.entries(notificationStats)
       .map(([key, value]) => ({
         key,
         count: Number(value) || 0,
         label: NOTIFICATION_LABELS[key] || formatNotificationKey(key),
         href: getNotificationHref(currentRole, key),
       }))
+      .filter((item) => !persistentActionKeys.has(item.key))
       .filter((item) => item.count > 0)
       .sort((a, b) => b.count - a.count);
-  }, [notificationStats, currentRole]);
+
+    return [...detailedItems, ...statsItems];
+  }, [notificationStats, notifications, currentRole]);
 
   const totalNotifications = useMemo(
     () => notificationItems.reduce((sum, item) => sum + item.count, 0),
@@ -268,6 +324,21 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
   const handleLogout = async () => {
     await logout();
     window.location.href = '/login';
+  };
+
+  const handleNotificationClick = async (item) => {
+    if (item.isPersistent && item.id) {
+      await notificationAPI.markRead?.(item.id);
+      setNotifications((prev) => prev.filter((notification) => notification.id !== item.id));
+      loadNotificationStats({ silent: true });
+    }
+    if (item.href) router.push(item.href);
+  };
+
+  const handleMarkAllNotificationsRead = async () => {
+    await notificationAPI.markAllRead?.();
+    setNotifications([]);
+    loadNotificationStats({ silent: true });
   };
 
   const displayedTheme = isHydrated ? theme : 'light';
@@ -392,10 +463,15 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                           <DropdownMenuItem
                             key={item.key}
                             className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface0)/0.50)] cursor-pointer"
-                            onClick={() => item.href && router.push(item.href)}
+                            onClick={() => handleNotificationClick(item)}
                           >
                             <div className="flex w-full items-center justify-between gap-3">
-                              <span className="line-clamp-2">{item.label}</span>
+                              <span className="min-w-0">
+                                <span className="block line-clamp-1">{item.label}</span>
+                                {item.description ? (
+                                  <span className="mt-0.5 block line-clamp-2 text-xs text-[hsl(var(--ctp-subtext0))]">{item.description}</span>
+                                ) : null}
+                              </span>
                               <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-md bg-[hsl(var(--ctp-red)/0.15)] text-[hsl(var(--ctp-red))] text-xs font-semibold">
                                 {item.count}
                               </span>
@@ -417,6 +493,14 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                         >
                           Muat ulang notifikasi
                         </DropdownMenuItem>
+                        {notifications.length > 0 ? (
+                          <DropdownMenuItem
+                            className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-subtext1))] focus:bg-[hsl(var(--ctp-surface0)/0.50)] cursor-pointer"
+                            onClick={handleMarkAllNotificationsRead}
+                          >
+                            Tandai semua dibaca
+                          </DropdownMenuItem>
+                        ) : null}
                       </DropdownMenuContent>
                     </DropdownMenu>
 
