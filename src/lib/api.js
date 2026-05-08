@@ -385,7 +385,7 @@ export const dosenAPI = {
             method: 'PATCH',
             body: JSON.stringify({ status, catatan }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/dosen/bimbingan', '/api/dosen/mahasiswa', '/api/dosen/stats', '/api/mahasiswa/bimbingan', '/api/notifications/stats']);
+            if (result.ok) invalidateApiCache(['/api/dosen/bimbingan', '/api/dosen/mahasiswa', '/api/dosen/stats', '/api/mahasiswa/bimbingan', '/api/koordinator/mahasiswa', '/api/kaprodi/mahasiswa', '/api/notifications/stats']);
             return result;
         }),
 
@@ -399,7 +399,7 @@ export const dosenAPI = {
                 ...(note ? { note } : {}),
             }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/dosen/laporan', '/api/dosen/stats', '/api/mahasiswa/laporan', '/api/koordinator/sidang', '/api/notifications/stats']);
+            if (result.ok) invalidateApiCache(['/api/dosen/laporan', '/api/dosen/stats', '/api/mahasiswa/laporan', '/api/koordinator/sidang', '/api/koordinator/mahasiswa', '/api/kaprodi/mahasiswa', '/api/notifications/stats']);
             return result;
         }),
 };

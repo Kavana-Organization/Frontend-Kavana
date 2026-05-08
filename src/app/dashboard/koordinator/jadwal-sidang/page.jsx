@@ -159,6 +159,9 @@ export default function JadwalSidangPage() {
 
       if (availableMembers.length === 0) return;
 
+      const isEligible = entry?.sidang_eligible === true;
+      const reason = entry?.sidang_ineligible_reason || null;
+
       if (isProyek && entry?.kelompok_id) {
         const memberIds = availableMembers.map((member) => member.id);
         const groupName = entry.kelompok_nama || `Kelompok ${entry.kelompok_id}`;
@@ -167,6 +170,8 @@ export default function JadwalSidangPage() {
           value: buildGroupOptionValue(memberIds),
           label: groupName,
           sortLabel: groupName,
+          disabled: !isEligible,
+          reason: !isEligible ? reason : null,
         });
         return;
       }
@@ -176,19 +181,36 @@ export default function JadwalSidangPage() {
           value: buildMahasiswaOptionValue(member.id),
           label: member.nama || entry.nama || '-',
           sortLabel: member.nama || entry.nama || '-',
+          disabled: !isEligible,
+          reason: !isEligible ? reason : null,
         });
       });
     });
 
     const unique = new Map();
     result.forEach((item) => {
-      if (!unique.has(item.value)) unique.set(item.value, item);
+      const existing = unique.get(item.value);
+      // Bila ada duplikat, prioritaskan yang eligible (tidak disabled)
+      if (!existing || (existing.disabled && !item.disabled)) {
+        unique.set(item.value, item);
+      }
     });
 
-    return Array.from(unique.values()).sort((a, b) => a.sortLabel.localeCompare(b.sortLabel));
+    return Array.from(unique.values()).sort((a, b) => {
+      if (a.disabled !== b.disabled) return a.disabled ? 1 : -1;
+      return a.sortLabel.localeCompare(b.sortLabel);
+    });
   }, [mahasiswa, scheduledIds]);
 
-  const hasRemainingCandidate = mahasiswaOptions.length > 0;
+  const eligibleOptions = useMemo(
+    () => mahasiswaOptions.filter((item) => !item.disabled),
+    [mahasiswaOptions]
+  );
+  const ineligibleOptions = useMemo(
+    () => mahasiswaOptions.filter((item) => item.disabled),
+    [mahasiswaOptions]
+  );
+  const hasRemainingCandidate = eligibleOptions.length > 0;
 
   // Lookup dosen pembimbing dari mahasiswa terpilih (untuk pre-check bentrok)
   const selectedDosenId = useMemo(() => {
@@ -463,9 +485,31 @@ export default function JadwalSidangPage() {
                 <SelectValue placeholder="Pilih kelompok (proyek) / mahasiswa (internship)" />
               </SelectTrigger>
               <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
-                {mahasiswaOptions.map((item) => (
+                {eligibleOptions.map((item) => (
                   <SelectItem key={item.value} value={item.value}>
                     {item.label}
+                  </SelectItem>
+                ))}
+                {ineligibleOptions.length > 0 ? (
+                  <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-[hsl(var(--ctp-subtext0))]">
+                    Belum layak sidang
+                  </div>
+                ) : null}
+                {ineligibleOptions.map((item) => (
+                  <SelectItem
+                    key={item.value}
+                    value={item.value}
+                    disabled
+                    className="opacity-60"
+                  >
+                    <span className="flex flex-col">
+                      <span>{item.label}</span>
+                      {item.reason ? (
+                        <span className="text-[10px] text-[hsl(var(--ctp-peach))]">
+                          {item.reason}
+                        </span>
+                      ) : null}
+                    </span>
                   </SelectItem>
                 ))}
               </SelectContent>
@@ -525,7 +569,9 @@ export default function JadwalSidangPage() {
           {!hasRemainingCandidate ? (
             <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))] inline-flex items-center gap-2">
               <Users className="h-3.5 w-3.5" />
-              Semua mahasiswa eligible sudah memiliki jadwal sidang.
+              {ineligibleOptions.length > 0
+                ? 'Belum ada mahasiswa/kelompok yang layak sidang. Pastikan bimbingan ≥ 8 dan laporan sidang sudah disetujui.'
+                : 'Semua mahasiswa eligible sudah memiliki jadwal sidang.'}
             </div>
           ) : null}
 
