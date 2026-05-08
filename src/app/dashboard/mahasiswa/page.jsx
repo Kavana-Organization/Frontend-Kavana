@@ -6,11 +6,11 @@ import Link from 'next/link';
 import {
   ArrowUpRight, ArrowDownRight, CalendarDays, UploadCloud, AlertTriangle,
   MessageSquareText, Plus, CheckCircle2, Clock, FileText, GraduationCap,
-  MoreHorizontal, Settings,
+  Settings,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
-  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
   BarChart, Bar,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -27,10 +27,6 @@ import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
 import { removeAcademicTitles } from '@/lib/validators';
 
-// ==========================================
-// HELPER: Compute "Aktivitas bimbingan (7 hari)" from real bimbingan data
-// ==========================================
-const DAY_NAMES = ['Min', 'Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab'];
 const APPROVED_STATUSES = new Set(['approved', 'disetujui']);
 const WAITING_STATUSES = new Set(['waiting', 'pending', 'menunggu']);
 const REJECTED_STATUSES = new Set(['rejected', 'ditolak']);
@@ -49,29 +45,6 @@ function isWaitingStatus(value) {
 
 function isRejectedStatus(value) {
   return REJECTED_STATUSES.has(normalizeStatus(value));
-}
-
-function computeWeeklyActivity(bimbinganList) {
-  const now = new Date();
-  // Build map for last 7 days
-  const dayMap = {};
-  for (let i = 6; i >= 0; i--) {
-    const d = new Date(now);
-    d.setDate(now.getDate() - i);
-    const key = d.toISOString().slice(0, 10); // YYYY-MM-DD
-    dayMap[key] = { name: DAY_NAMES[d.getDay()], v: 0 };
-  }
-
-  bimbinganList.forEach((b) => {
-    if (!b.tanggal) return;
-    // tanggal could be "2025-11-20T00:00:00.000Z" or "2025-11-20"
-    const dateKey = b.tanggal.slice(0, 10);
-    if (dayMap[dateKey]) {
-      dayMap[dateKey].v += 1;
-    }
-  });
-
-  return Object.values(dayMap);
 }
 
 // ==========================================
@@ -206,8 +179,6 @@ export default function MahasiswaDashboard() {
     || profile?.dosen_pembimbing
     || 'Belum ada pembimbing';
 
-  // Computed chart data from real bimbingan
-  const chartSubmissionData = useMemo(() => computeWeeklyActivity(bimbinganList), [bimbinganList]);
   const statusDistData = useMemo(() => computeStatusDistribution(bimbinganList), [bimbinganList]);
 
   // Laporan status from real API
@@ -404,40 +375,7 @@ export default function MahasiswaDashboard() {
       </div>
 
       {/* Analytics row */}
-      <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* Submission chart - NOW REAL DATA */}
-        <Card className="xl:col-span-2 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
-          <CardHeader className="flex flex-row items-start justify-between gap-3">
-            <div>
-              <CardTitle className="text-[hsl(var(--ctp-text))]">Aktivitas bimbingan (7 hari)</CardTitle>
-              <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Jumlah sesi dan submission per hari.</CardDescription>
-            </div>
-            <Button variant="secondary" className="ctp-focus h-9 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)]">
-              <MoreHorizontal className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />
-            </Button>
-          </CardHeader>
-          <CardContent>
-            {chartSubmissionData.every((d) => d.v === 0) ? (
-              <div className="flex flex-col items-center justify-center h-[280px] text-center">
-                <CalendarDays className="w-10 h-10 text-[hsl(var(--ctp-overlay1))] mb-3" />
-                <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada aktivitas bimbingan dalam 7 hari terakhir</p>
-              </div>
-            ) : (
-              <div className="h-[280px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartSubmissionData} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }} />
-                    <YAxis tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }} allowDecimals={false} />
-                    <Tooltip />
-                    <Area type="monotone" dataKey="v" stroke="hsl(var(--ctp-lavender))" fill="hsl(var(--ctp-lavender)/0.18)" strokeWidth={2} />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
+      <div className="grid grid-cols-1 gap-4">
         {/* Status distribution chart - REAL DATA */}
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
