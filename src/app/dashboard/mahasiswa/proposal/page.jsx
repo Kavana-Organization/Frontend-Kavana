@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Upload, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Upload, AlertTriangle, CheckCircle2, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import {
@@ -19,12 +20,25 @@ import {
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
 
+const API_TRACK_LABELS = {
+  proyek1: 'Proyek 1', proyek2: 'Proyek 2', proyek3: 'Proyek 3',
+  internship1: 'Internship 1', internship2: 'Internship 2',
+};
+
+const ENROLLMENT_TYPE_LABELS = {
+  regular: 'Regular',
+  repeat: 'Repeat',
+  parallel_repeat: 'Paralel',
+};
+
 export default function ProposalPage() {
   const router = useRouter();
   const { role, user } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [dosenList, setDosenList] = useState([]);
   const [kelompokMembers, setKelompokMembers] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+  const [selectedEnrollmentId, setSelectedEnrollmentId] = useState(null);
   const [track, setTrack] = useState('');
   const [hasProposal, setHasProposal] = useState(false);
   const [proposalStatus, setProposalStatus] = useState('');
@@ -41,14 +55,53 @@ export default function ProposalPage() {
       const profileRes = await mahasiswaAPI.getProfile();
       if (profileRes.ok) {
         const p = profileRes.data;
-        setTrack(p.track || '');
         setForm(f => ({ ...f, nama: p.nama || user?.name || '', npm: p.npm || '' }));
-        if (['pending', 'approved'].includes(p.status_proposal)) {
-          setHasProposal(true);
-          setProposalStatus(p.status_proposal);
+
+        // Get enrollments from profile
+        const activeEnrollments = Array.isArray(p.enrollments) ? p.enrollments.filter((e) => e.status === 'active') : [];
+        setEnrollments(activeEnrollments);
+
+        if (activeEnrollments.length === 1) {
+          // Single enrollment: auto-select
+          const enr = activeEnrollments[0];
+          setSelectedEnrollmentId(enr.id);
+          setTrack(enr.track || p.track || '');
+
+          // Check proposal status from enrollment
+          if (['pending', 'approved'].includes(enr.status_proposal) && enr.judul_proyek) {
+            setHasProposal(true);
+            setProposalStatus(enr.status_proposal);
+          }
+        } else if (activeEnrollments.length > 1) {
+          // Multi-enrollment: find one without proposal
+          const needsProposal = activeEnrollments.filter((e) =>
+            !e.judul_proyek || e.status_proposal === 'rejected'
+          );
+          if (needsProposal.length === 1) {
+            const enr = needsProposal[0];
+            setSelectedEnrollmentId(enr.id);
+            setTrack(enr.track || '');
+          } else if (needsProposal.length === 0) {
+            // All have proposals
+            setHasProposal(true);
+            setProposalStatus('pending');
+          }
+          // else: user must select
+        } else {
+          // No enrollments, fallback to legacy
+          setTrack(p.track || '');
+          if (['pending', 'approved'].includes(p.status_proposal)) {
+            setHasProposal(true);
+            setProposalStatus(p.status_proposal);
+          }
         }
 
-        if (String(p.track || '').includes('proyek')) {
+        // Load kelompok members
+        const selectedTrack = activeEnrollments.length > 0
+          ? (activeEnrollments.find((e) => e.id === selectedEnrollmentId)?.track || activeEnrollments[0]?.track)
+          : p.track;
+
+        if (String(selectedTrack || '').includes('proyek')) {
           const kelompokRes = await mahasiswaAPI.getMyKelompok();
           if (kelompokRes.ok && Array.isArray(kelompokRes.data?.anggota)) {
             setKelompokMembers(kelompokRes.data.anggota);
@@ -65,11 +118,25 @@ export default function ProposalPage() {
     finally { setLoading(false); }
   };
 
+  const handleEnrollmentSelect = (enrollmentId) => {
+    const enr = enrollments.find((e) => e.id === Number(enrollmentId));
+    if (enr) {
+      setSelectedEnrollmentId(enr.id);
+      setTrack(enr.track || '');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.judul.trim()) { toast.error('Judul wajib diisi'); return; }
     if (!form.dosen) { toast.error('Pilih dosen pembimbing'); return; }
     if (!form.link.trim()) { toast.error('Link proposal wajib diisi'); return; }
+
+    if (enrollments.length > 1 && !selectedEnrollmentId) {
+      toast.error('Pilih enrollment terlebih dahulu');
+      return;
+    }
+
     setSubmitting(true);
     try {
       const res = await mahasiswaAPI.submitProposal({
@@ -78,6 +145,7 @@ export default function ProposalPage() {
         usulan_dosen_id: form.dosen ? Number(form.dosen) : null,
         dosen_id_2: form.dosen2 ? Number(form.dosen2) : null,
         partner_nama: form.partnerNama || null,
+        enrollment_id: selectedEnrollmentId || null,
       });
       if (res.ok) { toast.success('Proposal berhasil disubmit!'); router.push('/dashboard/mahasiswa'); }
       else toast.error(res.error || 'Gagal submit');
@@ -87,7 +155,7 @@ export default function ProposalPage() {
 
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" /></div>;
 
-  if (!track) return (
+  if (!track && enrollments.length === 0) return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
       <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
         <CardContent className="flex flex-col items-center py-16 text-center">
@@ -111,6 +179,45 @@ export default function ProposalPage() {
     </motion.div>
   );
 
+  // Multi-enrollment selector
+  const needsEnrollmentSelector = enrollments.length > 1 && !selectedEnrollmentId;
+
+  if (needsEnrollmentSelector) {
+    const unsubmitted = enrollments.filter((e) => !e.judul_proyek || e.status_proposal === 'rejected');
+    return (
+      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
+              <Layers className="h-4 w-4" /> Pilih Enrollment
+            </CardTitle>
+            <CardDescription className="text-[hsl(var(--ctp-subtext0))]">
+              Anda memiliki beberapa enrollment aktif. Pilih untuk track mana proposal akan disubmit.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {unsubmitted.map((enr) => (
+              <div
+                key={enr.id}
+                onClick={() => handleEnrollmentSelect(enr.id)}
+                className="cursor-pointer rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-4 hover:bg-[hsl(var(--ctp-surface0)/0.5)] transition-all"
+              >
+                <div className="flex items-center gap-3">
+                  <span className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
+                    {API_TRACK_LABELS[enr.track] || enr.track}
+                  </span>
+                  <Badge className="rounded-xl text-[10px] border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+                    {ENROLLMENT_TYPE_LABELS[enr.enrollment_type] || enr.enrollment_type}
+                  </Badge>
+                </div>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </motion.div>
+    );
+  }
+
   const inputCls = "bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]";
   const isProyek = String(track || '').includes('proyek');
   const isInternship = String(track || '').includes('internship');
@@ -118,12 +225,23 @@ export default function ProposalPage() {
     ? kelompokMembers
     : [{ nama: form.nama, npm: form.npm }];
 
+  const selectedEnrollment = enrollments.find((e) => e.id === selectedEnrollmentId);
+
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><Upload className="h-4 w-4" /> Upload Proposal</CardTitle>
-          <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Track: {track}</CardDescription>
+          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
+            <Upload className="h-4 w-4" /> Upload Proposal
+          </CardTitle>
+          <CardDescription className="text-[hsl(var(--ctp-subtext0))] flex items-center gap-2 flex-wrap">
+            Track: {API_TRACK_LABELS[track] || track}
+            {selectedEnrollment && selectedEnrollment.enrollment_type !== 'regular' && (
+              <Badge className="rounded-xl text-[10px] border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+                {ENROLLMENT_TYPE_LABELS[selectedEnrollment.enrollment_type] || selectedEnrollment.enrollment_type}
+              </Badge>
+            )}
+          </CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

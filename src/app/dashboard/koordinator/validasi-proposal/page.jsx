@@ -19,6 +19,12 @@ const STATUS_MAP = {
   rejected: { label: 'Ditolak', color: 'ctp-red' },
 };
 
+const ENROLLMENT_TYPE_MAP = {
+  regular: { label: 'Regular', color: 'ctp-blue' },
+  repeat: { label: 'Repeat', color: 'ctp-red' },
+  parallel_repeat: { label: 'Paralel', color: 'ctp-mauve' },
+};
+
 function getProposalStatus(item) {
   return String(item?.status_proposal || item?.status || 'pending').toLowerCase();
 }
@@ -31,6 +37,7 @@ export default function ValidasiProposalPage() {
   const [filter, setFilter] = useState('all');
   const [actionModal, setActionModal] = useState(null);
   const [actionType, setActionType] = useState('');
+  const [actionEnrollmentId, setActionEnrollmentId] = useState(null);
   const [catatan, setCatatan] = useState('');
 
   useEffect(() => {
@@ -52,16 +59,17 @@ export default function ValidasiProposalPage() {
     }
   };
 
-  const openActionModal = (proposalId, status) => {
+  const openActionModal = (proposalId, status, enrollmentId) => {
     setActionModal(proposalId);
     setActionType(status);
+    setActionEnrollmentId(enrollmentId || null);
     setCatatan('');
   };
 
   const handleAction = async () => {
     if (!actionModal) return;
     try {
-      const res = await koordinatorAPI.validateProposal(actionModal, actionType, catatan);
+      const res = await koordinatorAPI.validateProposal(actionModal, actionType, catatan, actionEnrollmentId);
       if (res.ok) {
         toast.success(actionType === 'approved' ? 'Proposal disetujui!' : 'Proposal ditolak');
         setActionModal(null);
@@ -146,7 +154,22 @@ export default function ValidasiProposalPage() {
                           <Badge className={`rounded-xl text-[10px] border border-[hsl(var(--${st.color})/0.35)] bg-[hsl(var(--${st.color})/0.12)] text-[hsl(var(--${st.color}))]`}>{st.label}</Badge>
                         </div>
                         <p className="text-sm text-[hsl(var(--ctp-text))]">{p.judul_proyek || p.judul || '-'}</p>
-                        <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{p.track || '-'} · {p.anggota?.length || 1} anggota</p>
+                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
+                          <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{p.track || '-'} · {p.anggota?.length || 1} anggota</p>
+                          {p.enrollment_type && p.enrollment_type !== 'regular' && (() => {
+                            const et = ENROLLMENT_TYPE_MAP[p.enrollment_type] || ENROLLMENT_TYPE_MAP.regular;
+                            return (
+                              <Badge className={`rounded-xl text-[9px] border border-[hsl(var(--${et.color})/0.35)] bg-[hsl(var(--${et.color})/0.12)] text-[hsl(var(--${et.color}))]`}>
+                                {et.label}
+                              </Badge>
+                            );
+                          })()}
+                          {p.jalur_pengambilan && p.jalur_pengambilan !== 'regular' && (
+                            <Badge className="rounded-xl text-[9px] border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+                              {p.jalur_pengambilan.toUpperCase()}
+                            </Badge>
+                          )}
+                        </div>
                         {fileProposal && (
                           <a href={fileProposal} target="_blank" rel="noreferrer" className="text-xs text-[hsl(var(--ctp-blue))] hover:underline inline-flex items-center gap-1 mt-1">
                             <ExternalLink className="h-3 w-3" /> File Proposal
@@ -157,7 +180,7 @@ export default function ValidasiProposalPage() {
                         <Button
                           size="sm"
                           disabled={status === 'approved'}
-                          onClick={() => openActionModal(p.id, 'approved')}
+                          onClick={() => openActionModal(p.id, 'approved', p.enrollment_id)}
                           className="rounded-xl h-8 px-3 bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-green))] border border-[hsl(var(--ctp-green)/0.35)] disabled:opacity-40"
                         >
                           <CheckCircle2 className="h-4 w-4 mr-1" />
@@ -166,7 +189,7 @@ export default function ValidasiProposalPage() {
                         <Button
                           size="sm"
                           disabled={status === 'rejected'}
-                          onClick={() => openActionModal(p.id, 'rejected')}
+                          onClick={() => openActionModal(p.id, 'rejected', p.enrollment_id)}
                           className="rounded-xl h-8 px-3 bg-[hsl(var(--ctp-red)/0.20)] text-[hsl(var(--ctp-red))] border border-[hsl(var(--ctp-red)/0.35)] disabled:opacity-40"
                         >
                           <XCircle className="h-4 w-4 mr-1" />

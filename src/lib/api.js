@@ -373,10 +373,10 @@ export const koordinatorAPI = {
     getStats: () => apiRequest('/api/koordinator/stats'),
     getPendingProposals: () => apiRequest('/api/koordinator/proposal/pending'),
 
-    validateProposal: (mahasiswaId, status, catatan) =>
+    validateProposal: (mahasiswaId, status, catatan, enrollmentId) =>
         apiRequest('/api/koordinator/proposal/validate', {
             method: 'PATCH',
-            body: JSON.stringify({ mahasiswa_id: mahasiswaId, status, catatan }),
+            body: JSON.stringify({ mahasiswa_id: mahasiswaId, status, catatan, enrollment_id: enrollmentId || null }),
         }).then((result) => {
             if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
             return result;
@@ -388,13 +388,14 @@ export const koordinatorAPI = {
     },
     getDosenList: () => apiRequest('/api/koordinator/dosen'),
 
-    assignDosen: (mahasiswaId, dosenId, dosenId2) =>
+    assignDosen: (mahasiswaId, dosenId, dosenId2, enrollmentId) =>
         apiRequest('/api/koordinator/assign-dosen', {
             method: 'POST',
             body: JSON.stringify({
                 mahasiswa_id: mahasiswaId,
                 dosen_id: dosenId,
                 dosen_id_2: dosenId2 || null,
+                enrollment_id: enrollmentId || null,
             }),
         }).then((result) => {
             if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/dosen/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);

@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   Briefcase, Building2, Users, Clock, CheckCircle2, AlertTriangle, ChevronRight,
+  RefreshCw, Layers,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
@@ -15,9 +16,6 @@ import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
 
-const SEMESTER_TRACK_MAP = {
-  2: 'proyek-1', 3: 'proyek-2', 5: 'proyek-3', 7: 'internship-1', 8: 'internship-2',
-};
 const TRACK_LABELS = {
   'proyek-1': 'Proyek 1', 'proyek-2': 'Proyek 2', 'proyek-3': 'Proyek 3',
   'internship-1': 'Internship 1', 'internship-2': 'Internship 2',
@@ -34,6 +32,12 @@ const TRACKS = [
   { id: 'internship-2', apiId: 'internship2', name: 'Internship 2', type: 'internship', semester: 8, desc: 'Magang industri semester 8', icon: Building2 },
 ];
 
+const ENROLLMENT_TYPE_CONFIG = {
+  regular: { label: 'Regular', color: 'ctp-blue', icon: Briefcase },
+  repeat: { label: 'Repeat', color: 'ctp-red', icon: RefreshCw },
+  parallel_repeat: { label: 'Paralel', color: 'ctp-mauve', icon: Layers },
+};
+
 export default function TrackPage() {
   const router = useRouter();
   const { role } = useAuthStore();
@@ -41,9 +45,10 @@ export default function TrackPage() {
   const [semester, setSemester] = useState(null);
   const [jalur, setJalur] = useState('regular');
   const [periodeActive, setPeriodeActive] = useState(false);
-  const [availableTracks, setAvailableTracks] = useState([]);
+  const [eligibilities, setEligibilities] = useState([]);
+  const [activeEnrollments, setActiveEnrollments] = useState([]);
   const [eligibilityMessage, setEligibilityMessage] = useState('');
-  const [repeatInfo, setRepeatInfo] = useState({ repeat_required: false, repeat_track: null, next_allowed_track: null, eligibility_source: null });
+  const [repeatInfo, setRepeatInfo] = useState({ repeat_required: false, repeat_track: null, next_allowed_track: null });
   const [selectedTrack, setSelectedTrack] = useState(null);
   const [partnerNpm, setPartnerNpm] = useState('');
   const [companyName, setCompanyName] = useState('');
@@ -54,27 +59,41 @@ export default function TrackPage() {
     const checkAndLoad = async () => {
       try {
         const profileRes = await mahasiswaAPI.getProfile();
-        if (profileRes.ok && profileRes.data?.track) {
-          toast.info(`Anda sudah memilih ${API_TRACK_LABELS[profileRes.data.track] || profileRes.data.track}`);
-          router.replace('/dashboard/mahasiswa');
-          return;
-        }
         if (profileRes.ok) {
           setJalur(profileRes.data?.jalur || 'regular');
         }
+
         const periodeRes = await mahasiswaAPI.getPeriodeAktif();
         if (periodeRes.ok) {
-          setSemester(periodeRes.data.semester);
-          setPeriodeActive(!!periodeRes.data.active);
-          setJalur(periodeRes.data.jalur || profileRes.data?.jalur || 'regular');
-          setAvailableTracks(Array.isArray(periodeRes.data.available_tracks) ? periodeRes.data.available_tracks : []);
-          setEligibilityMessage(periodeRes.data.message || '');
+          const data = periodeRes.data;
+          setSemester(data.semester);
+          setPeriodeActive(!!data.active);
+          setJalur(data.jalur || profileRes.data?.jalur || 'regular');
+          setEligibilityMessage(data.message || '');
           setRepeatInfo({
-            repeat_required: !!periodeRes.data.repeat_required,
-            repeat_track: periodeRes.data.repeat_track || null,
-            next_allowed_track: periodeRes.data.next_allowed_track || null,
-            eligibility_source: periodeRes.data.eligibility_source || null,
+            repeat_required: !!data.repeat_required,
+            repeat_track: data.repeat_track || null,
+            next_allowed_track: data.next_allowed_track || null,
           });
+
+          // Set eligibilities from backend
+          const elig = Array.isArray(data.eligibilities) ? data.eligibilities : [];
+          setEligibilities(elig);
+
+          // Set active enrollments
+          const enrolls = Array.isArray(data.active_enrollments) ? data.active_enrollments : [];
+          setActiveEnrollments(enrolls);
+
+          // Only redirect if ALL eligible tracks are already enrolled
+          const eligibleTracks = elig.map((e) => e.track);
+          const enrolledTracks = enrolls.map((e) => e.track);
+          const unenrolledTracks = eligibleTracks.filter((t) => !enrolledTracks.includes(t));
+
+          if (elig.length > 0 && unenrolledTracks.length === 0) {
+            toast.info('Semua track yang tersedia sudah Anda ambil');
+            router.replace('/dashboard/mahasiswa');
+            return;
+          }
         }
       } catch (err) {
         console.error(err);
@@ -87,24 +106,27 @@ export default function TrackPage() {
     checkAndLoad();
   }, [role, router]);
 
-  const visibleTracks = TRACKS.filter(t => periodeActive && availableTracks.includes(t.apiId));
+  // Filter to only show eligible tracks NOT yet enrolled
+  const enrolledTracks = activeEnrollments.map((e) => e.track);
+  const unenrolledEligibilities = eligibilities.filter((e) => !enrolledTracks.includes(e.track));
 
   const handleConfirm = async () => {
     if (!selectedTrack) return;
-    const track = TRACKS.find(t => t.id === selectedTrack);
-    if (!track) return;
+    const eligibility = unenrolledEligibilities.find((e) => e.track === selectedTrack);
+    if (!eligibility) return;
 
-    if (track.type === 'internship' && !companyName.trim()) {
+    const track = TRACKS.find((t) => t.apiId === selectedTrack);
+    if (track?.type === 'internship' && !companyName.trim()) {
       toast.error('Nama perusahaan wajib diisi');
       return;
     }
 
     setSubmitting(true);
     try {
-      const res = await mahasiswaAPI.setTrack(track.apiId, partnerNpm || null);
+      const res = await mahasiswaAPI.setTrack(selectedTrack, partnerNpm || null);
       if (res.ok) {
-        toast.success(`${track.name} berhasil dipilih!`);
-        if (track.type === 'proyek' && !res.data?.matched) {
+        toast.success(`${API_TRACK_LABELS[selectedTrack] || selectedTrack} berhasil dipilih!`);
+        if (track?.type === 'proyek' && !res.data?.matched) {
           router.push('/dashboard/mahasiswa/kelompok');
         } else {
           router.push('/dashboard/mahasiswa');
@@ -129,26 +151,62 @@ export default function TrackPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-5">
-      {visibleTracks.length === 0 ? (
+      {/* Active Enrollments Banner */}
+      {activeEnrollments.length > 0 && (
+        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <CardContent className="py-4">
+            <p className="text-sm font-semibold text-[hsl(var(--ctp-text))] mb-2">Enrollment Aktif</p>
+            <div className="flex flex-wrap gap-2">
+              {activeEnrollments.map((e) => {
+                const typeConf = ENROLLMENT_TYPE_CONFIG[e.enrollment_type] || ENROLLMENT_TYPE_CONFIG.regular;
+                return (
+                  <Badge
+                    key={e.id}
+                    className={`rounded-xl border border-[hsl(var(--${typeConf.color})/0.35)] bg-[hsl(var(--${typeConf.color})/0.12)] text-[hsl(var(--${typeConf.color}))]`}
+                  >
+                    {API_TRACK_LABELS[e.track] || e.track}
+                    {e.enrollment_type !== 'regular' && ` (${typeConf.label})`}
+                  </Badge>
+                );
+              })}
+            </div>
+            {unenrolledEligibilities.length > 0 && (
+              <p className="text-xs text-[hsl(var(--ctp-subtext0))] mt-2">
+                Anda masih bisa mengambil track tambahan di bawah.
+              </p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {unenrolledEligibilities.length === 0 && !periodeActive ? (
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <div className="grid h-16 w-16 place-items-center rounded-2xl border border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] mb-4">
               <AlertTriangle className="h-8 w-8 text-[hsl(var(--ctp-peach))]" />
             </div>
             <h2 className="text-xl font-semibold text-[hsl(var(--ctp-text))] mb-2">
-              {!semester || !SEMESTER_TRACK_MAP[semester]
-                ? 'Tidak Ada Proyek di Semester Ini'
-                : 'Periode Proyek Belum Dibuka'}
+              {!semester ? 'Tidak Ada Proyek di Semester Ini' : 'Periode Proyek Belum Dibuka'}
             </h2>
             <p className="text-sm text-[hsl(var(--ctp-subtext0))] max-w-md">
-              {eligibilityMessage
-                ? eligibilityMessage
-                : jalur === 'rpl'
-                ? 'Belum ada periode proyek atau internship aktif. Silakan tunggu koordinator membuka periode.'
-                : !semester || !SEMESTER_TRACK_MAP[semester]
-                ? `Semester ${semester || '-'} tidak memiliki proyek atau internship.`
-                : 'Koordinator belum membuka periode. Silakan tunggu pengumuman.'}
+              {eligibilityMessage || 'Koordinator belum membuka periode. Silakan tunggu pengumuman.'}
             </p>
+          </CardContent>
+        </Card>
+      ) : unenrolledEligibilities.length === 0 && activeEnrollments.length > 0 ? (
+        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center">
+            <CheckCircle2 className="h-12 w-12 text-[hsl(var(--ctp-green))] mb-4" />
+            <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Semua Track Sudah Dipilih</h2>
+            <p className="text-sm text-[hsl(var(--ctp-subtext0))]">
+              Tidak ada track tambahan yang tersedia.
+            </p>
+            <Button
+              onClick={() => router.push('/dashboard/mahasiswa')}
+              className="mt-4 rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-lavender)/0.35)]"
+            >
+              Kembali ke Dashboard
+            </Button>
           </CardContent>
         </Card>
       ) : (
@@ -160,11 +218,9 @@ export default function TrackPage() {
                   Jalur {jalur === 'rpl' ? 'RPL' : 'Regular'}
                 </p>
                 <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                  {eligibilityMessage
-                    ? eligibilityMessage
-                    : jalur === 'rpl'
+                  {eligibilityMessage || (jalur === 'rpl'
                     ? 'Anda dapat memilih track mana pun yang sedang dibuka koordinator.'
-                    : 'Pilihan track mengikuti semester berjalan dan periode yang dibuka koordinator.'}
+                    : 'Pilihan track mengikuti semester berjalan dan periode yang dibuka koordinator.')}
                 </p>
               </div>
               <div className="flex flex-wrap gap-2">
@@ -188,15 +244,18 @@ export default function TrackPage() {
           </Card>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-3">
-            {visibleTracks.map((track) => {
-              const Icon = track.icon;
-              const isSelected = selectedTrack === track.id;
-              const color = track.type === 'proyek' ? 'ctp-blue' : 'ctp-mauve';
+            {unenrolledEligibilities.map((elig) => {
+              const track = TRACKS.find((t) => t.apiId === elig.track);
+              const Icon = track?.icon || Briefcase;
+              const isSelected = selectedTrack === elig.track;
+              const typeConf = ENROLLMENT_TYPE_CONFIG[elig.enrollment_type] || ENROLLMENT_TYPE_CONFIG.regular;
+              const color = typeConf.color;
+
               return (
                 <Card
-                  key={track.id}
+                  key={elig.track}
                   className={`cursor-pointer transition-all bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring hover:bg-[hsl(var(--ctp-surface0)/0.70)] ${isSelected ? `ring-2 ring-[hsl(var(--${color}))]` : ''}`}
-                  onClick={() => setSelectedTrack(track.id)}
+                  onClick={() => setSelectedTrack(elig.track)}
                 >
                   <CardContent className="pt-6">
                     <div className="flex items-start gap-3">
@@ -204,11 +263,27 @@ export default function TrackPage() {
                         <Icon className={`h-6 w-6 text-[hsl(var(--${color}))]`} />
                       </span>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-base font-semibold text-[hsl(var(--ctp-text))]">{track.name}</h3>
-                        <p className="text-xs text-[hsl(var(--ctp-subtext0))] mt-1">{track.desc}</p>
-                        <Badge className="mt-2 rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-                          Semester {track.semester}
-                        </Badge>
+                        <h3 className="text-base font-semibold text-[hsl(var(--ctp-text))]">
+                          {API_TRACK_LABELS[elig.track] || elig.track}
+                        </h3>
+                        <p className="text-xs text-[hsl(var(--ctp-subtext0))] mt-1">
+                          {elig.reason || track?.desc || ''}
+                        </p>
+                        <div className="flex flex-wrap gap-1.5 mt-2">
+                          <Badge className={`rounded-xl text-[10px] border border-[hsl(var(--${color})/0.35)] bg-[hsl(var(--${color})/0.12)] text-[hsl(var(--${color}))]`}>
+                            {typeConf.label}
+                          </Badge>
+                          {elig.is_rpl_fallback && (
+                            <Badge className="rounded-xl text-[10px] border border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] text-[hsl(var(--ctp-peach))]">
+                              Via RPL
+                            </Badge>
+                          )}
+                          {elig.jadwal_nama && (
+                            <Badge className="rounded-xl text-[10px] border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+                              {elig.jadwal_nama}
+                            </Badge>
+                          )}
+                        </div>
                       </div>
                       {isSelected && (
                         <CheckCircle2 className={`h-5 w-5 text-[hsl(var(--${color}))]`} />
@@ -220,76 +295,85 @@ export default function TrackPage() {
             })}
           </div>
 
-          {selectedTrack && (
-            <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
-              <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
-                <CardHeader>
-                  <CardTitle className="text-[hsl(var(--ctp-text))]">
-                    Konfirmasi: {TRACK_LABELS[selectedTrack]}
-                  </CardTitle>
-                  <CardDescription className="text-[hsl(var(--ctp-subtext0))]">
-                    {TRACKS.find(t => t.id === selectedTrack)?.type === 'proyek'
-                      ? 'Proyek dikerjakan 2 orang per kelompok.'
-                      : 'Internship dilakukan secara individual.'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {TRACKS.find(t => t.id === selectedTrack)?.type === 'proyek' ? (
-                    <div className="space-y-2">
-                      <Label className="text-[hsl(var(--ctp-subtext1))]">NPM Partner (opsional)</Label>
-                      <Input
-                        placeholder="Masukkan NPM partner"
-                        value={partnerNpm}
-                        onChange={(e) => setPartnerNpm(e.target.value)}
-                        className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
-                      />
-                      <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                        Jika diisi, kelompok otomatis terbentuk saat partner mendaftar dengan NPM Anda.
-                      </p>
-                    </div>
-                  ) : (
-                    <div className="space-y-3">
+          {selectedTrack && (() => {
+            const track = TRACKS.find((t) => t.apiId === selectedTrack);
+            const elig = unenrolledEligibilities.find((e) => e.track === selectedTrack);
+            const typeConf = ENROLLMENT_TYPE_CONFIG[elig?.enrollment_type] || ENROLLMENT_TYPE_CONFIG.regular;
+
+            return (
+              <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
+                <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+                  <CardHeader>
+                    <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
+                      Konfirmasi: {API_TRACK_LABELS[selectedTrack] || selectedTrack}
+                      <Badge className={`rounded-xl text-[10px] border border-[hsl(var(--${typeConf.color})/0.35)] bg-[hsl(var(--${typeConf.color})/0.12)] text-[hsl(var(--${typeConf.color}))]`}>
+                        {typeConf.label}
+                      </Badge>
+                    </CardTitle>
+                    <CardDescription className="text-[hsl(var(--ctp-subtext0))]">
+                      {track?.type === 'proyek'
+                        ? 'Proyek dikerjakan 2 orang per kelompok.'
+                        : 'Internship dilakukan secara individual.'}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    {track?.type === 'proyek' ? (
                       <div className="space-y-2">
-                        <Label className="text-[hsl(var(--ctp-subtext1))]">Nama Perusahaan *</Label>
+                        <Label className="text-[hsl(var(--ctp-subtext1))]">NPM Partner (opsional)</Label>
                         <Input
-                          placeholder="PT. Contoh Indonesia"
-                          value={companyName}
-                          onChange={(e) => setCompanyName(e.target.value)}
+                          placeholder="Masukkan NPM partner"
+                          value={partnerNpm}
+                          onChange={(e) => setPartnerNpm(e.target.value)}
                           className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
                         />
+                        <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
+                          Jika diisi, kelompok otomatis terbentuk saat partner mendaftar dengan NPM Anda.
+                        </p>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-[hsl(var(--ctp-subtext1))]">Alamat Perusahaan</Label>
-                        <Input
-                          placeholder="Alamat lengkap"
-                          value={companyAddress}
-                          onChange={(e) => setCompanyAddress(e.target.value)}
-                          className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
-                        />
+                    ) : (
+                      <div className="space-y-3">
+                        <div className="space-y-2">
+                          <Label className="text-[hsl(var(--ctp-subtext1))]">Nama Perusahaan *</Label>
+                          <Input
+                            placeholder="PT. Contoh Indonesia"
+                            value={companyName}
+                            onChange={(e) => setCompanyName(e.target.value)}
+                            className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-[hsl(var(--ctp-subtext1))]">Alamat Perusahaan</Label>
+                          <Input
+                            placeholder="Alamat lengkap"
+                            value={companyAddress}
+                            onChange={(e) => setCompanyAddress(e.target.value)}
+                            className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
+                          />
+                        </div>
                       </div>
+                    )}
+                    <div className="flex gap-3 pt-2">
+                      <Button
+                        variant="secondary"
+                        onClick={() => setSelectedTrack(null)}
+                        className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
+                      >
+                        Batal
+                      </Button>
+                      <Button
+                        onClick={handleConfirm}
+                        disabled={submitting}
+                        className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]"
+                      >
+                        {submitting ? 'Memproses...' : 'Konfirmasi Pilihan'}
+                        <ChevronRight className="h-4 w-4 ml-1" />
+                      </Button>
                     </div>
-                  )}
-                  <div className="flex gap-3 pt-2">
-                    <Button
-                      variant="secondary"
-                      onClick={() => setSelectedTrack(null)}
-                      className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
-                    >
-                      Batal
-                    </Button>
-                    <Button
-                      onClick={handleConfirm}
-                      disabled={submitting}
-                      className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]"
-                    >
-                      {submitting ? 'Memproses...' : 'Konfirmasi Pilihan'}
-                      <ChevronRight className="h-4 w-4 ml-1" />
-                    </Button>
-                  </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
+                  </CardContent>
+                </Card>
+              </motion.div>
+            );
+          })()}
         </>
       )}
     </motion.div>
