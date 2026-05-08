@@ -328,6 +328,46 @@ export const mahasiswaAPI = {
     getDosenList: () => apiRequest('/api/mahasiswa/dosen/list'),
     getMyLaporan: () => apiRequest('/api/mahasiswa/laporan'),
     getMySidang: () => apiRequest('/api/mahasiswa/sidang'),
+
+    exportBimbingan: async (format = 'pdf') => {
+        const fmt = format === 'docx' ? 'docx' : 'pdf';
+        const token = getToken();
+        try {
+            const response = await fetch(
+                `${API_BASE_URL}/api/mahasiswa/bimbingan/export?format=${fmt}`,
+                {
+                    headers: {
+                        ...(token && { Authorization: `Bearer ${token}` }),
+                    },
+                }
+            );
+
+            if (!response.ok) {
+                const err = await response.json().catch(() => ({}));
+                const errorMsg = err?.error?.message || err?.message || 'Gagal mengunduh file';
+                return { ok: false, error: errorMsg, status: response.status };
+            }
+
+            const blob = await response.blob();
+            const cd = response.headers.get('Content-Disposition') || '';
+            const match = cd.match(/filename="?([^";]+)"?/i);
+            const filename = match ? match[1] : `formulir-bimbingan.${fmt}`;
+
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = filename;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            URL.revokeObjectURL(url);
+
+            return { ok: true };
+        } catch (err) {
+            console.error('Export bimbingan error:', err);
+            return { ok: false, error: err.message || 'Network error' };
+        }
+    },
 };
 
 // ========================================

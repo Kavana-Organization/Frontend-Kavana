@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   MessageSquare, Plus, Edit, Trash2, CheckCircle2, Clock, XCircle, AlertTriangle,
+  Download, FileText, FileType2,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
@@ -14,6 +15,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
@@ -33,9 +40,11 @@ export default function BimbinganPage() {
   const [hasPembimbing, setHasPembimbing] = useState(false);
   const [dosenNama, setDosenNama] = useState('');
   const [trackName, setTrackName] = useState('');
+  const [judulProyek, setJudulProyek] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editIdx, setEditIdx] = useState(-1);
   const [form, setForm] = useState({ date: '', topic: '', notes: '' });
+  const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
     if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
@@ -49,6 +58,7 @@ export default function BimbinganPage() {
         const p = profileRes.data;
         setTrackName(p.track || '');
         setDosenNama(p.dosen_nama || '');
+        setJudulProyek(p.judul_proyek || '');
         setHasPembimbing(p.status_proposal === 'approved' && !!p.dosen_nama);
       }
       const bimRes = await mahasiswaAPI.getMyBimbingan();
@@ -85,6 +95,26 @@ export default function BimbinganPage() {
       if (res.ok) { toast.success('Bimbingan berhasil disimpan'); setShowModal(false); loadAll(); }
       else toast.error(res.error || 'Gagal menyimpan');
     } catch { toast.error('Kesalahan jaringan'); }
+  };
+
+  const approvedCount = sessions.filter(s => s.status === 'approved').length;
+  const canExport = hasPembimbing && !!judulProyek && approvedCount > 0;
+
+  const handleExport = async (format) => {
+    if (!canExport || exporting) return;
+    setExporting(true);
+    try {
+      const res = await mahasiswaAPI.exportBimbingan(format);
+      if (res.ok) {
+        toast.success(`Formulir bimbingan ${format.toUpperCase()} berhasil diunduh`);
+      } else {
+        toast.error(res.error || 'Gagal mengunduh formulir');
+      }
+    } catch {
+      toast.error('Kesalahan jaringan saat export');
+    } finally {
+      setExporting(false);
+    }
   };
 
   const progress = (sessions.length / MAX_SESSIONS) * 100;
@@ -140,9 +170,39 @@ export default function BimbinganPage() {
             </CardTitle>
             <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Riwayat sesi bimbingan Anda.</CardDescription>
           </div>
-          <Button onClick={openAdd} disabled={sessions.length >= MAX_SESSIONS} className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]">
-            <Plus className="h-4 w-4 mr-1" /> Tambah
-          </Button>
+          <div className="flex items-center gap-2">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  type="button"
+                  disabled={!canExport || exporting}
+                  className="rounded-2xl bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-blue)/0.30)] border border-[hsl(var(--ctp-blue)/0.35)] disabled:opacity-50"
+                  title={!canExport ? 'Perlu pembimbing, judul, dan minimal 1 bimbingan disetujui' : 'Export formulir bimbingan'}
+                >
+                  <Download className="h-4 w-4 mr-1" /> {exporting ? 'Mengunduh...' : 'Export'}
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="bg-[hsl(var(--ctp-mantle))] border-[hsl(var(--ctp-overlay0)/0.45)]">
+                <DropdownMenuItem
+                  onClick={() => handleExport('pdf')}
+                  disabled={!canExport || exporting}
+                  className="cursor-pointer text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)]"
+                >
+                  <FileText className="h-4 w-4 mr-2" /> Export PDF
+                </DropdownMenuItem>
+                <DropdownMenuItem
+                  onClick={() => handleExport('docx')}
+                  disabled={!canExport || exporting}
+                  className="cursor-pointer text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)]"
+                >
+                  <FileType2 className="h-4 w-4 mr-2" /> Export Word
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+            <Button onClick={openAdd} disabled={sessions.length >= MAX_SESSIONS} className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]">
+              <Plus className="h-4 w-4 mr-1" /> Tambah
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {sessions.length === 0 ? (
