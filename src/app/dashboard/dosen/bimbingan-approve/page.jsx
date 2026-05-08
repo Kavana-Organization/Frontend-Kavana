@@ -279,9 +279,10 @@ export default function BimbinganApprovePage() {
                           size="sm"
                           onClick={() => openQrModal((b.ids && b.ids[0]) || b.id)}
                           title="Lihat QR tanda tangan"
-                          className="rounded-xl h-8 bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.35)] shrink-0"
+                          className="rounded-xl h-8 bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.35)] shrink-0 px-3"
                         >
-                          <QrCode className="h-4 w-4" />
+                          <QrCode className="h-4 w-4 mr-1.5" />
+                          <span className="text-xs font-semibold">QR</span>
                         </Button>
                       ) : null}
                     </div>

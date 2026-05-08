@@ -1,1 +1,1 @@
-export { default } from '../../mahasiswa/profile/page';
+export { default } from '../../dosen/profile/page';
