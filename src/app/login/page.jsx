@@ -34,6 +34,7 @@ export default function LoginPage() {
 
   // Turnstile state
   const [turnstileToken, setTurnstileToken] = useState('');
+  const [turnstileScriptLoaded, setTurnstileScriptLoaded] = useState(false);
   const turnstileContainerRef = useRef(null);
   const turnstileWidgetId = useRef(null);
 
@@ -51,6 +52,8 @@ export default function LoginPage() {
     turnstileWidgetId.current = window.turnstile.render(turnstileContainerRef.current, {
       sitekey: TURNSTILE_SITE_KEY,
       theme: 'auto',
+      appearance: 'always',
+      size: 'normal',
       callback: (token) => {
         setTurnstileToken(token);
         setErrors((prev) => {
@@ -68,6 +71,12 @@ export default function LoginPage() {
       },
     });
   }, []);
+
+  useEffect(() => {
+    if (turnstileScriptLoaded) {
+      renderTurnstile();
+    }
+  }, [turnstileScriptLoaded, renderTurnstile]);
 
   // Clean up widget on unmount
   useEffect(() => {
@@ -177,7 +186,20 @@ export default function LoginPage() {
         <Script
           src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit"
           strategy="afterInteractive"
-          onReady={renderTurnstile}
+          onLoad={() => {
+            setTurnstileScriptLoaded(true);
+            renderTurnstile();
+          }}
+          onReady={() => {
+            setTurnstileScriptLoaded(true);
+            renderTurnstile();
+          }}
+          onError={() => {
+            setErrors((prev) => ({
+              ...prev,
+              turnstile: 'Captcha Cloudflare gagal dimuat. Periksa koneksi atau ad blocker.',
+            }));
+          }}
         />
       )}
 
@@ -307,8 +329,13 @@ export default function LoginPage() {
                         <div
                           ref={turnstileContainerRef}
                           id="turnstile-widget"
-                          className="flex min-h-[65px] items-center justify-center"
+                          className="flex min-h-[74px] items-center justify-center"
                         />
+                        {!turnstileScriptLoaded ? (
+                          <p className="text-center text-xs text-[hsl(var(--ctp-overlay1))]">
+                            Memuat captcha Cloudflare...
+                          </p>
+                        ) : null}
                         <p className="mt-2 text-center text-[10px] uppercase tracking-[0.14em] text-[hsl(var(--ctp-overlay1))]">
                           Dilindungi oleh Cloudflare Turnstile
                         </p>
