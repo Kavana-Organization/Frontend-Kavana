@@ -67,6 +67,8 @@ export default function BimbinganPage() {
   const [trackName, setTrackName] = useState('');
   const [judulProyek, setJudulProyek] = useState('');
   const [bimbinganStartDate, setBimbinganStartDate] = useState('');
+  const [bimbinganEndDate, setBimbinganEndDate] = useState('');
+  const [bimbinganScheduleStatus, setBimbinganScheduleStatus] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editIdx, setEditIdx] = useState(-1);
   const [form, setForm] = useState({ date: '', topic: '', notes: '' });
@@ -90,6 +92,8 @@ export default function BimbinganPage() {
           ? p.enrollments.find((e) => e.status_proposal === 'approved' && e.dosen_id)
           : null;
         setBimbinganStartDate(toDateInputValue(p.bimbingan_start_at || approvedEnrollment?.updated_at || p.updated_at || p.created_at));
+        setBimbinganEndDate(toDateInputValue(p.bimbingan_end_at || approvedEnrollment?.jadwal_end_date));
+        setBimbinganScheduleStatus(p.bimbingan_schedule_status || approvedEnrollment?.jadwal_status || '');
       }
       const bimRes = await mahasiswaAPI.getMyBimbingan();
       if (bimRes.ok && bimRes.data) {
@@ -105,6 +109,14 @@ export default function BimbinganPage() {
   const openAdd = () => {
     if (!hasPembimbing) { toast.warning('Upload proposal dan dapatkan dosen pembimbing terlebih dahulu.'); return; }
     if (activeSessionCount >= MAX_SESSIONS) { toast.info('Bimbingan aktif sudah mencapai 8 sesi. Tunggu review dosen atau ajukan ulang jika ada yang ditolak.'); return; }
+    if (isScheduleCompleted) {
+      toast.warning('Jadwal proyek sudah selesai. Bimbingan baru tidak bisa ditambahkan.');
+      return;
+    }
+    if (bimbinganEndDate && todayDateInputValue() > bimbinganEndDate) {
+      toast.warning(`Jadwal proyek sudah berakhir pada ${bimbinganEndDate}. Bimbingan baru tidak bisa ditambahkan.`);
+      return;
+    }
     setEditIdx(-1);
     setForm({ date: maxDateValue(todayDateInputValue(), bimbinganStartDate), topic: '', notes: '' });
     setShowModal(true);
@@ -122,6 +134,10 @@ export default function BimbinganPage() {
       toast.error(`Tanggal bimbingan tidak boleh sebelum ${bimbinganStartDate}`);
       return;
     }
+    if (bimbinganEndDate && form.date > bimbinganEndDate) {
+      toast.error(`Tanggal bimbingan tidak boleh melebihi jadwal proyek (${bimbinganEndDate})`);
+      return;
+    }
     try {
       const res = await mahasiswaAPI.createBimbingan({
         tanggal: form.date, minggu_ke: nextSessionNumber, topik: form.topic, catatan: form.notes,
@@ -134,6 +150,9 @@ export default function BimbinganPage() {
   const approvedCount = sessions.filter(s => s.status === 'approved').length;
   const activeSessionCount = sessions.filter(s => s.status !== 'rejected').length;
   const nextSessionNumber = Math.min(MAX_SESSIONS, activeSessionCount + 1);
+  const isScheduleCompleted = String(bimbinganScheduleStatus || '').toLowerCase() === 'completed';
+  const isScheduleEnded = !!bimbinganEndDate && todayDateInputValue() > bimbinganEndDate;
+  const canAddBimbingan = activeSessionCount < MAX_SESSIONS && !isScheduleEnded && !isScheduleCompleted;
   const canExport = hasPembimbing && !!judulProyek && approvedCount > 0;
 
   const handleExport = async (format) => {
@@ -235,7 +254,12 @@ export default function BimbinganPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={openAdd} disabled={activeSessionCount >= MAX_SESSIONS} className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]">
+            <Button
+              onClick={openAdd}
+              disabled={!canAddBimbingan}
+              title={isScheduleCompleted ? 'Jadwal proyek sudah selesai' : isScheduleEnded ? `Jadwal proyek sudah berakhir pada ${bimbinganEndDate}` : undefined}
+              className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]"
+            >
               <Plus className="h-4 w-4 mr-1" /> Tambah
             </Button>
           </div>
@@ -284,10 +308,10 @@ export default function BimbinganPage() {
         <div className="space-y-3">
           <div>
             <Label className="text-[hsl(var(--ctp-subtext1))]">Tanggal</Label>
-            <Input type="date" min={bimbinganStartDate || undefined} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-            {bimbinganStartDate && (
+            <Input type="date" min={bimbinganStartDate || undefined} max={bimbinganEndDate || undefined} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
+            {(bimbinganStartDate || bimbinganEndDate) && (
               <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">
-                Tanggal minimal bimbingan: {bimbinganStartDate}
+                Rentang tanggal bimbingan: {bimbinganStartDate || '-'} sampai {bimbinganEndDate || '-'}
               </p>
             )}
           </div>
