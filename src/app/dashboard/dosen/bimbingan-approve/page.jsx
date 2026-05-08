@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CheckCircle2, XCircle, MessageSquare } from 'lucide-react';
+import { CheckCircle2, XCircle, MessageSquare, QrCode, ExternalLink, Copy, ShieldX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -96,6 +96,8 @@ export default function BimbinganApprovePage() {
   const [filter, setFilter] = useState('all');
   const [actionModal, setActionModal] = useState(null);
   const [catatan, setCatatan] = useState('');
+  const [qrModal, setQrModal] = useState(null);
+  const [qrLoading, setQrLoading] = useState(false);
 
   useEffect(() => {
     if (role && !['dosen', 'koordinator', 'kaprodi'].includes(role)) {
@@ -145,6 +147,36 @@ export default function BimbinganApprovePage() {
       }
     } catch {
       toast.error('Kesalahan jaringan');
+    }
+  };
+
+  const openQrModal = async (bimbinganId) => {
+    if (!bimbinganId) return;
+    setQrLoading(true);
+    setQrModal({ bimbingan_id: bimbinganId });
+    try {
+      const res = await dosenAPI.getBimbinganSignature(bimbinganId);
+      if (res.ok) {
+        setQrModal({ bimbingan_id: bimbinganId, ...res.data });
+      } else {
+        toast.error(res.error || 'Tanda tangan belum tersedia');
+        setQrModal(null);
+      }
+    } catch {
+      toast.error('Kesalahan jaringan');
+      setQrModal(null);
+    } finally {
+      setQrLoading(false);
+    }
+  };
+
+  const handleCopyVerifyUrl = async (url) => {
+    if (!url) return;
+    try {
+      await navigator.clipboard.writeText(url);
+      toast.success('URL verifikasi disalin');
+    } catch {
+      toast.error('Gagal menyalin URL');
     }
   };
 
@@ -242,6 +274,16 @@ export default function BimbinganApprovePage() {
                           </Button>
                         </div>
                       )}
+                      {status === 'approved' ? (
+                        <Button
+                          size="sm"
+                          onClick={() => openQrModal((b.ids && b.ids[0]) || b.id)}
+                          title="Lihat QR tanda tangan"
+                          className="rounded-xl h-8 bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.35)] shrink-0"
+                        >
+                          <QrCode className="h-4 w-4" />
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 );
@@ -266,6 +308,90 @@ export default function BimbinganApprovePage() {
           <Button variant="secondary" onClick={() => setActionModal(null)} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">Batal</Button>
           <Button onClick={() => handleAction(actionModal?.ids || [], 'rejected')} className="rounded-2xl bg-[hsl(var(--ctp-red)/0.20)] text-[hsl(var(--ctp-red))] border border-[hsl(var(--ctp-red)/0.35)]">Tolak</Button>
         </div>
+      </DashboardDialog>
+
+      <DashboardDialog
+        open={!!qrModal}
+        onOpenChange={(open) => { if (!open) setQrModal(null); }}
+      >
+        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-3 flex items-center gap-2">
+          <QrCode className="h-4 w-4" /> Tanda Tangan QR Bimbingan
+        </h3>
+        {qrLoading ? (
+          <div className="py-8 flex items-center justify-center">
+            <div className="w-7 h-7 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
+          </div>
+        ) : qrModal?.signature ? (
+          <div className="space-y-4">
+            {qrModal.signature.status === 'revoked' ? (
+              <div className="rounded-xl border border-[hsl(var(--ctp-red)/0.45)] bg-[hsl(var(--ctp-red)/0.10)] px-3 py-2 text-xs text-[hsl(var(--ctp-red))] flex items-center gap-2">
+                <ShieldX className="h-3.5 w-3.5" />
+                Tanda tangan ini telah dicabut
+                {qrModal.signature.revoked_reason ? ` (${qrModal.signature.revoked_reason})` : ''}.
+              </div>
+            ) : null}
+
+            <div className="flex flex-col items-center gap-2">
+              {qrModal.signature.qr_data_url ? (
+                <img
+                  src={qrModal.signature.qr_data_url}
+                  alt="QR tanda tangan bimbingan"
+                  className="h-44 w-44 rounded-xl border border-[hsl(var(--ctp-overlay0)/0.45)] bg-white p-2"
+                />
+              ) : (
+                <div className="h-44 w-44 rounded-xl border border-[hsl(var(--ctp-overlay0)/0.45)] flex items-center justify-center text-xs text-[hsl(var(--ctp-subtext0))]">
+                  QR tidak tersedia
+                </div>
+              )}
+              <p className="text-[10px] uppercase tracking-[0.14em] text-[hsl(var(--ctp-overlay1))]">
+                Token: {String(qrModal.signature.token).slice(0, 8)}…
+              </p>
+            </div>
+
+            <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.45)] p-3 space-y-1 text-xs">
+              <div className="flex justify-between gap-2">
+                <span className="text-[hsl(var(--ctp-subtext0))]">Nama</span>
+                <span className="text-[hsl(var(--ctp-text))]">{qrModal.signature.dosen_nama || '—'}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="text-[hsl(var(--ctp-subtext0))]">Kode Dosen</span>
+                <span className="text-[hsl(var(--ctp-text))]">{qrModal.signature.dosen_kode || '—'}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="text-[hsl(var(--ctp-subtext0))]">NIDN</span>
+                <span className="text-[hsl(var(--ctp-text))]">{qrModal.signature.dosen_nidn || '—'}</span>
+              </div>
+              <div className="flex justify-between gap-2">
+                <span className="text-[hsl(var(--ctp-subtext0))]">NIK</span>
+                <span className="text-[hsl(var(--ctp-text))]">{qrModal.signature.dosen_nik_masked || '—'}</span>
+              </div>
+            </div>
+
+            <div className="flex flex-wrap gap-2 justify-end">
+              {qrModal.signature.verify_url ? (
+                <>
+                  <Button
+                    size="sm"
+                    onClick={() => handleCopyVerifyUrl(qrModal.signature.verify_url)}
+                    className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
+                  >
+                    <Copy className="h-3.5 w-3.5 mr-1" /> Salin URL
+                  </Button>
+                  <a
+                    href={qrModal.signature.verify_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 rounded-xl bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.35)] px-3 py-1.5 text-xs font-medium"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5" /> Buka Verifikasi
+                  </a>
+                </>
+              ) : null}
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-[hsl(var(--ctp-subtext0))] py-4 text-center">Belum ada data tanda tangan.</p>
+        )}
       </DashboardDialog>
     </motion.div>
   );

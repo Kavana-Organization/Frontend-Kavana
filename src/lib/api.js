@@ -420,6 +420,9 @@ export const dosenAPI = {
 
     getLaporanList: () => apiRequest('/api/dosen/laporan'),
 
+    // Tanda tangan QR per sesi bimbingan
+    getBimbinganSignature: (id) => apiRequest(`/api/dosen/bimbingan/${id}/signature`),
+
     // Revisi pasca sidang
     getRevisiList: () => apiRequest('/api/dosen/revisi-sidang'),
     reviewRevisi: (id, payload) =>
