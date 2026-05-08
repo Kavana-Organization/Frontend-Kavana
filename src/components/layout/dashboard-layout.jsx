@@ -8,7 +8,7 @@ import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { TITLE_MAP, ROLE_LABEL, ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
 import { invalidateApiCache, notificationAPI } from '@/lib/api';
-import { subscribeRealtimeUpdates } from '@/lib/realtime';
+import { subscribeRealtimeUpdates, payloadTouchesPrefixes } from '@/lib/realtime';
 import { removeAcademicTitles } from '@/lib/validators';
 import { Button } from '@/components/ui/button';
 import {
@@ -85,8 +85,8 @@ function useFormattedDate() {
 }
 
 const iconBtnCls = "ctp-focus h-10 w-10 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.82)] shadow-[0_1px_0_hsl(0_0%_100%/0.45)_inset] transition-colors hover:bg-[hsl(var(--ctp-crust))]";
-const LIVE_REFRESH_INTERVAL = 20000;
-const LIVE_REFRESH_DEBOUNCE = 3500;
+const LIVE_REFRESH_DEBOUNCE = 1500;
+const NOTIFICATION_PREFIXES = ['/api/notifications/'];
 
 function useIsHydrated() {
   return useSyncExternalStore(
@@ -178,73 +178,73 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
     [currentRole]
   );
 
+  // Initial fetch notifikasi sekali saat role siap. Tidak ada polling berkala —
+  // refresh notifikasi mengikuti event realtime yang menyentuh /api/notifications/.
   useEffect(() => {
     if (!currentRole) return;
-    const initialFetch = setTimeout(() => loadNotificationStats(), 0);
-    const interval = setInterval(() => loadNotificationStats({ silent: true }), 60000);
-    return () => {
-      clearTimeout(initialFetch);
-      clearInterval(interval);
-    };
+    loadNotificationStats();
   }, [currentRole, loadNotificationStats]);
 
+  // Refresh dashboard murni event-driven. Tidak ada `setInterval`.
+  // Saat event realtime tiba: invalidate cache prefix yang relevan, lalu remount
+  // konten halaman aktif agar `loadData()`-nya dijalankan ulang.
   useEffect(() => {
     if (!currentRole) return;
 
-    let pendingRefresh = false;
-    let pendingPrefixes = ['/api/'];
+    let pendingPayload = null;
     let lastRefreshAt = 0;
 
-    const applyRefresh = (prefixes = ['/api/']) => {
+    const applyRefresh = (payload) => {
       const now = Date.now();
-      if (now - lastRefreshAt < LIVE_REFRESH_DEBOUNCE) return;
+      if (now - lastRefreshAt < LIVE_REFRESH_DEBOUNCE) {
+        pendingPayload = payload;
+        return;
+      }
       lastRefreshAt = now;
-      pendingRefresh = false;
-      pendingPrefixes = ['/api/'];
-      invalidateApiCache(prefixes, { broadcast: false });
+      pendingPayload = null;
+
+      const prefixes = Array.isArray(payload?.prefixes) && payload.prefixes.length > 0
+        ? payload.prefixes
+        : null;
+      if (prefixes) {
+        invalidateApiCache(prefixes, { broadcast: false });
+      }
       setRefreshVersion((prev) => prev + 1);
-      loadNotificationStats({ silent: true });
+
+      if (!prefixes || payloadTouchesPrefixes(payload, NOTIFICATION_PREFIXES)) {
+        loadNotificationStats({ silent: true });
+      }
     };
 
-    const requestRefresh = (prefixes = ['/api/']) => {
-      pendingPrefixes = Array.isArray(prefixes) && prefixes.length > 0 ? prefixes : ['/api/'];
-
-      if (document.visibilityState !== 'visible') {
-        pendingRefresh = true;
+    const requestRefresh = (payload) => {
+      if (document.visibilityState !== 'visible' || shouldDelayRealtimeRefresh()) {
+        pendingPayload = payload;
         return;
       }
-
-      if (shouldDelayRealtimeRefresh()) {
-        pendingRefresh = true;
-        return;
-      }
-
-      applyRefresh(pendingPrefixes);
+      applyRefresh(payload);
     };
 
-    const flushPendingRefresh = () => {
-      if (pendingRefresh && !shouldDelayRealtimeRefresh() && document.visibilityState === 'visible') {
-        applyRefresh(pendingPrefixes);
+    const flushPending = () => {
+      if (
+        pendingPayload
+        && !shouldDelayRealtimeRefresh()
+        && document.visibilityState === 'visible'
+      ) {
+        applyRefresh(pendingPayload);
       }
     };
 
-    const unsubscribeRealtime = subscribeRealtimeUpdates((payload) => {
-      requestRefresh(payload?.prefixes);
+    const unsubscribe = subscribeRealtimeUpdates((payload) => {
+      requestRefresh(payload || {});
     });
 
-    const interval = window.setInterval(() => {
-      if (document.visibilityState !== 'visible') return;
-      requestRefresh(['/api/']);
-    }, LIVE_REFRESH_INTERVAL);
-
-    window.addEventListener('focus', flushPendingRefresh);
-    document.addEventListener('visibilitychange', flushPendingRefresh);
+    window.addEventListener('focus', flushPending);
+    document.addEventListener('visibilitychange', flushPending);
 
     return () => {
-      unsubscribeRealtime();
-      window.clearInterval(interval);
-      window.removeEventListener('focus', flushPendingRefresh);
-      document.removeEventListener('visibilitychange', flushPendingRefresh);
+      unsubscribe();
+      window.removeEventListener('focus', flushPending);
+      document.removeEventListener('visibilitychange', flushPending);
     };
   }, [currentRole, loadNotificationStats]);
 

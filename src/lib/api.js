@@ -2,7 +2,12 @@
 // API HELPER - Kavana Bimbingan Online
 // ========================================
 
-import { notifyRealtimeUpdate } from '@/lib/realtime';
+import {
+    notifyRealtimeUpdate,
+    emitRealtimeEvent,
+    EVENT_PREFIX_MAP,
+    REALTIME_EVENTS,
+} from '@/lib/realtime';
 
 const API_BASE_URL = (
     process.env.NEXT_PUBLIC_API_BASE_URL
@@ -75,6 +80,20 @@ export function invalidateApiCache(prefixes = [], options = {}) {
     if (shouldBroadcast && typeof window !== 'undefined') {
         notifyRealtimeUpdate(prefixes, { source: 'api-cache-invalidated' });
     }
+}
+
+/**
+ * Trigger event realtime ber-tipe spesifik setelah mutasi sukses.
+ * - Invalidasi cache lokal sesuai EVENT_PREFIX_MAP (tanpa broadcast ulang).
+ * - Emit event ber-tipe yang dapat disubscribe per resource oleh halaman lain
+ *   maupun lintas tab.
+ */
+function triggerMutationEvent(type, meta = {}) {
+    const prefixes = EVENT_PREFIX_MAP[type] || [];
+    if (prefixes.length > 0) {
+        invalidateApiCache(prefixes, { broadcast: false });
+    }
+    emitRealtimeEvent(type, meta);
 }
 
 // ========================================
@@ -202,7 +221,7 @@ export const authAPI = {
             method: 'PATCH',
             body: JSON.stringify(data),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/auth/profile', '/api/mahasiswa/profile', '/api/dosen/profile', '/api/kaprodi/profile', '/api/koordinator/profile']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.PROFILE_UPDATED);
             return result;
         }),
 
@@ -216,7 +235,7 @@ export const authAPI = {
         try {
             await apiRequest('/api/auth/logout', { method: 'POST' });
         } catch (_) { /* ignore - clear local state regardless */ }
-        invalidateApiCache(['/api/']);
+        triggerMutationEvent(REALTIME_EVENTS.AUTH_LOGOUT);
         clearToken();
         sessionStorage.clear();
     },
@@ -269,7 +288,7 @@ export const mahasiswaAPI = {
             method: 'PATCH',
             body: JSON.stringify({ track, partner_npm: partnerNpm }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.TRACK_CHANGED);
             return result;
         }),
 
@@ -280,7 +299,7 @@ export const mahasiswaAPI = {
             method: 'POST',
             body: JSON.stringify(data),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.PROPOSAL_SUBMITTED);
             return result;
         }),
 
@@ -291,7 +310,7 @@ export const mahasiswaAPI = {
             method: 'POST',
             body: JSON.stringify(data),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/bimbingan', '/api/dosen/bimbingan', '/api/dosen/mahasiswa', '/api/dosen/stats', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.BIMBINGAN_CREATED);
             return result;
         }),
 
@@ -300,7 +319,7 @@ export const mahasiswaAPI = {
             method: 'POST',
             body: JSON.stringify(data),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/laporan', '/api/mahasiswa/sidang', '/api/dosen/laporan', '/api/dosen/stats', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.LAPORAN_SUBMITTED);
             return result;
         }),
 
@@ -309,7 +328,7 @@ export const mahasiswaAPI = {
             method: 'POST',
             body: JSON.stringify({ nama }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/profile', '/api/mahasiswa/kelompok', '/api/koordinator/', '/api/kaprodi/']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.KELOMPOK_CHANGED);
             return result;
         }),
 
@@ -318,7 +337,7 @@ export const mahasiswaAPI = {
             method: 'POST',
             body: JSON.stringify({ kelompok_id }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/profile', '/api/mahasiswa/kelompok', '/api/koordinator/', '/api/kaprodi/']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.KELOMPOK_CHANGED);
             return result;
         }),
 
@@ -385,7 +404,7 @@ export const dosenAPI = {
             method: 'PATCH',
             body: JSON.stringify({ status, catatan }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/dosen/bimbingan', '/api/dosen/mahasiswa', '/api/dosen/stats', '/api/mahasiswa/bimbingan', '/api/koordinator/mahasiswa', '/api/kaprodi/mahasiswa', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.BIMBINGAN_APPROVED);
             return result;
         }),
 
@@ -399,7 +418,7 @@ export const dosenAPI = {
                 ...(note ? { note } : {}),
             }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/dosen/laporan', '/api/dosen/stats', '/api/mahasiswa/laporan', '/api/koordinator/sidang', '/api/koordinator/mahasiswa', '/api/kaprodi/mahasiswa', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.LAPORAN_APPROVED);
             return result;
         }),
 };
@@ -418,7 +437,7 @@ export const koordinatorAPI = {
             method: 'PATCH',
             body: JSON.stringify({ mahasiswa_id: mahasiswaId, status, catatan, enrollment_id: enrollmentId || null }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.PROPOSAL_VALIDATED);
             return result;
         }),
 
@@ -438,7 +457,7 @@ export const koordinatorAPI = {
                 enrollment_id: enrollmentId || null,
             }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/mahasiswa/', '/api/dosen/', '/api/koordinator/', '/api/kaprodi/', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.DOSEN_ASSIGNED);
             return result;
         }),
 
@@ -447,7 +466,7 @@ export const koordinatorAPI = {
             method: 'POST',
             body: JSON.stringify(data),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/koordinator/sidang', '/api/mahasiswa/sidang']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.SIDANG_SCHEDULED);
             return result;
         }),
 
@@ -459,7 +478,7 @@ export const koordinatorAPI = {
             method: 'POST',
             body: JSON.stringify(data),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/koordinator/jadwal', '/api/koordinator/jadwal/active', '/api/mahasiswa/periode-aktif']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.PERIODE_UPDATED);
             return result;
         }),
 
@@ -468,7 +487,7 @@ export const koordinatorAPI = {
             method: 'PUT',
             body: JSON.stringify(data),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/koordinator/jadwal', '/api/koordinator/jadwal/active', '/api/mahasiswa/periode-aktif']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.PERIODE_UPDATED);
             return result;
         }),
 
@@ -476,7 +495,7 @@ export const koordinatorAPI = {
         apiRequest(`/api/koordinator/jadwal/${id}/complete`, {
             method: 'POST',
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/koordinator/jadwal', '/api/koordinator/jadwal/active', '/api/mahasiswa/periode-aktif']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.PERIODE_UPDATED);
             return result;
         }),
 
@@ -509,7 +528,7 @@ export const kaprodiAPI = {
             method: 'POST',
             body: JSON.stringify({ koordinator_id, semesters }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/kaprodi/', '/api/koordinator/', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.KOORDINATOR_ASSIGNED);
             return result;
         }),
 
@@ -518,7 +537,7 @@ export const kaprodiAPI = {
             method: 'POST',
             body: JSON.stringify({ koordinator_id, semesters }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/kaprodi/', '/api/koordinator/', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.KOORDINATOR_ASSIGNED);
             return result;
         }),
 
@@ -527,7 +546,7 @@ export const kaprodiAPI = {
             method: 'PATCH',
             body: JSON.stringify(payload),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/kaprodi/', '/api/koordinator/', '/api/mahasiswa/', '/api/notifications/stats']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.MAHASISWA_REPEAT_UPDATED);
             return result;
         }),
 };
@@ -557,7 +576,7 @@ export const adminAPI = {
             method: 'PATCH',
             body: JSON.stringify({ role, is_active: isActive }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/admin/users', '/api/admin/stats', '/api/admin/activity', '/api/admin/audit-logs']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.ADMIN_USER_UPDATED);
             return result;
         }),
 
@@ -566,7 +585,7 @@ export const adminAPI = {
             method: 'PATCH',
             body: JSON.stringify(payload),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/admin/users', '/api/admin/stats', '/api/admin/activity', '/api/admin/audit-logs']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.ADMIN_USER_UPDATED);
             return result;
         }),
 
@@ -575,7 +594,7 @@ export const adminAPI = {
             method: 'PATCH',
             body: JSON.stringify(payload),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/admin/activity', '/api/admin/audit-logs']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.ADMIN_AUDIT_TOUCHED);
             return result;
         }),
 
@@ -584,7 +603,7 @@ export const adminAPI = {
             method: 'DELETE',
             body: JSON.stringify({ role }),
         }).then((result) => {
-            if (result.ok) invalidateApiCache(['/api/admin/users', '/api/admin/stats', '/api/admin/activity', '/api/admin/audit-logs']);
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.ADMIN_USER_UPDATED);
             return result;
         }),
 
