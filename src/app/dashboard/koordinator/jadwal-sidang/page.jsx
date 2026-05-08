@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { CalendarClock, Clock3, MapPin, Plus, UserRound, Users } from 'lucide-react';
+import { AlertTriangle, CalendarClock, Clock3, MapPin, Plus, UserRound, Users } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -89,6 +89,15 @@ function statusClass(status) {
 function isProyekTrack(track) {
   return String(track || '').toLowerCase().includes('proyek');
 }
+
+function normalizeWaktu(value) {
+  if (!value) return '';
+  const str = String(value);
+  // Accept "HH:MM" or "HH:MM:SS" → normalize to "HH:MM"
+  return str.length >= 5 ? str.slice(0, 5) : str;
+}
+
+const ACTIVE_STATUSES = new Set(['scheduled', 'ongoing']);
 
 export default function JadwalSidangPage() {
   const router = useRouter();
@@ -180,6 +189,60 @@ export default function JadwalSidangPage() {
   }, [mahasiswa, scheduledIds]);
 
   const hasRemainingCandidate = mahasiswaOptions.length > 0;
+
+  // Lookup dosen pembimbing dari mahasiswa terpilih (untuk pre-check bentrok)
+  const selectedDosenId = useMemo(() => {
+    const ids = parseSelectedMahasiswaIds(form.mahasiswa_id);
+    if (ids.length === 0) return null;
+    const raw = Array.isArray(mahasiswa) ? mahasiswa : [];
+    for (const entry of raw) {
+      const members = Array.isArray(entry?.anggota) && entry.anggota.length > 0
+        ? entry.anggota
+        : [{ id: entry.id }];
+      if (members.some((m) => ids.includes(Number(m?.id)))) {
+        return entry?.dosen_id ? Number(entry.dosen_id) : null;
+      }
+    }
+    return null;
+  }, [form.mahasiswa_id, mahasiswa]);
+
+  // Pre-check bentrok dari data jadwal yang sudah dimuat. Backend tetap sumber kebenaran.
+  const conflictWarning = useMemo(() => {
+    const pengujiId = form.penguji_id ? Number(form.penguji_id) : null;
+    const tanggal = form.tanggal;
+    const waktu = normalizeWaktu(form.waktu);
+
+    if (selectedDosenId && pengujiId && selectedDosenId === pengujiId) {
+      return 'Dosen pembimbing dan penguji tidak boleh orang yang sama.';
+    }
+    if (!tanggal || !waktu) return null;
+
+    const slotJadwal = (Array.isArray(jadwal) ? jadwal : []).filter((j) => {
+      if (!ACTIVE_STATUSES.has(String(j?.status || '').toLowerCase())) return false;
+      return String(j?.tanggal || '').slice(0, 10) === tanggal
+        && normalizeWaktu(j?.waktu) === waktu;
+    });
+
+    if (selectedDosenId) {
+      const conflict = slotJadwal.find((j) => (
+        Number(j?.dosen_id) === selectedDosenId || Number(j?.penguji_id) === selectedDosenId
+      ));
+      if (conflict) {
+        return `Dosen pembimbing (${conflict.dosen_nama || conflict.penguji_nama || 'dosen'}) sudah dijadwalkan pada slot ini.`;
+      }
+    }
+
+    if (pengujiId) {
+      const conflict = slotJadwal.find((j) => (
+        Number(j?.dosen_id) === pengujiId || Number(j?.penguji_id) === pengujiId
+      ));
+      if (conflict) {
+        return `Penguji yang dipilih sudah dijadwalkan sebagai ${Number(conflict.dosen_id) === pengujiId ? 'pembimbing' : 'penguji'} pada slot ini.`;
+      }
+    }
+
+    return null;
+  }, [form.penguji_id, form.tanggal, form.waktu, selectedDosenId, jadwal]);
 
   const groupedJadwal = useMemo(() => {
     const raw = Array.isArray(jadwal) ? jadwal : [];
@@ -463,6 +526,13 @@ export default function JadwalSidangPage() {
             <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))] inline-flex items-center gap-2">
               <Users className="h-3.5 w-3.5" />
               Semua mahasiswa eligible sudah memiliki jadwal sidang.
+            </div>
+          ) : null}
+
+          {conflictWarning ? (
+            <div className="rounded-xl border border-[hsl(var(--ctp-peach)/0.45)] bg-[hsl(var(--ctp-peach)/0.10)] px-3 py-2 text-xs text-[hsl(var(--ctp-peach))] inline-flex items-start gap-2">
+              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+              <span>{conflictWarning}</span>
             </div>
           ) : null}
 
