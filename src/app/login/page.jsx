@@ -34,7 +34,6 @@ export default function LoginPage() {
 
   // Turnstile state
   const [turnstileToken, setTurnstileToken] = useState('');
-  const [turnstileReady, setTurnstileReady] = useState(false);
   const turnstileContainerRef = useRef(null);
   const turnstileWidgetId = useRef(null);
 
@@ -68,8 +67,6 @@ export default function LoginPage() {
         setErrors((prev) => ({ ...prev, turnstile: 'Verifikasi gagal. Silakan coba lagi.' }));
       },
     });
-
-    setTurnstileReady(true);
   }, []);
 
   // Clean up widget on unmount
