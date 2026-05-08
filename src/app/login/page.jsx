@@ -289,18 +289,47 @@ export default function LoginPage() {
                 </div>
 
                 {/* Cloudflare Turnstile Widget */}
-                {TURNSTILE_SITE_KEY && (
-                  <div className="space-y-2">
-                    <div
-                      ref={turnstileContainerRef}
-                      id="turnstile-widget"
-                      className="flex items-center justify-center"
-                    />
-                    {errors.turnstile ? (
-                      <p className="text-xs text-center text-[hsl(var(--ctp-red))]">{errors.turnstile}</p>
-                    ) : null}
+                <div className="space-y-2">
+                  <Label className="flex items-center gap-2 text-sm font-medium text-[hsl(var(--ctp-subtext1))]">
+                    <ShieldCheck className="h-4 w-4 text-[hsl(var(--ctp-blue))]" />
+                    Verifikasi Keamanan
+                  </Label>
+
+                  <div
+                    className={`rounded-2xl border bg-[hsl(var(--ctp-base)/0.72)] px-4 py-3 ${
+                      errors.turnstile
+                        ? 'border-[hsl(var(--ctp-red)/0.55)]'
+                        : 'border-[hsl(var(--ctp-surface1))]'
+                    }`}
+                  >
+                    {TURNSTILE_SITE_KEY ? (
+                      <>
+                        <div
+                          ref={turnstileContainerRef}
+                          id="turnstile-widget"
+                          className="flex min-h-[65px] items-center justify-center"
+                        />
+                        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.14em] text-[hsl(var(--ctp-overlay1))]">
+                          Dilindungi oleh Cloudflare Turnstile
+                        </p>
+                      </>
+                    ) : (
+                      <div className="flex items-center justify-center gap-2 py-3 text-xs text-[hsl(var(--ctp-overlay1))]">
+                        <ShieldCheck className="h-3.5 w-3.5" />
+                        <span>
+                          Captcha nonaktif — atur{' '}
+                          <code className="rounded bg-[hsl(var(--ctp-surface1)/0.6)] px-1 py-0.5 text-[hsl(var(--ctp-text))]">
+                            NEXT_PUBLIC_TURNSTILE_SITE_KEY
+                          </code>{' '}
+                          di <code className="rounded bg-[hsl(var(--ctp-surface1)/0.6)] px-1 py-0.5 text-[hsl(var(--ctp-text))]">.env.local</code>
+                        </span>
+                      </div>
+                    )}
                   </div>
-                )}
+                  {errors.turnstile ? (
+                    <p className="text-xs text-center text-[hsl(var(--ctp-red))]">{errors.turnstile}</p>
+                  ) : null}
+                </div>
 
                 <Button
                   type="submit"
