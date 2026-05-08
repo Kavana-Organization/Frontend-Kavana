@@ -14,6 +14,29 @@ import { mahasiswaAPI } from '@/lib/api';
 
 const SUBMITTED_STATUSES = new Set(['pending', 'submitted', 'approved']);
 
+function parseLuaranPayload(value) {
+  if (!value || typeof value !== 'string') {
+    return { luaranLink: '', links: [] };
+  }
+
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      const links = Object.entries(parsed)
+        .map(([label, url]) => ({ label, url: String(url || '').trim() }))
+        .filter((link) => link.url);
+      return { luaranLink: '', links };
+    }
+  } catch {
+    // Legacy data stores luaran as a single URL.
+  }
+
+  return {
+    luaranLink: value,
+    links: [{ label: 'Buka Luaran', url: value }],
+  };
+}
+
 export default function LaporanPage() {
   const router = useRouter();
   const { role } = useAuthStore();
@@ -23,7 +46,12 @@ export default function LaporanPage() {
   const [prereqProposal, setPrereqProposal] = useState(false);
   const [prereqBimbingan, setPrereqBimbingan] = useState(0);
   const [submitting, setSubmitting] = useState(false);
-  const [form, setForm] = useState({ judul: '', laporanLink: '', luaranLink: '' });
+  const [track, setTrack] = useState('');
+  const [form, setForm] = useState({
+    judul: '',
+    laporanLink: '',
+    luaranLink: '',
+  });
 
   useEffect(() => {
     if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
@@ -40,10 +68,11 @@ export default function LaporanPage() {
           && latest.file_luaran;
 
         setExistingLaporan(latest);
+        const parsedLuaran = parseLuaranPayload(latest.file_luaran || '');
         setForm((current) => ({
           ...current,
           laporanLink: latest.file_url || '',
-          luaranLink: latest.file_luaran || '',
+          luaranLink: parsedLuaran.luaranLink,
         }));
 
         if (isCompletedSubmission) {
@@ -54,6 +83,10 @@ export default function LaporanPage() {
       }
       const profileRes = await mahasiswaAPI.getProfile();
       if (profileRes.ok) {
+        const activeEnrollment = Array.isArray(profileRes.data.enrollments)
+          ? profileRes.data.enrollments.find((item) => String(item.status || '').toLowerCase() === 'active')
+          : null;
+        setTrack(profileRes.data.track || activeEnrollment?.track || '');
         setPrereqProposal(profileRes.data.status_proposal === 'approved');
         setForm((current) => ({
           ...current,
@@ -106,16 +139,17 @@ export default function LaporanPage() {
                 Buka Laporan
               </a>
             ) : null}
-            {existingLaporan?.file_luaran ? (
+            {parseLuaranPayload(existingLaporan?.file_luaran || '').links.map((link) => (
               <a
-                href={existingLaporan.file_luaran}
+                key={`${link.label}-${link.url}`}
+                href={link.url}
                 target="_blank"
                 rel="noreferrer"
                 className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] px-4 py-2 text-sm text-[hsl(var(--ctp-text))]"
               >
-                Buka Luaran
+                {link.label}
               </a>
-            ) : null}
+            ))}
           </div>
         </CardContent>
       </Card>

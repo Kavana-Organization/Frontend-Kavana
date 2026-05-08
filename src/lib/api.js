@@ -358,8 +358,8 @@ export const mahasiswaAPI = {
             return result;
         }),
 
-    exportBimbingan: async (format = 'pdf') => {
-        const fmt = format === 'docx' ? 'docx' : 'pdf';
+    exportBimbingan: async () => {
+        const fmt = 'pdf';
         const token = getToken();
         try {
             const response = await fetch(

@@ -253,6 +253,8 @@ export const LANDING_CONTENT = {
         ],
         resourceLinks: [
             { label: 'Luaran Proyek 1', href: '/luaran-proyek-1' },
+            { label: 'Luaran Proyek 2', href: '/luaran-proyek-2' },
+            { label: 'Luaran Proyek 3', href: '/luaran-proyek-3' },
             { label: 'Panduan Pengguna', href: '/panduan-pengguna' },
             { label: 'FAQ Sistem', href: '/faq-sistem' },
             { label: 'Kebijakan Privasi', href: '/kebijakan-privasi' },
@@ -304,6 +306,92 @@ export const PROJECT_OUTPUTS = {
             'Komponen CRUD diposisikan sebagai nilai tambah yang dapat diperiksa langsung oleh dosen saat presentasi atau review.',
             'Draft buku dan poster tetap perlu finalisasi isi akademik di luar codebase.',
             'Halaman ini berfungsi sebagai representasi resmi luaran Proyek 1 di aplikasi.',
+        ],
+    },
+    project2: {
+        label: 'Proyek 2',
+        title: 'Luaran Proyek 2',
+        summary:
+            'Tahap kedua difokuskan pada aplikasi berbasis CRUD RDBMS yang terukur, terdokumentasi, dan memiliki artefak akademik lengkap berupa draft jurnal, laporan metodologi riset, dan poster.',
+        deliverables: [
+            {
+                title: 'Aplikasi Code Coverage (CRUD RDBMS)',
+                status: 'Wajib Ditunjukkan',
+                description:
+                    'Aplikasi harus memperlihatkan operasi Create, Read, Update, Delete pada basis data relasional, dilengkapi struktur data yang jelas dan cakupan kode yang dapat ditinjau.',
+            },
+            {
+                title: 'Draft Jurnal',
+                status: 'Siap Review',
+                description:
+                    'Draft jurnal memuat latar belakang, rumusan masalah, metode, implementasi, hasil pengujian, dan pembahasan singkat sesuai topik proyek.',
+            },
+            {
+                title: 'Laporan dengan Methodologi Riset',
+                status: 'Dokumen Utama',
+                description:
+                    'Laporan disusun menggunakan metodologi riset yang eksplisit, mulai dari pendekatan penelitian, tahapan pengembangan, pengujian, sampai evaluasi hasil.',
+            },
+            {
+                title: 'Poster',
+                status: 'Siap Presentasi',
+                description:
+                    'Poster merangkum masalah, tujuan, metode, fitur utama CRUD RDBMS, hasil implementasi, dan kesimpulan dalam format presentasi akademik.',
+            },
+        ],
+        implementedScope: [
+            'Aplikasi CRUD dengan RDBMS sebagai fokus utama implementasi.',
+            'Model data, relasi tabel, dan alur transaksi data dapat dijelaskan saat review.',
+            'Code coverage atau bukti cakupan implementasi disiapkan sebagai bagian evaluasi teknis.',
+            'Dokumen akademik terdiri dari draft jurnal, laporan metodologi riset, dan poster.',
+        ],
+        academicNotes: [
+            'CRUD RDBMS menjadi bukti utama kemampuan implementasi dan pengelolaan data pada Proyek 2.',
+            'Draft jurnal dan laporan harus konsisten pada topik, metode, data uji, serta hasil evaluasi.',
+            'Poster digunakan sebagai ringkasan visual untuk sidang atau presentasi luaran Proyek 2.',
+        ],
+    },
+    project3: {
+        label: 'Proyek 3',
+        title: 'Luaran Proyek 3',
+        summary:
+            'Tahap ketiga difokuskan pada aplikasi web services yang memiliki dokumentasi API jelas, didukung draft jurnal, buku tutorial, dan poster sebagai artefak publikasi serta diseminasi hasil.',
+        deliverables: [
+            {
+                title: 'Aplikasi Web Services (Doc API)',
+                status: 'Wajib Ditunjukkan',
+                description:
+                    'Aplikasi harus menyediakan layanan API yang dapat diakses, diuji, dan didokumentasikan secara jelas melalui dokumentasi endpoint, request, response, autentikasi, serta skenario penggunaan.',
+            },
+            {
+                title: 'Draft Jurnal',
+                status: 'Siap Review',
+                description:
+                    'Draft jurnal menjelaskan latar belakang, metode pengembangan web services, rancangan API, hasil implementasi, pengujian, dan pembahasan manfaat layanan.',
+            },
+            {
+                title: 'Buku Tutorial',
+                status: 'Bebas Penerbit',
+                description:
+                    'Buku tutorial berisi panduan penggunaan atau implementasi aplikasi web services dan bebas memilih penerbit sesuai ketentuan akademik yang berlaku.',
+            },
+            {
+                title: 'Poster',
+                status: 'Siap Presentasi',
+                description:
+                    'Poster merangkum konsep layanan, arsitektur web services, fitur API utama, hasil pengujian, dan kesimpulan proyek dalam format visual akademik.',
+            },
+        ],
+        implementedScope: [
+            'Aplikasi web services menjadi fokus utama implementasi Proyek 3.',
+            'Dokumentasi API mencakup endpoint, parameter, request body, response, dan status error.',
+            'Pengujian API disiapkan untuk membuktikan layanan berjalan sesuai kebutuhan.',
+            'Artefak akademik terdiri dari draft jurnal, buku tutorial, dan poster.',
+        ],
+        academicNotes: [
+            'Doc API menjadi bukti utama bahwa web services dapat dipahami dan digunakan oleh pihak lain.',
+            'Buku tutorial boleh menggunakan penerbit yang dipilih mahasiswa selama format dan isi tetap dapat dipertanggungjawabkan.',
+            'Draft jurnal dan poster harus konsisten dengan implementasi web services yang dibuat.',
         ],
     },
 };

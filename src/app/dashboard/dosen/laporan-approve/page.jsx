@@ -23,13 +23,29 @@ const STATUS_MAP = {
 
 const REVIEWABLE_STATUSES = new Set(['submitted', 'pending', 'waiting']);
 const FILTER_OPTIONS = ['all', 'submitted', 'approved', 'rejected'];
-
 function normalizeStatus(value) {
   return String(value || '').toLowerCase();
 }
 
 function isReviewableStatus(value) {
   return REVIEWABLE_STATUSES.has(normalizeStatus(value));
+}
+
+function getLuaranLinks(value) {
+  if (!value || typeof value !== 'string') return [];
+
+  try {
+    const parsed = JSON.parse(value);
+    if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      return Object.entries(parsed)
+        .map(([label, url]) => ({ label, url: String(url || '').trim() }))
+        .filter((link) => link.url);
+    }
+  } catch {
+    // Legacy laporan stores a single luaran URL.
+  }
+
+  return [{ label: 'Buka Luaran', url: value }];
 }
 
 function getLaporanDisplay(item) {
@@ -167,7 +183,7 @@ export default function LaporanApprovePage() {
                 const status = normalizeStatus(l.status);
                 const st = STATUS_MAP[status] || STATUS_MAP.submitted;
                 const laporanUrl = l.file_laporan || l.file_url;
-                const luaranUrl = l.file_luaran;
+                const luaranLinks = getLuaranLinks(l.file_luaran);
                 const display = getLaporanDisplay(l);
                 return (
                   <div key={l.id || l.mahasiswa_id} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
@@ -187,11 +203,11 @@ export default function LaporanApprovePage() {
                               <ExternalLink className="h-3 w-3" /> Buka Laporan
                             </a>
                           )}
-                          {luaranUrl && (
-                            <a href={luaranUrl} target="_blank" rel="noreferrer" className="text-xs text-[hsl(var(--ctp-teal))] hover:underline inline-flex items-center gap-1">
-                              <ExternalLink className="h-3 w-3" /> Buka Luaran
+                          {luaranLinks.map((link) => (
+                            <a key={`${link.label}-${link.url}`} href={link.url} target="_blank" rel="noreferrer" className="text-xs text-[hsl(var(--ctp-teal))] hover:underline inline-flex items-center gap-1">
+                              <ExternalLink className="h-3 w-3" /> {link.label}
                             </a>
-                          )}
+                          ))}
                         </div>
                       </div>
                       {isReviewableStatus(status) && (

@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
   MessageSquare, Plus, Edit, Trash2, CheckCircle2, Clock, XCircle, AlertTriangle,
-  Download, FileText, FileType2,
+  Download, FileText,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
@@ -244,13 +244,6 @@ export default function BimbinganPage() {
                   className="cursor-pointer text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)]"
                 >
                   <FileText className="h-4 w-4 mr-2" /> Export PDF
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onClick={() => handleExport('docx')}
-                  disabled={!canExport || exporting}
-                  className="cursor-pointer text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)]"
-                >
-                  <FileType2 className="h-4 w-4 mr-2" /> Export Word
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

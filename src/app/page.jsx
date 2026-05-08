@@ -25,6 +25,8 @@ const ROLE_ICONS = [GraduationCap, Users, ShieldCheck, ClipboardList];
 const FEATURE_ICONS = [BookOpenText, MessageSquareText, ShieldCheck, CalendarClock];
 const STEP_ICONS = [Sparkles, BookOpenText, ClipboardList, MessageSquareText, CheckCircle2];
 const projectOne = PROJECT_OUTPUTS.project1;
+const projectTwo = PROJECT_OUTPUTS.project2;
+const projectThree = PROJECT_OUTPUTS.project3;
 
 const fadeUp = {
   hidden: { opacity: 0, y: 24 },
@@ -281,6 +283,16 @@ export default function LandingPage() {
                     <ArrowRight className="h-4 w-4" />
                   </Button>
                 </Link>
+                <Link href="/luaran-proyek-2">
+                  <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
+                    Lihat Luaran Proyek 2
+                  </Button>
+                </Link>
+                <Link href="/luaran-proyek-3">
+                  <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
+                    Lihat Luaran Proyek 3
+                  </Button>
+                </Link>
                 <Link href="/panduan-pengguna">
                   <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
                     Buka Panduan
@@ -290,7 +302,7 @@ export default function LandingPage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-2">
-              {projectOne.deliverables.map((item) => (
+              {[projectOne.deliverables[0], projectTwo.deliverables[0], projectThree.deliverables[0], projectThree.deliverables[2]].map((item) => (
                 <article key={item.title} className="soft-card rounded-[28px] p-5">
                   <span className="inline-flex rounded-full border border-[hsl(var(--ctp-green)/0.22)] bg-[hsl(var(--ctp-green)/0.12)] px-3 py-1 text-xs font-semibold text-[hsl(var(--ctp-green))]">
                     {item.status}
