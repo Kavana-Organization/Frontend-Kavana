@@ -48,6 +48,11 @@ export const REALTIME_EVENTS = Object.freeze({
   // Admin
   ADMIN_USER_UPDATED: 'admin.user.updated',
   ADMIN_AUDIT_TOUCHED: 'admin.audit.touched',
+
+  // Revisi pasca sidang
+  SIDANG_HASIL_UPDATED: 'sidang.hasil-updated',
+  REVISI_SUBMITTED: 'revisi.submitted',
+  REVISI_REVIEWED: 'revisi.reviewed',
 });
 
 // Mapping event → cache prefix yang relevan. Sumber kebenaran tunggal — jangan
@@ -162,6 +167,27 @@ export const EVENT_PREFIX_MAP = Object.freeze({
   [REALTIME_EVENTS.ADMIN_AUDIT_TOUCHED]: [
     '/api/admin/activity',
     '/api/admin/audit-logs',
+  ],
+
+  [REALTIME_EVENTS.SIDANG_HASIL_UPDATED]: [
+    '/api/mahasiswa/sidang',
+    '/api/mahasiswa/revisi-sidang',
+    '/api/koordinator/sidang',
+    '/api/koordinator/revisi-sidang',
+    '/api/dosen/revisi-sidang',
+    '/api/notifications/stats',
+  ],
+  [REALTIME_EVENTS.REVISI_SUBMITTED]: [
+    '/api/mahasiswa/revisi-sidang',
+    '/api/dosen/revisi-sidang',
+    '/api/koordinator/revisi-sidang',
+    '/api/notifications/stats',
+  ],
+  [REALTIME_EVENTS.REVISI_REVIEWED]: [
+    '/api/mahasiswa/revisi-sidang',
+    '/api/dosen/revisi-sidang',
+    '/api/koordinator/revisi-sidang',
+    '/api/notifications/stats',
   ],
 });
 

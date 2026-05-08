@@ -31,6 +31,7 @@ export const MENU_CONFIG = {
         { id: 'proposal', label: 'Upload Proposal', icon: Upload },
         { id: 'laporan', label: 'Upload Laporan Sidang', icon: FileText },
         { id: 'hasil', label: 'Nilai & Hasil Akhir', icon: GraduationCap },
+        { id: 'revisi-sidang', label: 'Revisi Sidang', icon: ClipboardCheck },
         { id: 'profile', label: 'Profil Saya', icon: User },
         { id: 'settings', label: 'Pengaturan', icon: Settings },
     ],
@@ -39,6 +40,7 @@ export const MENU_CONFIG = {
         { id: 'mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: Users },
         { id: 'bimbingan-approve', label: 'Approve Bimbingan', icon: CheckCircle },
         { id: 'laporan-approve', label: 'Approve Laporan Sidang', icon: ClipboardCheck },
+        { id: 'revisi-approve', label: 'Approve Revisi Sidang', icon: ClipboardCheck },
         { id: 'profile', label: 'Profil Saya', icon: User },
         { id: 'settings', label: 'Pengaturan', icon: Settings },
     ],
@@ -49,11 +51,13 @@ export const MENU_CONFIG = {
         { id: 'approve-pembimbing', label: 'Assign Pembimbing', icon: UserCheck },
         { id: 'daftar-mahasiswa', label: 'Daftar Mahasiswa', icon: Users },
         { id: 'jadwal-sidang', label: 'Jadwal Sidang', icon: CalendarDays },
+        { id: 'revisi-monitoring', label: 'Monitoring Revisi', icon: BarChart3 },
         // Dosen Pembimbing features (koordinator juga dosen)
         { id: 'separator', label: 'Dosen Pembimbing', icon: null },
         { id: 'mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: GraduationCap },
         { id: 'bimbingan-approve', label: 'Approve Bimbingan', icon: CheckCircle },
         { id: 'laporan-approve', label: 'Approve Laporan Sidang', icon: ClipboardCheck },
+        { id: 'revisi-approve', label: 'Approve Revisi Sidang', icon: ClipboardCheck },
         { id: 'profile', label: 'Profil Saya', icon: User },
         { id: 'settings', label: 'Pengaturan', icon: Settings },
     ],
@@ -69,11 +73,13 @@ export const MENU_CONFIG = {
         { id: 'approve-pembimbing', label: 'Assign Pembimbing', icon: UserCheck },
         { id: 'daftar-mahasiswa', label: 'Daftar Mahasiswa', icon: Users },
         { id: 'jadwal-sidang', label: 'Jadwal Sidang', icon: CalendarDays },
+        { id: 'revisi-monitoring', label: 'Monitoring Revisi', icon: BarChart3 },
         // Dosen Pembimbing features
         { id: 'separator-dosen', label: 'Dosen Pembimbing', icon: null },
         { id: 'mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: GraduationCap },
         { id: 'bimbingan-approve', label: 'Approve Bimbingan', icon: CheckCircle },
         { id: 'laporan-approve', label: 'Approve Laporan Sidang', icon: ClipboardCheck },
+        { id: 'revisi-approve', label: 'Approve Revisi Sidang', icon: ClipboardCheck },
         { id: 'profile', label: 'Profil Saya', icon: User },
         { id: 'settings', label: 'Pengaturan', icon: Settings },
     ],
@@ -121,6 +127,9 @@ export const TITLE_MAP = {
     monitoring: 'Monitoring Mahasiswa',
     'kelola-users': 'Kelola Users',
     'kelola-dosen': 'Kelola Dosen',
+    'revisi-sidang': 'Revisi Sidang',
+    'revisi-approve': 'Approve Revisi Sidang',
+    'revisi-monitoring': 'Monitoring Revisi',
 };
 
 // ---------- ROLE DASHBOARD ROUTES ----------

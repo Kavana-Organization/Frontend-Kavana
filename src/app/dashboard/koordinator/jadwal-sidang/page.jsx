@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { AlertTriangle, CalendarClock, Clock3, MapPin, Plus, UserRound, Users } from 'lucide-react';
+import { AlertTriangle, CalendarClock, CheckCircle2, Clock3, MapPin, Plus, UserRound, Users } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -22,6 +23,12 @@ import { koordinatorAPI } from '@/lib/api';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
 const INITIAL_FORM = { mahasiswa_id: '', penguji_id: '', tanggal: '', waktu: '', ruangan: '' };
+
+const HASIL_OPTIONS = [
+  { value: 'lulus', label: 'Lulus (Tanpa Revisi)' },
+  { value: 'lulus_revisi', label: 'Lulus dengan Revisi' },
+  { value: 'tidak_lulus', label: 'Tidak Lulus' },
+];
 
 function buildGroupOptionValue(memberIds) {
   const ids = (Array.isArray(memberIds) ? memberIds : [])
@@ -108,6 +115,9 @@ export default function JadwalSidangPage() {
   const [form, setForm] = useState(INITIAL_FORM);
   const [mahasiswa, setMahasiswa] = useState([]);
   const [penguji, setPenguji] = useState([]);
+  const [hasilTarget, setHasilTarget] = useState(null);
+  const [hasilForm, setHasilForm] = useState({ hasil_sidang: 'lulus', catatan_sidang: '' });
+  const [submittingHasil, setSubmittingHasil] = useState(false);
 
   useEffect(() => {
     if (role && !['koordinator', 'kaprodi'].includes(role)) {
@@ -385,6 +395,37 @@ export default function JadwalSidangPage() {
     }
   };
 
+  const openHasil = (jadwal) => {
+    setHasilTarget(jadwal);
+    setHasilForm({
+      hasil_sidang: jadwal?.hasil_sidang || 'lulus',
+      catatan_sidang: jadwal?.catatan_sidang || '',
+    });
+  };
+
+  const handleSubmitHasil = async (e) => {
+    e.preventDefault();
+    if (!hasilTarget) return;
+    setSubmittingHasil(true);
+    try {
+      const res = await koordinatorAPI.setHasilSidang(hasilTarget.id, {
+        hasil_sidang: hasilForm.hasil_sidang,
+        catatan_sidang: hasilForm.catatan_sidang.trim() || undefined,
+      });
+      if (res.ok) {
+        toast.success(res.data?.message || 'Hasil sidang berhasil disimpan');
+        setHasilTarget(null);
+        loadData();
+      } else {
+        toast.error(res.error || 'Gagal menyimpan hasil sidang');
+      }
+    } catch {
+      toast.error('Kesalahan jaringan');
+    } finally {
+      setSubmittingHasil(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -463,7 +504,22 @@ export default function JadwalSidangPage() {
                         </Badge>
                       </div>
                     </div>
-                    <Badge className={`rounded-xl border ${statusClass(j.status)}`}>{statusLabel(j.status)}</Badge>
+                    <div className="flex flex-col items-end gap-2 shrink-0">
+                      <Badge className={`rounded-xl border ${statusClass(j.status)}`}>{statusLabel(j.status)}</Badge>
+                      {String(j.status || '').toLowerCase() !== 'completed' ? (
+                        <Button
+                          type="button"
+                          onClick={() => openHasil(j)}
+                          className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)] text-xs px-3 py-1 h-auto"
+                        >
+                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Selesaikan
+                        </Button>
+                      ) : j.hasil_sidang ? (
+                        <Badge className="rounded-xl border bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))] border-[hsl(var(--ctp-blue)/0.35)]">
+                          {HASIL_OPTIONS.find((o) => o.value === j.hasil_sidang)?.label || j.hasil_sidang}
+                        </Badge>
+                      ) : null}
+                    </div>
                   </div>
                 </div>
               ))}
@@ -599,6 +655,65 @@ export default function JadwalSidangPage() {
             </Button>
           </div>
         </form>
+      </DashboardDialog>
+
+      <DashboardDialog
+        open={!!hasilTarget}
+        onOpenChange={(open) => { if (!open) setHasilTarget(null); }}
+        title="Selesaikan Sidang"
+      >
+        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-3">Tandai Hasil Sidang</h3>
+        {hasilTarget ? (
+          <form onSubmit={handleSubmitHasil} className="space-y-3">
+            <p className="text-sm text-[hsl(var(--ctp-subtext1))]">
+              {hasilTarget.display_nama || hasilTarget.mahasiswa_nama || '-'} · {formatTanggal(hasilTarget.tanggal)} {formatWaktu(hasilTarget.waktu)}
+            </p>
+            <div>
+              <Label className="text-[hsl(var(--ctp-subtext1))]">Hasil Sidang</Label>
+              <Select value={hasilForm.hasil_sidang} onValueChange={(v) => setHasilForm({ ...hasilForm, hasil_sidang: v })}>
+                <SelectTrigger className={inputCls}>
+                  <SelectValue placeholder="Pilih hasil" />
+                </SelectTrigger>
+                <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
+                  {HASIL_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-[hsl(var(--ctp-subtext1))]">Catatan Sidang (Opsional)</Label>
+              <Textarea
+                rows={3}
+                value={hasilForm.catatan_sidang}
+                onChange={(e) => setHasilForm({ ...hasilForm, catatan_sidang: e.target.value })}
+                placeholder="Catatan untuk mahasiswa, mis. poin revisi"
+                className={inputCls}
+              />
+            </div>
+            <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))]">
+              {hasilForm.hasil_sidang === 'lulus_revisi'
+                ? 'Mahasiswa akan menerima email dan menu revisi sidang akan terbuka.'
+                : 'Hasil ini akan langsung men-set sidang ke status completed.'}
+            </div>
+            <div className="flex justify-end gap-2 pt-2">
+              <Button
+                type="button"
+                onClick={() => setHasilTarget(null)}
+                className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
+              >
+                Batal
+              </Button>
+              <Button
+                type="submit"
+                disabled={submittingHasil}
+                className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
+              >
+                {submittingHasil ? 'Menyimpan...' : 'Simpan Hasil'}
+              </Button>
+            </div>
+          </form>
+        ) : null}
       </DashboardDialog>
     </motion.div>
   );

@@ -348,6 +348,16 @@ export const mahasiswaAPI = {
     getMyLaporan: () => apiRequest('/api/mahasiswa/laporan'),
     getMySidang: () => apiRequest('/api/mahasiswa/sidang'),
 
+    getMyRevisi: () => apiRequest('/api/mahasiswa/revisi-sidang'),
+    submitRevisi: (data) =>
+        apiRequest('/api/mahasiswa/revisi-sidang', {
+            method: 'POST',
+            body: JSON.stringify(data),
+        }).then((result) => {
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.REVISI_SUBMITTED);
+            return result;
+        }),
+
     exportBimbingan: async (format = 'pdf') => {
         const fmt = format === 'docx' ? 'docx' : 'pdf';
         const token = getToken();
@@ -409,6 +419,17 @@ export const dosenAPI = {
         }),
 
     getLaporanList: () => apiRequest('/api/dosen/laporan'),
+
+    // Revisi pasca sidang
+    getRevisiList: () => apiRequest('/api/dosen/revisi-sidang'),
+    reviewRevisi: (id, payload) =>
+        apiRequest(`/api/dosen/revisi-sidang/${id}/status`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        }).then((result) => {
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.REVISI_REVIEWED);
+            return result;
+        }),
 
     approveLaporan: (laporanId, status, note = '') =>
         apiRequest(`/api/dosen/laporan/${laporanId}/status`, {
@@ -500,6 +521,17 @@ export const koordinatorAPI = {
         }),
 
     getMySemester: () => apiRequest('/api/koordinator/my-semester'),
+
+    // Revisi pasca sidang (monitoring)
+    getRevisiMonitoring: () => apiRequest('/api/koordinator/revisi-sidang'),
+    setHasilSidang: (id, payload) =>
+        apiRequest(`/api/sidang/${id}/hasil`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        }).then((result) => {
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.SIDANG_HASIL_UPDATED);
+            return result;
+        }),
     getAllMahasiswa: (options = {}) => {
         const grouped = options.grouped !== false;
         return apiRequest(`/api/koordinator/mahasiswa${grouped ? '' : '?grouped=false'}`);
