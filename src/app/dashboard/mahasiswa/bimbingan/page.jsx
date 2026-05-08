@@ -32,6 +32,31 @@ const STATUS_MAP = {
   rejected: { label: 'Revisi', color: 'ctp-red', Icon: XCircle },
 };
 
+function toDateInputValue(value) {
+  if (!value) return '';
+  const text = String(value);
+  const match = text.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (match) return match[1];
+
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return '';
+
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
+function todayDateInputValue() {
+  return toDateInputValue(new Date());
+}
+
+function maxDateValue(first, second) {
+  if (!first) return second || '';
+  if (!second) return first;
+  return first > second ? first : second;
+}
+
 export default function BimbinganPage() {
   const router = useRouter();
   const { role } = useAuthStore();
@@ -41,6 +66,7 @@ export default function BimbinganPage() {
   const [dosenNama, setDosenNama] = useState('');
   const [trackName, setTrackName] = useState('');
   const [judulProyek, setJudulProyek] = useState('');
+  const [bimbinganStartDate, setBimbinganStartDate] = useState('');
   const [showModal, setShowModal] = useState(false);
   const [editIdx, setEditIdx] = useState(-1);
   const [form, setForm] = useState({ date: '', topic: '', notes: '' });
@@ -60,11 +86,15 @@ export default function BimbinganPage() {
         setDosenNama(p.dosen_nama || '');
         setJudulProyek(p.judul_proyek || '');
         setHasPembimbing(p.status_proposal === 'approved' && !!p.dosen_nama);
+        const approvedEnrollment = Array.isArray(p.enrollments)
+          ? p.enrollments.find((e) => e.status_proposal === 'approved' && e.dosen_id)
+          : null;
+        setBimbinganStartDate(toDateInputValue(p.bimbingan_start_at || approvedEnrollment?.updated_at || p.updated_at || p.created_at));
       }
       const bimRes = await mahasiswaAPI.getMyBimbingan();
       if (bimRes.ok && bimRes.data) {
         setSessions(bimRes.data.map(b => ({
-          id: b.id, date: b.tanggal, topic: b.topik || b.kegiatan || '',
+          id: b.id, date: toDateInputValue(b.tanggal), topic: b.topik || b.kegiatan || '',
           notes: b.catatan || '', mingguKe: b.minggu_ke, status: b.status || 'pending',
         })));
       }
@@ -74,9 +104,9 @@ export default function BimbinganPage() {
 
   const openAdd = () => {
     if (!hasPembimbing) { toast.warning('Upload proposal dan dapatkan dosen pembimbing terlebih dahulu.'); return; }
-    if (sessions.length >= MAX_SESSIONS) { toast.info('Bimbingan sudah mencapai 8 sesi.'); return; }
+    if (activeSessionCount >= MAX_SESSIONS) { toast.info('Bimbingan aktif sudah mencapai 8 sesi. Tunggu review dosen atau ajukan ulang jika ada yang ditolak.'); return; }
     setEditIdx(-1);
-    setForm({ date: new Date().toISOString().split('T')[0], topic: '', notes: '' });
+    setForm({ date: maxDateValue(todayDateInputValue(), bimbinganStartDate), topic: '', notes: '' });
     setShowModal(true);
   };
 
@@ -88,9 +118,13 @@ export default function BimbinganPage() {
 
   const handleSubmit = async () => {
     if (!form.date || !form.topic || !form.notes) { toast.error('Semua field wajib diisi'); return; }
+    if (bimbinganStartDate && form.date < bimbinganStartDate) {
+      toast.error(`Tanggal bimbingan tidak boleh sebelum ${bimbinganStartDate}`);
+      return;
+    }
     try {
       const res = await mahasiswaAPI.createBimbingan({
-        tanggal: form.date, minggu_ke: sessions.length + 1, topik: form.topic, catatan: form.notes,
+        tanggal: form.date, minggu_ke: nextSessionNumber, topik: form.topic, catatan: form.notes,
       });
       if (res.ok) { toast.success('Bimbingan berhasil disimpan'); setShowModal(false); loadAll(); }
       else toast.error(res.error || 'Gagal menyimpan');
@@ -98,6 +132,8 @@ export default function BimbinganPage() {
   };
 
   const approvedCount = sessions.filter(s => s.status === 'approved').length;
+  const activeSessionCount = sessions.filter(s => s.status !== 'rejected').length;
+  const nextSessionNumber = Math.min(MAX_SESSIONS, activeSessionCount + 1);
   const canExport = hasPembimbing && !!judulProyek && approvedCount > 0;
 
   const handleExport = async (format) => {
@@ -117,7 +153,7 @@ export default function BimbinganPage() {
     }
   };
 
-  const progress = (sessions.length / MAX_SESSIONS) * 100;
+  const progress = (approvedCount / MAX_SESSIONS) * 100;
 
   if (loading) {
     return (
@@ -149,12 +185,12 @@ export default function BimbinganPage() {
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Progress Bimbingan</p>
-              <span className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{sessions.length}/{MAX_SESSIONS}</span>
+              <span className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{approvedCount}/{MAX_SESSIONS}</span>
             </div>
             <Progress value={progress} className="mt-2" />
             <div className="flex gap-1 mt-2">
               {Array.from({ length: MAX_SESSIONS }, (_, i) => (
-                <div key={i} className={`h-2 flex-1 rounded-full ${i < sessions.length ? 'bg-[hsl(var(--ctp-lavender))]' : 'bg-[hsl(var(--ctp-surface1))]'}`} />
+                <div key={i} className={`h-2 flex-1 rounded-full ${i < approvedCount ? 'bg-[hsl(var(--ctp-lavender))]' : 'bg-[hsl(var(--ctp-surface1))]'}`} />
               ))}
             </div>
           </CardContent>
@@ -199,7 +235,7 @@ export default function BimbinganPage() {
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-            <Button onClick={openAdd} disabled={sessions.length >= MAX_SESSIONS} className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]">
+            <Button onClick={openAdd} disabled={activeSessionCount >= MAX_SESSIONS} className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]">
               <Plus className="h-4 w-4 mr-1" /> Tambah
             </Button>
           </div>
@@ -221,7 +257,7 @@ export default function BimbinganPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs text-[hsl(var(--ctp-subtext0))]">{s.date}</span>
+                        <span className="text-xs text-[hsl(var(--ctp-subtext0))]">{s.date || '-'}</span>
                         <Badge className={`rounded-xl text-[10px] border border-[hsl(var(--${st.color})/0.35)] bg-[hsl(var(--${st.color})/0.12)] text-[hsl(var(--${st.color}))]`}>
                           {st.label}
                         </Badge>
@@ -243,12 +279,17 @@ export default function BimbinganPage() {
       {/* Modal */}
       <DashboardDialog open={showModal} onOpenChange={setShowModal}>
         <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-4">
-          {editIdx >= 0 ? `Edit Bimbingan ke-${editIdx + 1}` : `Tambah Bimbingan ke-${sessions.length + 1}`}
+          {editIdx >= 0 ? `Edit Bimbingan ke-${editIdx + 1}` : `Tambah Bimbingan ke-${nextSessionNumber}`}
         </h3>
         <div className="space-y-3">
           <div>
             <Label className="text-[hsl(var(--ctp-subtext1))]">Tanggal</Label>
-            <Input type="date" value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
+            <Input type="date" min={bimbinganStartDate || undefined} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
+            {bimbinganStartDate && (
+              <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">
+                Tanggal minimal bimbingan: {bimbinganStartDate}
+              </p>
+            )}
           </div>
           <div>
             <Label className="text-[hsl(var(--ctp-subtext1))]">Topik / Kegiatan</Label>
