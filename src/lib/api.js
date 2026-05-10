@@ -544,6 +544,28 @@ export const koordinatorAPI = {
 };
 
 // ========================================
+// PENGUJI API
+// ========================================
+
+export const pengujiAPI = {
+    getProfile: () => apiRequest('/api/dosen/profile'),
+    getStats: () => apiRequest('/api/dosen/stats'),
+    getSidangList: async () => {
+        const primary = await apiRequest('/api/penguji/sidang');
+        if (primary.ok) return primary;
+        return apiRequest('/api/koordinator/sidang');
+    },
+    setHasilSidang: (id, payload) =>
+        apiRequest(`/api/sidang/${id}/hasil`, {
+            method: 'PATCH',
+            body: JSON.stringify(payload),
+        }).then((result) => {
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.SIDANG_HASIL_UPDATED);
+            return result;
+        }),
+};
+
+// ========================================
 // KAPRODI API
 // ========================================
 

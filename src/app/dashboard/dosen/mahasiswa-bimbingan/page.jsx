@@ -22,7 +22,7 @@ export default function MahasiswaBimbinganPage() {
   const [search, setSearch] = useState('');
 
   useEffect(() => {
-    if (role && !['dosen','koordinator','kaprodi'].includes(role)) { router.replace(`/dashboard/${role}`); return; }
+    if (role && !['dosen','penguji','koordinator','kaprodi'].includes(role)) { router.replace(`/dashboard/${role}`); return; }
     loadData();
   }, [role]);
 

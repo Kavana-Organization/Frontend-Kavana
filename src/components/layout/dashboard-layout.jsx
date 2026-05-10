@@ -127,6 +127,11 @@ const NOTIFICATION_ROUTE_OVERRIDES = {
   dosen: {
     'mahasiswa-bimbingan': 'bimbingan-approve',
   },
+  penguji: {
+    'mahasiswa-bimbingan': 'bimbingan-approve',
+    'jadwal-sidang': 'sidang',
+    hasil: 'sidang',
+  },
   koordinator: {
     'mahasiswa-bimbingan': 'bimbingan-approve',
   },

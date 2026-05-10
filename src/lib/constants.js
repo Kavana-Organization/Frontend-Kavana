@@ -44,6 +44,18 @@ export const MENU_CONFIG = {
         { id: 'profile', label: 'Profil Saya', icon: User },
         { id: 'settings', label: 'Pengaturan', icon: Settings },
     ],
+    penguji: [
+        { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
+        { id: 'sidang', label: 'Sidang Penguji', icon: GraduationCap },
+        // Penguji tetap dosen, jadi fitur pembimbing tetap tersedia.
+        { id: 'separator-dosen', label: 'Dosen Pembimbing', icon: null },
+        { id: 'mahasiswa-bimbingan', label: 'Mahasiswa Bimbingan', icon: Users },
+        { id: 'bimbingan-approve', label: 'Approve Bimbingan', icon: CheckCircle },
+        { id: 'laporan-approve', label: 'Approve Laporan Sidang', icon: ClipboardCheck },
+        { id: 'revisi-approve', label: 'Approve Revisi Sidang', icon: ClipboardCheck },
+        { id: 'profile', label: 'Profil Saya', icon: User },
+        { id: 'settings', label: 'Pengaturan', icon: Settings },
+    ],
     koordinator: [
         { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
         { id: 'kelola-periode', label: 'Kelola Periode', icon: CalendarDays },
@@ -97,6 +109,7 @@ export const MENU_CONFIG = {
 export const ROLE_LABEL = {
     mahasiswa: 'Mahasiswa',
     dosen: 'Dosen Pembimbing',
+    penguji: 'Dosen Penguji',
     koordinator: 'Koordinator',
     kaprodi: 'Kepala Prodi',
     admin: 'Administrator',
@@ -117,6 +130,7 @@ export const TITLE_MAP = {
     'mahasiswa-bimbingan': 'Mahasiswa Bimbingan',
     'bimbingan-approve': 'Approve Bimbingan',
     'laporan-approve': 'Approve Laporan Sidang',
+    sidang: 'Sidang Penguji',
     'validasi-proposal': 'Validasi Proposal',
     'approve-pembimbing': 'Assign Pembimbing',
     'daftar-mahasiswa': 'Daftar Mahasiswa',
@@ -137,6 +151,7 @@ export const TITLE_MAP = {
 export const ROLE_DASHBOARD_ROUTE = {
     mahasiswa: '/dashboard/mahasiswa',
     dosen: '/dashboard/dosen',
+    penguji: '/dashboard/penguji',
     koordinator: '/dashboard/koordinator',
     kaprodi: '/dashboard/kaprodi',
     admin: '/dashboard/admin',
