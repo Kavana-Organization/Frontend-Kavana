@@ -1,12 +1,12 @@
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState, useMemo, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
   ArrowUpRight, ArrowDownRight, CalendarDays, UploadCloud, AlertTriangle,
   MessageSquareText, Plus, CheckCircle2, Clock, FileText, GraduationCap,
-  Settings,
+  Settings, MapPin, UserCheck,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -30,6 +30,12 @@ import { removeAcademicTitles } from '@/lib/validators';
 const APPROVED_STATUSES = new Set(['approved', 'disetujui']);
 const WAITING_STATUSES = new Set(['waiting', 'pending', 'menunggu']);
 const REJECTED_STATUSES = new Set(['rejected', 'ditolak']);
+const SIDANG_TONE_CLASSES = {
+  green: 'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))]',
+  peach: 'border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] text-[hsl(var(--ctp-peach))]',
+  yellow: 'border-[hsl(var(--ctp-yellow)/0.35)] bg-[hsl(var(--ctp-yellow)/0.12)] text-[hsl(var(--ctp-yellow))]',
+  blue: 'border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]',
+};
 
 function normalizeStatus(value) {
   return String(value || '').toLowerCase();
@@ -45,6 +51,65 @@ function isWaitingStatus(value) {
 
 function isRejectedStatus(value) {
   return REJECTED_STATUSES.has(normalizeStatus(value));
+}
+
+function getFirstRecord(value) {
+  if (Array.isArray(value)) return value[0] || null;
+  if (Array.isArray(value?.data)) return value.data[0] || null;
+  if (value?.data && typeof value.data === 'object') return value.data;
+  if (value?.sidang && typeof value.sidang === 'object') return value.sidang;
+  if (value?.jadwal && typeof value.jadwal === 'object') return value.jadwal;
+  return value || null;
+}
+
+function formatDate(value) {
+  if (!value) return '-';
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
+  return date.toLocaleDateString('id-ID', {
+    weekday: 'long',
+    day: 'numeric',
+    month: 'long',
+    year: 'numeric',
+  });
+}
+
+function formatTime(value) {
+  if (!value) return '-';
+  const raw = String(value);
+  if (/^\d{2}:\d{2}/.test(raw)) return raw.slice(0, 5);
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return raw;
+  return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+}
+
+function getSidangStatus({ sidang, laporanStatus, approvedCount }) {
+  if (sidang?.tanggal || sidang?.tanggal_sidang || sidang?.waktu || sidang?.waktu_sidang || sidang?.ruangan) {
+    return {
+      label: 'Sudah dijadwalkan',
+      description: 'Jadwal sidang sudah ditentukan oleh koordinator.',
+      tone: 'green',
+    };
+  }
+  if (approvedCount < 8) {
+    return {
+      label: 'Belum memenuhi syarat',
+      description: `Minimal 8 bimbingan disetujui. Saat ini ${approvedCount}/8.`,
+      tone: 'peach',
+    };
+  }
+  if (!isApprovedStatus(laporanStatus)) {
+    return {
+      label: 'Menunggu laporan disetujui',
+      description: 'Jadwal sidang aktif setelah laporan sidang disetujui.',
+      tone: 'yellow',
+    };
+  }
+  return {
+    label: 'Belum dijadwalkan',
+    description: 'Syarat sudah terpenuhi, menunggu koordinator membuat jadwal sidang.',
+    tone: 'blue',
+  };
 }
 
 // ==========================================
@@ -138,7 +203,33 @@ export default function MahasiswaDashboard() {
   const [profile, setProfile] = useState(null);
   const [bimbinganList, setBimbinganList] = useState([]);
   const [laporanData, setLaporanData] = useState(null);
+  const [sidangData, setSidangData] = useState(null);
   const [loading, setLoading] = useState(true);
+
+  const loadDashboard = useCallback(async () => {
+    try {
+      const [profileRes, bimbinganRes, laporanRes, sidangRes] = await Promise.all([
+        mahasiswaAPI.getProfile(),
+        mahasiswaAPI.getMyBimbingan(),
+        mahasiswaAPI.getMyLaporan().catch(() => ({ ok: false })),
+        mahasiswaAPI.getMySidang().catch(() => ({ ok: false })),
+      ]);
+      if (profileRes.ok) { setProfile(profileRes.data); setUser(profileRes.data); }
+      if (bimbinganRes.ok) {
+        setBimbinganList(Array.isArray(bimbinganRes.data) ? bimbinganRes.data : bimbinganRes.data?.data || []);
+      }
+      if (laporanRes.ok) {
+        setLaporanData(getFirstRecord(laporanRes.data));
+      }
+      if (sidangRes.ok) {
+        setSidangData(getFirstRecord(sidangRes.data));
+      }
+    } catch (err) {
+      console.error('Error loading dashboard:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, [setUser]);
 
   useEffect(() => {
     if (role && role !== 'mahasiswa') {
@@ -146,30 +237,7 @@ export default function MahasiswaDashboard() {
       return;
     }
     loadDashboard();
-  }, [role]);
-
-  const loadDashboard = async () => {
-    try {
-      const [profileRes, bimbinganRes, laporanRes] = await Promise.all([
-        mahasiswaAPI.getProfile(),
-        mahasiswaAPI.getMyBimbingan(),
-        mahasiswaAPI.getMyLaporan().catch(() => ({ ok: false })),
-      ]);
-      if (profileRes.ok) { setProfile(profileRes.data); setUser(profileRes.data); }
-      if (bimbinganRes.ok) {
-        setBimbinganList(Array.isArray(bimbinganRes.data) ? bimbinganRes.data : bimbinganRes.data?.data || []);
-      }
-      if (laporanRes.ok) {
-        // laporanRes.data could be an object or array
-        const lap = Array.isArray(laporanRes.data) ? laporanRes.data[0] : laporanRes.data;
-        setLaporanData(lap || null);
-      }
-    } catch (err) {
-      console.error('Error loading dashboard:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadDashboard, role, router]);
 
   const displayName = removeAcademicTitles(user?.nama || profile?.nama || 'Mahasiswa');
   const approvedCount = bimbinganList.filter((b) => isApprovedStatus(b.status)).length;
@@ -183,6 +251,11 @@ export default function MahasiswaDashboard() {
 
   // Laporan status from real API
   const laporanStatus = laporanData?.status || laporanData?.status_laporan || 'belum';
+  const sidangStatus = getSidangStatus({ sidang: sidangData, laporanStatus, approvedCount });
+  const sidangDate = sidangData?.tanggal_sidang || sidangData?.tanggal || sidangData?.date;
+  const sidangTime = sidangData?.waktu_sidang || sidangData?.waktu || sidangData?.time;
+  const sidangRoom = sidangData?.ruangan || sidangData?.room;
+  const sidangPenguji = sidangData?.penguji_nama || sidangData?.nama_penguji || sidangData?.penguji;
 
   const recentActivity = useMemo(() => {
     return bimbinganList.slice(0, 5).map((b, i) => ({
@@ -234,7 +307,7 @@ export default function MahasiswaDashboard() {
       {/* Top workflow row */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         {/* Today / Upcoming Sessions */}
-        <Card className="xl:col-span-4 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -272,8 +345,62 @@ export default function MahasiswaDashboard() {
           </CardContent>
         </Card>
 
+        {/* Jadwal Sidang */}
+        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <CardHeader className="flex flex-row items-start justify-between gap-3">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
+                <CalendarDays className="h-4 w-4" /> Jadwal Sidang
+              </CardTitle>
+              <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Informasi sidang dari koordinator.</CardDescription>
+            </div>
+            <span className={`rounded-full border px-2 py-0.5 text-[11px] ${SIDANG_TONE_CLASSES[sidangStatus.tone] || SIDANG_TONE_CLASSES.blue}`}>
+              {sidangStatus.label}
+            </span>
+          </CardHeader>
+          <CardContent>
+            {sidangData?.tanggal || sidangData?.tanggal_sidang || sidangData?.waktu || sidangData?.ruangan ? (
+              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-4 space-y-3">
+                <div>
+                  <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Tanggal & waktu</p>
+                  <p className="mt-1 text-sm font-semibold text-[hsl(var(--ctp-text))]">
+                    {formatDate(sidangDate)} · {formatTime(sidangTime)}
+                  </p>
+                </div>
+                <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                  <div className="flex items-start gap-2 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.28)] bg-[hsl(var(--ctp-surface0)/0.28)] p-3">
+                    <MapPin className="mt-0.5 h-4 w-4 text-[hsl(var(--ctp-blue))]" />
+                    <div>
+                      <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Ruangan</p>
+                      <p className="text-sm font-medium text-[hsl(var(--ctp-text))]">{sidangRoom || '-'}</p>
+                    </div>
+                  </div>
+                  <div className="flex items-start gap-2 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.28)] bg-[hsl(var(--ctp-surface0)/0.28)] p-3">
+                    <UserCheck className="mt-0.5 h-4 w-4 text-[hsl(var(--ctp-teal))]" />
+                    <div>
+                      <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Penguji</p>
+                      <p className="text-sm font-medium text-[hsl(var(--ctp-text))]">{sidangPenguji || '-'}</p>
+                    </div>
+                  </div>
+                </div>
+                <Link href="/dashboard/mahasiswa/hasil">
+                  <Button variant="secondary" className="ctp-focus h-9 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)]">
+                    <FileText className="h-4 w-4 mr-2" /> Lihat detail
+                  </Button>
+                </Link>
+              </div>
+            ) : (
+              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-6 text-center">
+                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--ctp-overlay1))]" />
+                <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{sidangStatus.label}</p>
+                <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">{sidangStatus.description}</p>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Pending Reviews / Documents */}
-        <Card className="xl:col-span-4 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -321,7 +448,7 @@ export default function MahasiswaDashboard() {
         </Card>
 
         {/* Progress Overview */}
-        <Card className="xl:col-span-4 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
