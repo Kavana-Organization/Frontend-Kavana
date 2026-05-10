@@ -9,7 +9,7 @@ import {
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
-  Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -112,13 +112,13 @@ export default function KaprodiDashboard() {
           <CardContent>
             <div className="h-[280px] w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={trendData} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
+                <BarChart data={trendData} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
                   <CartesianGrid vertical={false} />
                   <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }} />
                   <YAxis tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }} />
                   <Tooltip />
-                  <Area type="monotone" dataKey="v" stroke="hsl(var(--ctp-sapphire))" fill="hsl(var(--ctp-sapphire)/0.18)" strokeWidth={2} />
-                </AreaChart>
+                  <Bar dataKey="v" fill="hsl(var(--ctp-sapphire)/0.65)" radius={[10, 10, 6, 6]} maxBarSize={96} />
+                </BarChart>
               </ResponsiveContainer>
             </div>
           </CardContent>
