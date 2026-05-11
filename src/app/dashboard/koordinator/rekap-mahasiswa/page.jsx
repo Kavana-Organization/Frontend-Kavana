@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Users, Search, RotateCcw, ArrowRightCircle, ShieldCheck } from 'lucide-react';
+import { Users, RotateCcw, ArrowRightCircle, ShieldCheck, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -66,6 +66,7 @@ export default function RekapMahasiswaPage() {
   const [dialogMode, setDialogMode] = useState('repeat');
   const [selectedMahasiswa, setSelectedMahasiswa] = useState(null);
   const [selectedTrack, setSelectedTrack] = useState('');
+  const [conversionNote, setConversionNote] = useState('');
   const [saving, setSaving] = useState(false);
 
   const isKaprodi = role === 'kaprodi';
@@ -93,12 +94,16 @@ export default function RekapMahasiswaPage() {
     internship: list.filter(m => m.track?.includes('internship')).length,
     noTrack: list.filter(m => !m.track).length,
     repeat: list.filter(m => m.repeat_required).length,
+    converted: list.filter(m => Array.isArray(m.converted_tracks) && m.converted_tracks.length > 0).length,
   };
 
   const openDialog = (mode, mahasiswa) => {
     setDialogMode(mode);
     setSelectedMahasiswa(mahasiswa);
-    setSelectedTrack(mode === 'repeat' ? (mahasiswa.repeat_track || '') : (mahasiswa.next_allowed_track || ''));
+    if (mode === 'repeat') setSelectedTrack(mahasiswa.repeat_track || '');
+    else if (mode === 'next') setSelectedTrack(mahasiswa.next_allowed_track || '');
+    else setSelectedTrack('');
+    setConversionNote('');
     setDialogOpen(true);
   };
 
@@ -107,18 +112,49 @@ export default function RekapMahasiswaPage() {
     setDialogOpen(false);
     setSelectedMahasiswa(null);
     setSelectedTrack('');
+    setConversionNote('');
   };
 
   const resetDialogState = () => {
     setDialogOpen(false);
     setSelectedMahasiswa(null);
     setSelectedTrack('');
+    setConversionNote('');
   };
 
   const submitRepeatAction = async () => {
     if (!selectedMahasiswa) return;
-    if ((dialogMode === 'repeat' || dialogMode === 'next') && !selectedTrack) {
+    if ((dialogMode === 'repeat' || dialogMode === 'next' || dialogMode === 'conversion') && !selectedTrack) {
       toast.error('Track wajib dipilih');
+      return;
+    }
+
+    if (dialogMode === 'conversion') {
+      if (selectedMahasiswa.jalur !== 'rpl') {
+        toast.error('Konversi hanya berlaku untuk mahasiswa RPL');
+        return;
+      }
+
+      setSaving(true);
+      try {
+        const res = await kaprodiAPI.convertMahasiswaTrack({
+          mahasiswa_id: selectedMahasiswa.id,
+          track: selectedTrack,
+          note: conversionNote,
+        });
+        if (!res.ok) {
+          toast.error(res.error || 'Gagal mencatat konversi');
+          return;
+        }
+        toast.success(res.data?.message || 'Konversi track berhasil dicatat');
+        resetDialogState();
+        await loadData();
+      } catch (err) {
+        console.error(err);
+        toast.error('Terjadi kesalahan jaringan');
+      } finally {
+        setSaving(false);
+      }
       return;
     }
 
@@ -173,12 +209,13 @@ export default function RekapMahasiswaPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-5">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-6">
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{list.length}</p></CardContent></Card>
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Proyek</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{stats.proyek}</p></CardContent></Card>
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Internship</p><p className="text-2xl font-bold text-[hsl(var(--ctp-mauve))]">{stats.internship}</p></CardContent></Card>
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum Pilih</p><p className="text-2xl font-bold text-[hsl(var(--ctp-peach))]">{stats.noTrack}</p></CardContent></Card>
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Wajib Ulang</p><p className="text-2xl font-bold text-[hsl(var(--ctp-red))]">{stats.repeat}</p></CardContent></Card>
+        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Konversi RPL</p><p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{stats.converted}</p></CardContent></Card>
       </div>
 
       <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
@@ -219,9 +256,19 @@ export default function RekapMahasiswaPage() {
                       </td>
                       <td className="py-2 px-3"><Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">{formatTrack(m.track)}</Badge></td>
                       <td className="py-2 px-3">
-                        <Badge className={`rounded-xl ${getRepeatBadge(m).className}`}>
-                          {getRepeatBadge(m).label}
-                        </Badge>
+                        <div className="flex flex-wrap gap-1.5">
+                          <Badge className={`rounded-xl ${getRepeatBadge(m).className}`}>
+                            {getRepeatBadge(m).label}
+                          </Badge>
+                          {(m.converted_tracks || []).map((track) => (
+                            <Badge
+                              key={track}
+                              className="rounded-xl bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] border border-[hsl(var(--ctp-green)/0.28)]"
+                            >
+                              Konversi {formatTrack(track)}
+                            </Badge>
+                          ))}
+                        </div>
                       </td>
                       <td className="py-2 px-3 text-[hsl(var(--ctp-subtext0))] capitalize">{m.status_proposal || '-'}</td>
                       <td className="py-2 px-3 text-[hsl(var(--ctp-subtext0))]">{m.dosen_nama || '-'}</td>
@@ -256,6 +303,17 @@ export default function RekapMahasiswaPage() {
                               <ShieldCheck className="h-3.5 w-3.5 mr-1" />
                               Clear
                             </Button>
+                            {m.jalur === 'rpl' ? (
+                              <Button
+                                type="button"
+                                size="sm"
+                                onClick={() => openDialog('conversion', m)}
+                                className="rounded-xl bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] hover:bg-[hsl(var(--ctp-green)/0.24)] border border-[hsl(var(--ctp-green)/0.28)]"
+                              >
+                                <BadgeCheck className="h-3.5 w-3.5 mr-1" />
+                                Konversi
+                              </Button>
+                            ) : null}
                           </div>
                         </td>
                       ) : null}
@@ -272,7 +330,11 @@ export default function RekapMahasiswaPage() {
         <DialogContent className="border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0))] text-[hsl(var(--ctp-text))]">
           <DialogHeader>
             <DialogTitle>
-              {dialogMode === 'repeat' ? 'Set Wajib Ulang' : 'Set Izin Lanjut'}
+              {dialogMode === 'repeat'
+                ? 'Set Wajib Ulang'
+                : dialogMode === 'conversion'
+                  ? 'Konversi Track RPL'
+                  : 'Set Izin Lanjut'}
             </DialogTitle>
             <DialogDescription className="text-[hsl(var(--ctp-subtext0))]">
               {selectedMahasiswa
@@ -285,7 +347,9 @@ export default function RekapMahasiswaPage() {
             <p className="text-sm text-[hsl(var(--ctp-subtext0))]">
               {dialogMode === 'repeat'
                 ? 'Mahasiswa akan dikunci hanya ke track ulang ini sampai dinyatakan selesai.'
-                : 'Mahasiswa akan diizinkan mengambil track ini setelah repeat selesai, tetapi tetap harus menunggu periodenya aktif.'}
+                : dialogMode === 'conversion'
+                  ? 'Track yang dikonversi akan dicatat sebagai selesai, sehingga mahasiswa RPL bisa mengambil track berikutnya dan tidak bisa memilih track ini lagi.'
+                  : 'Mahasiswa akan diizinkan mengambil track ini setelah repeat selesai, tetapi tetap harus menunggu periodenya aktif.'}
             </p>
             <Select value={selectedTrack} onValueChange={setSelectedTrack}>
               <SelectTrigger className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]">
@@ -299,6 +363,15 @@ export default function RekapMahasiswaPage() {
                 ))}
               </SelectContent>
             </Select>
+            {dialogMode === 'conversion' ? (
+              <textarea
+                value={conversionNote}
+                onChange={(event) => setConversionNote(event.target.value)}
+                placeholder="Catatan konversi, contoh: Konversi berdasarkan portofolio/rekognisi Proyek 1"
+                rows={3}
+                className="w-full rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-mantle)/0.5)] px-3 py-2 text-sm text-[hsl(var(--ctp-text))] outline-none placeholder:text-[hsl(var(--ctp-subtext0))]"
+              />
+            ) : null}
           </div>
 
           <DialogFooter>

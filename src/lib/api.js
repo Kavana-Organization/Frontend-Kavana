@@ -606,6 +606,15 @@ export const kaprodiAPI = {
             if (result.ok) triggerMutationEvent(REALTIME_EVENTS.MAHASISWA_REPEAT_UPDATED);
             return result;
         }),
+
+    convertMahasiswaTrack: (payload) =>
+        apiRequest('/api/kaprodi/mahasiswa/konversi-track', {
+            method: 'POST',
+            body: JSON.stringify(payload),
+        }).then((result) => {
+            if (result.ok) triggerMutationEvent(REALTIME_EVENTS.MAHASISWA_REPEAT_UPDATED);
+            return result;
+        }),
 };
 
 // ========================================
