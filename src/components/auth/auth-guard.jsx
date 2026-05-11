@@ -39,7 +39,7 @@ export function AuthGuard({ children, allowedRoles = [] }) {
     // Role check (support both single role and roles array)
     if (allowedRoles.length > 0 && role) {
       const userRoles = roles?.length ? roles : [role];
-      const hasAccess = allowedRoles.some(r => userRoles.includes(r));
+      const hasAccess = userRoles.includes('developer') || allowedRoles.some(r => userRoles.includes(r));
       if (!hasAccess) {
         const redirectTo = ROLE_DASHBOARD_ROUTE[role] || '/login';
         router.replace(redirectTo);

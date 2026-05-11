@@ -229,7 +229,11 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
   // refresh notifikasi mengikuti event realtime yang menyentuh /api/notifications/.
   useEffect(() => {
     if (!currentRole) return;
-    loadNotificationStats();
+    const timer = window.setTimeout(() => {
+      loadNotificationStats();
+    }, 0);
+
+    return () => window.clearTimeout(timer);
   }, [currentRole, loadNotificationStats]);
 
   // Refresh dashboard murni event-driven. Tidak ada `setInterval`.

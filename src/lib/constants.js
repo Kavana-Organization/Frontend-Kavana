@@ -18,6 +18,11 @@ import {
     BarChart3,
     Shield,
     Activity,
+    Code2,
+    Server,
+    Database,
+    KeyRound,
+    TerminalSquare,
 } from 'lucide-react';
 
 // ---------- MENU CONFIG ----------
@@ -102,6 +107,16 @@ export const MENU_CONFIG = {
         { id: 'monitoring', label: 'Monitoring Sistem', icon: Activity },
         { id: 'settings', label: 'Pengaturan Sistem', icon: Settings },
     ],
+    developer: [
+        { id: 'dashboard', label: 'Developer Center', icon: Code2 },
+        { id: 'health', label: 'System Health', icon: Server },
+        { id: 'audit-logs', label: 'Audit Logs', icon: Activity },
+        { id: 'auth-logs', label: 'Auth Logs', icon: Shield },
+        { id: 'devices', label: 'Device Lock', icon: KeyRound },
+        { id: 'redis-cache', label: 'Redis Cache', icon: Database },
+        { id: 'permission-matrix', label: 'Permission Matrix', icon: TerminalSquare },
+        { id: 'settings', label: 'Pengaturan Sistem', icon: Settings },
+    ],
 };
 
 // ---------- ROLE LABELS ----------
@@ -113,6 +128,7 @@ export const ROLE_LABEL = {
     koordinator: 'Koordinator',
     kaprodi: 'Kepala Prodi',
     admin: 'Administrator',
+    developer: 'Developer',
 };
 
 // ---------- TITLE MAP ----------
@@ -144,6 +160,12 @@ export const TITLE_MAP = {
     'revisi-sidang': 'Revisi Sidang',
     'revisi-approve': 'Approve Revisi Sidang',
     'revisi-monitoring': 'Monitoring Revisi',
+    health: 'System Health',
+    'audit-logs': 'Audit Logs',
+    'auth-logs': 'Auth Logs',
+    devices: 'Device Lock',
+    'redis-cache': 'Redis Cache',
+    'permission-matrix': 'Permission Matrix',
 };
 
 // ---------- ROLE DASHBOARD ROUTES ----------
@@ -155,6 +177,7 @@ export const ROLE_DASHBOARD_ROUTE = {
     koordinator: '/dashboard/koordinator',
     kaprodi: '/dashboard/kaprodi',
     admin: '/dashboard/admin',
+    developer: '/dashboard/developer',
 };
 
 // ---------- LANDING CONTENT ----------

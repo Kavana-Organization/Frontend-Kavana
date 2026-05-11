@@ -191,11 +191,33 @@ export async function apiRequest(endpoint, options = {}) {
 // AUTH API
 // ========================================
 
+export function getDeveloperDeviceCredentials() {
+    if (typeof window === 'undefined') {
+        return { device_id: null, device_token: null };
+    }
+
+    let deviceId = localStorage.getItem('kavana_developer_device_id');
+    if (!deviceId) {
+        deviceId = window.crypto?.randomUUID?.() || `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`;
+        localStorage.setItem('kavana_developer_device_id', deviceId);
+    }
+
+    return {
+        device_id: deviceId,
+        device_token: localStorage.getItem('kavana_developer_device_token') || null,
+    };
+}
+
+export function saveDeveloperDeviceToken(token) {
+    if (typeof window === 'undefined' || !token) return;
+    localStorage.setItem('kavana_developer_device_token', token);
+}
+
 export const authAPI = {
-    login: async (email, password, turnstile_token) => {
+    login: async (email, password, turnstile_token, developerDevice = {}) => {
         const result = await apiRequest('/api/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password, turnstile_token }),
+            body: JSON.stringify({ email, password, turnstile_token, ...developerDevice }),
         });
 
         if (result.ok && result.data.token) {
@@ -274,6 +296,23 @@ export const authAPI = {
             method: 'POST',
             body: JSON.stringify({ email, otp }),
         }),
+};
+
+export const developerAPI = {
+    getProfile: () => apiRequest('/api/developer/profile'),
+    getHealth: () => apiRequest('/api/developer/health'),
+    getSystemConfig: () => apiRequest('/api/developer/system/config'),
+    getAuditLogs: (limit = 100) => apiRequest(`/api/developer/audit-logs?limit=${limit}`),
+    getAuthLogs: (limit = 100) => apiRequest(`/api/developer/auth-logs?limit=${limit}`),
+    getDevices: () => apiRequest('/api/developer/devices'),
+    revokeDevice: (id) => apiRequest(`/api/developer/devices/${id}/revoke`, { method: 'POST' }),
+    getRedisKeys: (pattern = 'kavana:*') => apiRequest(`/api/developer/redis/keys?pattern=${encodeURIComponent(pattern)}`),
+    clearCache: (payload) => apiRequest('/api/developer/redis/cache', {
+        method: 'DELETE',
+        body: JSON.stringify(payload),
+    }),
+    getPermissionMatrix: () => apiRequest('/api/developer/permissions/matrix'),
+    runSyntheticTests: () => apiRequest('/api/developer/tests/synthetic', { method: 'POST' }),
 };
 
 // ========================================
