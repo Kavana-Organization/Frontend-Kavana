@@ -10,7 +10,7 @@ export function FloatingWhatsApp() {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState('');
 
-  const waNumber = '6285179935117';
+  const waNumber = '6285602213704';
 
   const handleSend = (e) => {
     e.preventDefault();
