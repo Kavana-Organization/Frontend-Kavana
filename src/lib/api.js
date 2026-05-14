@@ -191,33 +191,12 @@ export async function apiRequest(endpoint, options = {}) {
 // AUTH API
 // ========================================
 
-export function getDeveloperDeviceCredentials() {
-    if (typeof window === 'undefined') {
-        return { device_id: null, device_token: null };
-    }
-
-    let deviceId = localStorage.getItem('kavana_developer_device_id');
-    if (!deviceId) {
-        deviceId = window.crypto?.randomUUID?.() || `dev-${Date.now()}-${Math.random().toString(36).slice(2)}`;
-        localStorage.setItem('kavana_developer_device_id', deviceId);
-    }
-
-    return {
-        device_id: deviceId,
-        device_token: localStorage.getItem('kavana_developer_device_token') || null,
-    };
-}
-
-export function saveDeveloperDeviceToken(token) {
-    if (typeof window === 'undefined' || !token) return;
-    localStorage.setItem('kavana_developer_device_token', token);
-}
-
 export const authAPI = {
-    login: async (email, password, turnstile_token, developerDevice = {}) => {
+    login: async (email, password, turnstile_token) => {
         const result = await apiRequest('/api/auth/login', {
             method: 'POST',
-            body: JSON.stringify({ email, password, turnstile_token, ...developerDevice }),
+            credentials: 'include',
+            body: JSON.stringify({ email, password, turnstile_token }),
         });
 
         if (result.ok && result.data.token) {
@@ -228,6 +207,13 @@ export const authAPI = {
 
         return result;
     },
+
+    enrollDeveloperDevice: async (device_id, device_token) =>
+        apiRequest('/api/auth/developer-device/enroll', {
+            method: 'POST',
+            credentials: 'include',
+            body: JSON.stringify({ device_id, device_token }),
+        }),
 
     register: async (data) => {
         return apiRequest('/api/auth/register/mahasiswa', {

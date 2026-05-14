@@ -3,14 +3,14 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { authAPI, getDeveloperDeviceCredentials, saveDeveloperDeviceToken } from '@/lib/api';
+import { authAPI } from '@/lib/api';
 import { useAuthStore } from '@/store/auth-store';
 import { validateEmail, validateNPM } from '@/lib/validators';
 import { ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
@@ -31,8 +31,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
   const [formData, setFormData] = useState({ identifier: '', password: '' });
-  const [showDeveloperDevice, setShowDeveloperDevice] = useState(false);
-  const [developerDevice, setDeveloperDevice] = useState({ device_id: '', device_token: '' });
 
   // Turnstile state
   const [turnstileToken, setTurnstileToken] = useState('');
@@ -79,14 +77,6 @@ export default function LoginPage() {
       renderTurnstile();
     }
   }, [turnstileScriptLoaded, renderTurnstile]);
-
-  useEffect(() => {
-    const credentials = getDeveloperDeviceCredentials();
-    setDeveloperDevice({
-      device_id: credentials.device_id || '',
-      device_token: credentials.device_token || '',
-    });
-  }, []);
 
   // Clean up widget on unmount
   useEffect(() => {
@@ -143,17 +133,10 @@ export default function LoginPage() {
       const result = await authAPI.login(
         formData.identifier.trim(),
         formData.password,
-        turnstileToken || undefined,
-        {
-          device_id: developerDevice.device_id || undefined,
-          device_token: developerDevice.device_token || undefined,
-        }
+        turnstileToken || undefined
       );
 
       if (result.ok) {
-        if (developerDevice.device_token) {
-          saveDeveloperDeviceToken(developerDevice.device_token);
-        }
         storeLogin(result.data.token, result.data.role, result.data.user_id, result.data.roles || []);
         setUser({ nama: result.data.nama, email: result.data.email, roles: result.data.roles });
 
@@ -170,9 +153,14 @@ export default function LoginPage() {
         resetTurnstile();
 
         if (result.status === 403) {
-          // Turnstile verification failed
-          setErrors((prev) => ({ ...prev, turnstile: result.error || 'Verifikasi keamanan gagal. Silakan coba lagi.' }));
-          toast.error(result.error || 'Verifikasi keamanan gagal');
+          const isDeveloperDeviceError = /developer|device|token/i.test(result.error || '');
+          if (isDeveloperDeviceError) {
+            setErrors({ identifier: result.error || 'Device belum diizinkan untuk akun developer' });
+            toast.error(result.error || 'Device belum diizinkan untuk akun developer');
+          } else {
+            setErrors((prev) => ({ ...prev, turnstile: result.error || 'Verifikasi keamanan gagal. Silakan coba lagi.' }));
+            toast.error(result.error || 'Verifikasi keamanan gagal');
+          }
         } else if (result.status === 401) {
           setErrors({ password: 'Email/NPM atau password salah' });
           toast.error('Email/NPM atau password salah');
@@ -325,50 +313,6 @@ export default function LoginPage() {
                     </button>
                   </div>
                   {errors.password ? <p className="text-xs text-[hsl(var(--ctp-red))]">{errors.password}</p> : null}
-                </div>
-
-                <div className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-crust)/0.38)] p-3">
-                  <button
-                    type="button"
-                    onClick={() => setShowDeveloperDevice((prev) => !prev)}
-                    className="flex w-full items-center justify-between text-left text-xs font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))]"
-                  >
-                    <span className="inline-flex items-center gap-2">
-                      <KeyRound className="h-4 w-4" />
-                      Device developer
-                    </span>
-                    <span>{showDeveloperDevice ? 'Tutup' : 'Buka'}</span>
-                  </button>
-
-                  {showDeveloperDevice ? (
-                    <div className="mt-3 grid gap-3">
-                      <div className="space-y-1.5">
-                        <Label htmlFor="developer-device-id" className="text-xs text-[hsl(var(--ctp-subtext0))]">Device ID</Label>
-                        <Input
-                          id="developer-device-id"
-                          value={developerDevice.device_id}
-                          onChange={(event) => setDeveloperDevice((prev) => ({ ...prev, device_id: event.target.value }))}
-                          className={inputCls}
-                          autoComplete="off"
-                        />
-                      </div>
-                      <div className="space-y-1.5">
-                        <Label htmlFor="developer-device-token" className="text-xs text-[hsl(var(--ctp-subtext0))]">Device Token</Label>
-                        <Input
-                          id="developer-device-token"
-                          type="password"
-                          value={developerDevice.device_token}
-                          onChange={(event) => setDeveloperDevice((prev) => ({ ...prev, device_token: event.target.value }))}
-                          placeholder="Token device dari GitHub Secret"
-                          className={inputCls}
-                          autoComplete="off"
-                        />
-                        <p className="text-[11px] leading-5 text-[hsl(var(--ctp-overlay1))]">
-                          Hanya dipakai saat login role developer. Token disimpan lokal setelah login berhasil.
-                        </p>
-                      </div>
-                    </div>
-                  ) : null}
                 </div>
 
                 {/* Cloudflare Turnstile Widget */}
