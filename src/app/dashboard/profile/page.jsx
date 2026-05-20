@@ -207,7 +207,7 @@ export default function ProfilePage() {
         toast.success('Foto profil berhasil diupload!');
         await loadProfile();
       } else {
-        toast.error('Gagal upload foto');
+        toast.error(res.data?.error || res.data?.message || 'Gagal upload foto');
       }
     } catch {
       toast.error('Kesalahan jaringan');
