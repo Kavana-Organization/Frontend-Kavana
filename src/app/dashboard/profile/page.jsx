@@ -197,8 +197,17 @@ export default function ProfilePage() {
   const handleAvatarUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-    if (!file.type.startsWith('image/')) { toast.error('File harus berupa gambar'); return; }
-    if (file.size > 2 * 1024 * 1024) { toast.error('Maksimal 2MB'); return; }
+    const allowedImageTypes = ['image/png', 'image/jpeg'];
+    if (!allowedImageTypes.includes(file.type)) {
+      toast.error('Foto profil harus PNG, JPG, atau JPEG');
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 2 * 1024 * 1024) {
+      toast.error('Ukuran foto maksimal 2MB');
+      e.target.value = '';
+      return;
+    }
 
     setUploading(true);
     try {
@@ -283,7 +292,7 @@ export default function ProfilePage() {
                   <Camera className="w-5 h-5 text-white" />
                 )}
               </button>
-              <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+              <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" className="hidden" onChange={handleAvatarUpload} />
             </div>
 
             {/* Name & badges */}
