@@ -264,53 +264,93 @@ export default function LandingPage() {
         </section>
 
         <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="grid gap-6 lg:grid-cols-[1fr_0.95fr]">
-            <div className="soft-panel rounded-[34px] px-6 py-7 sm:px-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-blue))]">
-                {projectOne.label}
-              </p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">
-                Luaran tahap pertama sudah bisa ditampilkan sebagai demo aplikasi yang utuh.
-              </h2>
-              <p className="mt-4 max-w-2xl text-base leading-8 text-[hsl(var(--ctp-subtext1))]">
-                Fokus awal proyek adalah memperlihatkan bentuk aplikasi implementor secara jelas:
-                halaman publik, autentikasi, dashboard, dan alur inti yang cukup untuk presentasi proyek 1.
-              </p>
-              <div className="mt-6 flex flex-col gap-3 sm:flex-row">
-                <Link href="/luaran-proyek-1">
-                  <Button size="lg" className="w-full px-7 sm:w-auto">
-                    Lihat Luaran Proyek 1
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href="/luaran-proyek-2">
-                  <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                    Lihat Luaran Proyek 2
-                  </Button>
-                </Link>
-                <Link href="/luaran-proyek-3">
-                  <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                    Lihat Luaran Proyek 3
-                  </Button>
-                </Link>
-                <Link href="/panduan-pengguna">
-                  <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                    Buka Panduan
-                  </Button>
-                </Link>
-              </div>
-            </div>
-
-            <div className="grid gap-4 sm:grid-cols-2">
-              {[projectOne.deliverables[0], projectTwo.deliverables[0], projectThree.deliverables[0], projectThree.deliverables[2]].map((item) => (
-                <article key={item.title} className="soft-card rounded-[28px] p-5">
-                  <span className="inline-flex rounded-full border border-[hsl(var(--ctp-green)/0.22)] bg-[hsl(var(--ctp-green)/0.12)] px-3 py-1 text-xs font-semibold text-[hsl(var(--ctp-green))]">
-                    {item.status}
+          <div className="soft-panel overflow-hidden rounded-[38px]">
+            <div className="grid gap-0 xl:grid-cols-[0.78fr_1.22fr]">
+              <div className="relative border-b border-[hsl(var(--ctp-surface1)/0.8)] px-6 py-8 sm:px-8 lg:px-10 xl:border-b-0 xl:border-r">
+                <div className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-[hsl(var(--ctp-sky)/0.12)] blur-3xl" />
+                <div className="relative">
+                  <span className="inline-flex rounded-full border border-[hsl(var(--ctp-blue)/0.22)] bg-[hsl(var(--ctp-blue)/0.1)] px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--ctp-blue))]">
+                    Luaran Akademik
                   </span>
-                  <h3 className="mt-4 text-lg font-bold">{item.title}</h3>
-                  <p className="mt-2 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{item.description}</p>
-                </article>
-              ))}
+                  <h2 className="mt-5 max-w-xl text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
+                    Peta luaran proyek ditampilkan lebih jelas untuk presentasi dan review.
+                  </h2>
+                  <p className="mt-5 max-w-2xl text-base leading-8 text-[hsl(var(--ctp-subtext1))]">
+                    Setiap tahap proyek memiliki artefak yang berbeda. Mahasiswa dan dosen bisa melihat fokus luaran,
+                    status kesiapan, dan detail yang perlu disiapkan tanpa harus membuka dokumen terpisah terlebih dahulu.
+                  </p>
+
+                  <div className="mt-7 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+                    {[
+                      { value: '01', label: 'Demo aplikasi implementor' },
+                      { value: '02', label: 'CRUD RDBMS dan riset' },
+                      { value: '03', label: 'Web services dan Doc API' },
+                    ].map((item) => (
+                      <div key={item.value} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.5)] p-4">
+                        <p className="text-2xl font-black text-[hsl(var(--ctp-blue))]">{item.value}</p>
+                        <p className="mt-1 text-sm leading-6 text-[hsl(var(--ctp-subtext1))]">{item.label}</p>
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
+                    <Link href="/luaran-proyek-1">
+                      <Button size="lg" className="w-full px-7 sm:w-auto">
+                        Lihat Luaran Proyek 1
+                        <ArrowRight className="h-4 w-4" />
+                      </Button>
+                    </Link>
+                    <Link href="/luaran-proyek-2">
+                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
+                        Proyek 2
+                      </Button>
+                    </Link>
+                    <Link href="/luaran-proyek-3">
+                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
+                        Proyek 3
+                      </Button>
+                    </Link>
+                    <Link href="/panduan-pengguna">
+                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
+                        Panduan
+                      </Button>
+                    </Link>
+                  </div>
+                </div>
+              </div>
+
+              <div className="grid gap-4 p-4 sm:p-5 lg:p-6">
+                {[projectOne, projectTwo, projectThree].map((project, index) => (
+                  <article
+                    key={project.label}
+                    className="group rounded-[30px] border border-[hsl(var(--ctp-surface1))] bg-[linear-gradient(135deg,hsl(var(--ctp-base)/0.84),hsl(var(--ctp-mantle)/0.66))] p-5 transition-all hover:-translate-y-0.5 hover:border-[hsl(var(--ctp-blue)/0.45)]"
+                  >
+                    <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
+                      <div>
+                        <span className="inline-flex rounded-full border border-[hsl(var(--ctp-green)/0.24)] bg-[hsl(var(--ctp-green)/0.12)] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[hsl(var(--ctp-green))]">
+                          Tahap {index + 1}
+                        </span>
+                        <h3 className="mt-4 text-2xl font-black tracking-tight text-[hsl(var(--ctp-text))]">{project.title}</h3>
+                        <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{project.summary}</p>
+                      </div>
+
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        {project.deliverables.slice(0, 4).map((item) => (
+                          <div key={item.title} className="rounded-3xl border border-[hsl(var(--ctp-overlay0)/0.38)] bg-[hsl(var(--ctp-surface0)/0.5)] p-4">
+                            <div className="flex items-start justify-between gap-3">
+                              <h4 className="text-sm font-black leading-6 text-[hsl(var(--ctp-text))]">{item.title}</h4>
+                              <span className="shrink-0 rounded-full border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.1)] px-2.5 py-1 text-[10px] font-bold text-[hsl(var(--ctp-blue))]">
+                                {item.status}
+                              </span>
+                            </div>
+                            <p className="mt-3 line-clamp-3 text-xs leading-6 text-[hsl(var(--ctp-subtext0))]">{item.description}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </article>
+                ))}
+              </div>
             </div>
           </div>
         </section>
