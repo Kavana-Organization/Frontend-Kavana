@@ -9,7 +9,7 @@ import {
     REALTIME_EVENTS,
 } from '@/lib/realtime';
 
-const API_BASE_URL = (
+export const API_BASE_URL = (
     process.env.NEXT_PUBLIC_API_BASE_URL
     || 'https://asia-southeast2-renzip-478811.cloudfunctions.net/kavana'
 ).replace(/\/$/, '');

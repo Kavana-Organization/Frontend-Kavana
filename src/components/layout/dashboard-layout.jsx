@@ -7,8 +7,8 @@ import { useAuthStore } from '@/store/auth-store';
 import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar';
 import { AuthGuard } from '@/components/auth/auth-guard';
 import { TITLE_MAP, ROLE_LABEL, ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
-import { invalidateApiCache, notificationAPI } from '@/lib/api';
-import { subscribeRealtimeUpdates, payloadTouchesPrefixes } from '@/lib/realtime';
+import { API_BASE_URL, getToken, invalidateApiCache, notificationAPI } from '@/lib/api';
+import { subscribeRealtimeUpdates, subscribeServerRealtimeUpdates, payloadTouchesPrefixes } from '@/lib/realtime';
 import { removeAcademicTitles } from '@/lib/validators';
 import { Button } from '@/components/ui/button';
 import {
@@ -85,7 +85,7 @@ function useFormattedDate() {
 }
 
 const iconBtnCls = "ctp-focus h-10 w-10 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.82)] shadow-[0_1px_0_hsl(0_0%_100%/0.45)_inset] transition-colors hover:bg-[hsl(var(--ctp-crust))]";
-const LIVE_REFRESH_DEBOUNCE = 1500;
+const LIVE_REFRESH_DEBOUNCE = 250;
 const NOTIFICATION_PREFIXES = ['/api/notifications'];
 
 function useIsHydrated() {
@@ -288,12 +288,18 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
     const unsubscribe = subscribeRealtimeUpdates((payload) => {
       requestRefresh(payload || {});
     });
+    const unsubscribeServer = subscribeServerRealtimeUpdates({
+      baseUrl: API_BASE_URL,
+      token: getToken(),
+      onEvent: (payload) => requestRefresh(payload || {}),
+    });
 
     window.addEventListener('focus', flushPending);
     document.addEventListener('visibilitychange', flushPending);
 
     return () => {
       unsubscribe();
+      unsubscribeServer();
       window.removeEventListener('focus', flushPending);
       document.removeEventListener('visibilitychange', flushPending);
     };

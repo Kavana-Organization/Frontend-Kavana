@@ -314,3 +314,33 @@ export function payloadTouchesPrefixes(payload, prefixes = []) {
     ))
   ));
 }
+
+export function subscribeServerRealtimeUpdates({ baseUrl, token, onEvent } = {}) {
+  if (!canUseDom() || typeof EventSource === 'undefined' || !baseUrl || !token || typeof onEvent !== 'function') {
+    return () => {};
+  }
+
+  const lastIdKey = 'kavana:realtime:last-event-id';
+  const cleanBase = baseUrl.replace(/\/$/, '');
+  const since = window.sessionStorage.getItem(lastIdKey) || '0';
+  const url = `${cleanBase}/api/realtime/events?token=${encodeURIComponent(token)}&since=${encodeURIComponent(since)}`;
+  const source = new EventSource(url);
+
+  source.addEventListener('cache.invalidated', (event) => {
+    try {
+      const payload = JSON.parse(event.data || '{}');
+      if (payload?.id) {
+        window.sessionStorage.setItem(lastIdKey, String(payload.id));
+      }
+      onEvent(payload);
+    } catch {
+      // Ignore malformed realtime payloads.
+    }
+  });
+
+  source.onerror = () => {
+    // EventSource reconnects automatically. No manual polling here.
+  };
+
+  return () => source.close();
+}
