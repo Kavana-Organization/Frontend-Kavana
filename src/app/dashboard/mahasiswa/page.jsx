@@ -205,6 +205,7 @@ export default function MahasiswaDashboard() {
   const [laporanData, setLaporanData] = useState(null);
   const [sidangData, setSidangData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [documentFilter, setDocumentFilter] = useState('all');
 
   const loadDashboard = useCallback(async () => {
     try {
@@ -256,6 +257,28 @@ export default function MahasiswaDashboard() {
   const sidangTime = sidangData?.waktu_sidang || sidangData?.waktu || sidangData?.time;
   const sidangRoom = sidangData?.ruangan || sidangData?.room;
   const sidangPenguji = sidangData?.penguji_nama || sidangData?.nama_penguji || sidangData?.penguji;
+  const documentItems = useMemo(() => {
+    const items = [
+      {
+        type: 'proposal',
+        title: 'Proposal',
+        status: profile?.proposal_status || profile?.status_proposal || 'belum',
+        tag: 'Proposal',
+        href: '/dashboard/mahasiswa/proposal',
+      },
+      {
+        type: 'laporan',
+        title: 'Laporan Sidang',
+        status: laporanStatus,
+        tag: 'Laporan',
+        href: '/dashboard/mahasiswa/laporan',
+      },
+    ];
+
+    return documentFilter === 'all'
+      ? items
+      : items.filter((item) => item.type === documentFilter);
+  }, [documentFilter, laporanStatus, profile?.proposal_status, profile?.status_proposal]);
 
   const recentActivity = useMemo(() => {
     return bimbinganList.slice(0, 5).map((b, i) => ({
@@ -408,7 +431,7 @@ export default function MahasiswaDashboard() {
               </CardTitle>
               <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Status proposal dan laporan kamu.</CardDescription>
             </div>
-            <Select defaultValue="all">
+            <Select value={documentFilter} onValueChange={setDocumentFilter}>
               <SelectTrigger className="ctp-focus h-9 w-[120px] rounded-2xl border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] text-[hsl(var(--ctp-text))]">
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
@@ -420,10 +443,7 @@ export default function MahasiswaDashboard() {
             </Select>
           </CardHeader>
           <CardContent className="space-y-2">
-            {[
-              { title: 'Proposal', status: profile?.proposal_status || profile?.status_proposal || 'belum', tag: 'Proposal', due: '-' },
-              { title: 'Laporan Sidang', status: laporanStatus, tag: 'Laporan', due: '-' },
-            ].map((d) => (
+            {documentItems.map((d) => (
               <div key={d.title} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
@@ -436,7 +456,7 @@ export default function MahasiswaDashboard() {
                 </div>
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-[hsl(var(--ctp-subtext0))]">Status: <span className="text-[hsl(var(--ctp-subtext1))] font-medium">{d.status}</span></span>
-                  <Link href={`/dashboard/mahasiswa/${d.tag.toLowerCase()}`}>
+                  <Link href={d.href}>
                     <Button variant="secondary" className="ctp-focus h-8 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)] text-[hsl(var(--ctp-text))]">
                       <MessageSquareText className="h-4 w-4 mr-2" /> Lihat
                     </Button>
