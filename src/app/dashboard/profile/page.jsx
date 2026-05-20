@@ -271,7 +271,7 @@ export default function ProfilePage() {
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
             {/* Avatar */}
             <div className="relative group">
-              <div className="w-20 h-20 rounded-2xl border-4 border-[hsl(var(--ctp-surface0))] bg-[hsl(var(--ctp-surface1))] flex items-center justify-center overflow-hidden shadow-lg">
+              <div className="relative w-20 h-20 rounded-2xl border-4 border-[hsl(var(--ctp-surface0))] bg-[hsl(var(--ctp-surface1))] flex items-center justify-center overflow-hidden shadow-lg">
                 {avatarUrl ? (
                   <Image src={avatarUrl} alt="Avatar" className="object-cover" fill sizes="80px" />
                 ) : (
