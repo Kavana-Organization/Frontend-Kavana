@@ -31,6 +31,7 @@ const TRACKS = [
   { id: 'internship-1', apiId: 'internship1', name: 'Internship 1', type: 'internship', semester: 7, desc: 'Magang industri semester 7', icon: Building2 },
   { id: 'internship-2', apiId: 'internship2', name: 'Internship 2', type: 'internship', semester: 8, desc: 'Magang industri semester 8', icon: Building2 },
 ];
+const TRACK_ORDER = TRACKS.reduce((acc, track) => ({ ...acc, [track.apiId]: track.semester }), {});
 
 const ENROLLMENT_TYPE_CONFIG = {
   regular: { label: 'Regular', color: 'ctp-blue', icon: Briefcase },
@@ -108,7 +109,21 @@ export default function TrackPage() {
 
   // Filter to only show eligible tracks NOT yet enrolled
   const enrolledTracks = activeEnrollments.map((e) => e.track);
-  const unenrolledEligibilities = eligibilities.filter((e) => !enrolledTracks.includes(e.track));
+  const maxActiveTrackOrder = Math.max(0, ...activeEnrollments.map((e) => Number(TRACK_ORDER[e.track] || 0)));
+  const unenrolledEligibilities = eligibilities.filter((e) => {
+    if (enrolledTracks.includes(e.track)) return false;
+
+    if (
+      !repeatInfo.repeat_required &&
+      e.enrollment_type === 'regular' &&
+      maxActiveTrackOrder > 0 &&
+      Number(TRACK_ORDER[e.track] || 0) <= maxActiveTrackOrder
+    ) {
+      return false;
+    }
+
+    return true;
+  });
 
   const handleConfirm = async () => {
     if (!selectedTrack) return;

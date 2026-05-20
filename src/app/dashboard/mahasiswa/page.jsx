@@ -6,7 +6,7 @@ import Link from 'next/link';
 import {
   ArrowUpRight, ArrowDownRight, CalendarDays, UploadCloud, AlertTriangle,
   MessageSquareText, Plus, CheckCircle2, Clock, FileText, GraduationCap,
-  Settings, MapPin, UserCheck,
+  MapPin, UserCheck,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import {
@@ -476,9 +476,6 @@ export default function MahasiswaDashboard() {
               </CardTitle>
               <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Ringkasan progres dan pembimbing.</CardDescription>
             </div>
-            <Button variant="secondary" className="ctp-focus h-9 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)]">
-              <Settings className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />
-            </Button>
           </CardHeader>
           <CardContent className="space-y-3">
             {guidanceSummary.map((p) => {
