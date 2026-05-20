@@ -295,9 +295,8 @@ export default function LandingPage() {
 
                   <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
                     <Link href="/luaran-proyek-1">
-                      <Button size="lg" className="w-full px-7 sm:w-auto">
-                        Lihat Luaran Proyek 1
-                        <ArrowRight className="h-4 w-4" />
+                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
+                        Proyek 1
                       </Button>
                     </Link>
                     <Link href="/luaran-proyek-2">
