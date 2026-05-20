@@ -19,6 +19,7 @@ import {
 } from '@/components/ui/select';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
+import { getGoogleDriveLinkError } from '@/lib/validation';
 
 const API_TRACK_LABELS = {
   proyek1: 'Proyek 1', proyek2: 'Proyek 2', proyek3: 'Proyek 3',
@@ -131,6 +132,8 @@ export default function ProposalPage() {
     if (!form.judul.trim()) { toast.error('Judul wajib diisi'); return; }
     if (!form.dosen) { toast.error('Pilih dosen pembimbing'); return; }
     if (!form.link.trim()) { toast.error('Link proposal wajib diisi'); return; }
+    const proposalLinkError = getGoogleDriveLinkError(form.link, 'Link proposal');
+    if (proposalLinkError) { toast.error(proposalLinkError); return; }
 
     if (enrollments.length > 1 && !selectedEnrollmentId) {
       toast.error('Pilih enrollment terlebih dahulu');
@@ -301,7 +304,7 @@ export default function ProposalPage() {
                 </div>
               ) : null}
             </div>
-            <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Link Proposal *</Label><Input value={form.link} onChange={e => setForm({...form, link: e.target.value})} placeholder="https://drive.google.com/..." className={inputCls} /></div>
+            <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Link Proposal *</Label><Input value={form.link} onChange={e => setForm({...form, link: e.target.value})} placeholder="https://drive.google.com/drive/..." className={inputCls} /></div>
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="secondary" onClick={() => router.push('/dashboard/mahasiswa')} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">Batal</Button>
               <Button type="submit" disabled={submitting} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]">

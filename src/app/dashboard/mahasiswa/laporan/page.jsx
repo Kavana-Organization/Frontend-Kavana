@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
+import { getGoogleDriveLinkError } from '@/lib/validation';
 
 const SUBMITTED_STATUSES = new Set(['pending', 'submitted', 'approved']);
 
@@ -106,6 +107,10 @@ export default function LaporanPage() {
     if (prereqBimbingan < 8) { toast.error('Minimal 8 bimbingan disetujui sebelum submit sidang'); return; }
     if (!form.laporanLink.trim()) { toast.error('Link laporan wajib diisi'); return; }
     if (!form.luaranLink.trim()) { toast.error('Link luaran proyek wajib diisi'); return; }
+    const laporanLinkError = getGoogleDriveLinkError(form.laporanLink, 'Link laporan sidang');
+    if (laporanLinkError) { toast.error(laporanLinkError); return; }
+    const luaranLinkError = getGoogleDriveLinkError(form.luaranLink, 'Link luaran proyek');
+    if (luaranLinkError) { toast.error(luaranLinkError); return; }
     setSubmitting(true);
     try {
       const res = await mahasiswaAPI.submitLaporan({
@@ -186,8 +191,8 @@ export default function LaporanPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Judul *</Label><Input value={form.judul} onChange={e => setForm({ ...form, judul: e.target.value })} className={inputCls} /></div>
-            <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Link Laporan Sidang *</Label><Input value={form.laporanLink} onChange={e => setForm({ ...form, laporanLink: e.target.value })} placeholder="https://drive.google.com/..." className={inputCls} /></div>
-            <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Link Luaran Proyek *</Label><Input value={form.luaranLink} onChange={e => setForm({ ...form, luaranLink: e.target.value })} placeholder="https://drive.google.com/..." className={inputCls} /></div>
+            <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Link Laporan Sidang *</Label><Input value={form.laporanLink} onChange={e => setForm({ ...form, laporanLink: e.target.value })} placeholder="https://drive.google.com/drive/..." className={inputCls} /></div>
+            <div className="space-y-2"><Label className="text-[hsl(var(--ctp-subtext1))]">Link Luaran Proyek *</Label><Input value={form.luaranLink} onChange={e => setForm({ ...form, luaranLink: e.target.value })} placeholder="https://drive.google.com/drive/..." className={inputCls} /></div>
             <div className="flex gap-3 pt-2">
               <Button type="button" variant="secondary" onClick={() => router.push('/dashboard/mahasiswa')} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">Batal</Button>
               <Button type="submit" disabled={submitting} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]">

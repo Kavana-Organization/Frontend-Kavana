@@ -13,6 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
+import { getGoogleDriveLinkError } from '@/lib/validation';
 
 const STATUS_LABEL = {
   pending: { label: 'Menunggu Review', color: 'ctp-yellow', Icon: Clock },
@@ -75,8 +76,20 @@ export default function RevisiSidangPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!form.file_url.trim()) {
-      toast.error('File revisi wajib diisi (URL Drive atau hasil upload)');
+      toast.error('Link revisi wajib diisi');
       return;
+    }
+    const revisiLinkError = getGoogleDriveLinkError(form.file_url, 'Link revisi');
+    if (revisiLinkError) {
+      toast.error(revisiLinkError);
+      return;
+    }
+    if (form.file_luaran.trim()) {
+      const luaranLinkError = getGoogleDriveLinkError(form.file_luaran, 'Link luaran revisi');
+      if (luaranLinkError) {
+        toast.error(luaranLinkError);
+        return;
+      }
     }
     setSubmitting(true);
     try {
@@ -178,12 +191,12 @@ export default function RevisiSidangPage() {
             ) : (
               <form onSubmit={handleSubmit} className="space-y-3">
                 <div>
-                  <Label className="text-[hsl(var(--ctp-subtext1))]">URL File Revisi (Drive / GCS)</Label>
-                  <Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} placeholder="https://drive.google.com/..." className={inputCls} />
+                  <Label className="text-[hsl(var(--ctp-subtext1))]">URL File Revisi (Google Drive)</Label>
+                  <Input value={form.file_url} onChange={(e) => setForm({ ...form, file_url: e.target.value })} placeholder="https://drive.google.com/drive/..." className={inputCls} />
                 </div>
                 <div>
                   <Label className="text-[hsl(var(--ctp-subtext1))]">URL Luaran (Opsional)</Label>
-                  <Input value={form.file_luaran} onChange={(e) => setForm({ ...form, file_luaran: e.target.value })} placeholder="https://..." className={inputCls} />
+                  <Input value={form.file_luaran} onChange={(e) => setForm({ ...form, file_luaran: e.target.value })} placeholder="https://drive.google.com/drive/..." className={inputCls} />
                 </div>
                 <div>
                   <Label className="text-[hsl(var(--ctp-subtext1))]">Ringkasan Perubahan</Label>
