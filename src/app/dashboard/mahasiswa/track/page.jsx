@@ -194,7 +194,7 @@ export default function TrackPage() {
         </Card>
       )}
 
-      {unenrolledEligibilities.length === 0 && !periodeActive ? (
+      {unenrolledEligibilities.length === 0 && !periodeActive && activeEnrollments.length === 0 ? (
         <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <div className="grid h-16 w-16 place-items-center rounded-2xl border border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] mb-4">
