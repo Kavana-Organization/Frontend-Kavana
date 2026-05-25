@@ -38,7 +38,26 @@ const TEST_USERS = {
     email: process.env.TEST_ADMIN_EMAIL,
     password: process.env.TEST_ADMIN_PASSWORD,
   },
+  developer: {
+    email: process.env.TEST_DEVELOPER_EMAIL,
+    password: process.env.TEST_DEVELOPER_PASSWORD,
+    device_id: process.env.TEST_DEVELOPER_DEVICE_ID,
+    device_token: process.env.TEST_DEVELOPER_DEVICE_TOKEN,
+  },
 };
+
+// All dosen accounts for comprehensive testing
+const ALL_DOSEN = [
+  { name: 'Pak Yusril', email: 'yusrilhelmi@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Pak Rolly', email: 'awangga@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Pak Roni', email: 'roniandarsyah@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Pak Kamal', email: 'm.nurkamal.f@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Pak Cahyo', email: 'cahyo@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Pak Fahri', email: 'syafrial.fachri@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Pak Ronhab', email: 'roni.habibi@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Bu Nisa', email: 'nisa@ulbi.ac.id', password: 'bagas7474' },
+  { name: 'Miss Nur', email: 'nurainisf@ulbi.ac.id', password: 'bagas7474' },
+];
 
 function hasRoleCredential(role) {
   const user = TEST_USERS[role];
@@ -49,6 +68,7 @@ module.exports = {
   FRONTEND_URL,
   BACKEND_URL,
   TEST_USERS,
+  ALL_DOSEN,
   hasRoleCredential,
   isRealCredential,
 };
