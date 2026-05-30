@@ -32,6 +32,12 @@ const ENROLLMENT_TYPE_LABELS = {
   parallel_repeat: 'Paralel',
 };
 
+function sameId(left, right) {
+  const leftId = String(left ?? '').trim();
+  const rightId = String(right ?? '').trim();
+  return Boolean(leftId && rightId && leftId === rightId);
+}
+
 export default function ProposalPage() {
   const router = useRouter();
   const { role, user } = useAuthStore();
@@ -120,7 +126,7 @@ export default function ProposalPage() {
   };
 
   const handleEnrollmentSelect = (enrollmentId) => {
-    const enr = enrollments.find((e) => e.id === Number(enrollmentId));
+    const enr = enrollments.find((e) => sameId(e.id, enrollmentId));
     if (enr) {
       setSelectedEnrollmentId(enr.id);
       setTrack(enr.track || '');
@@ -145,8 +151,8 @@ export default function ProposalPage() {
       const res = await mahasiswaAPI.submitProposal({
         judul_proyek: form.judul.trim(),
         file_url: form.link.trim(),
-        usulan_dosen_id: form.dosen ? Number(form.dosen) : null,
-        dosen_id_2: form.dosen2 ? Number(form.dosen2) : null,
+        usulan_dosen_id: form.dosen || null,
+        dosen_id_2: form.dosen2 || null,
         partner_nama: form.partnerNama || null,
         enrollment_id: selectedEnrollmentId || null,
       });

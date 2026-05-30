@@ -42,6 +42,11 @@ function buildMahasiswaOptionValue(id) {
   return `mhs:${id}`;
 }
 
+function normalizeId(value) {
+  const id = String(value ?? '').trim();
+  return id || null;
+}
+
 function parseSelectedMahasiswaIds(value) {
   if (!value) return [];
 
@@ -49,17 +54,17 @@ function parseSelectedMahasiswaIds(value) {
     return value
       .slice('group:'.length)
       .split(',')
-      .map((id) => Number(id))
-      .filter((id) => Number.isFinite(id) && id > 0);
+      .map(normalizeId)
+      .filter(Boolean);
   }
 
   if (value.startsWith('mhs:')) {
-    const id = Number(value.slice('mhs:'.length));
-    return Number.isFinite(id) && id > 0 ? [id] : [];
+    const id = normalizeId(value.slice('mhs:'.length));
+    return id ? [id] : [];
   }
 
-  const fallbackId = Number(value);
-  return Number.isFinite(fallbackId) && fallbackId > 0 ? [fallbackId] : [];
+  const fallbackId = normalizeId(value);
+  return fallbackId ? [fallbackId] : [];
 }
 
 function formatTanggal(value) {
@@ -231,8 +236,8 @@ export default function JadwalSidangPage() {
       const members = Array.isArray(entry?.anggota) && entry.anggota.length > 0
         ? entry.anggota
         : [{ id: entry.id }];
-      if (members.some((m) => ids.includes(Number(m?.id)))) {
-        return entry?.dosen_id ? Number(entry.dosen_id) : null;
+      if (members.some((m) => ids.includes(normalizeId(m?.id)))) {
+        return normalizeId(entry?.dosen_id);
       }
     }
     return null;
@@ -240,7 +245,7 @@ export default function JadwalSidangPage() {
 
   // Pre-check bentrok dari data jadwal yang sudah dimuat. Backend tetap sumber kebenaran.
   const conflictWarning = useMemo(() => {
-    const pengujiId = form.penguji_id ? Number(form.penguji_id) : null;
+    const pengujiId = normalizeId(form.penguji_id);
     const tanggal = form.tanggal;
     const waktu = normalizeWaktu(form.waktu);
 
@@ -257,7 +262,7 @@ export default function JadwalSidangPage() {
 
     if (selectedDosenId) {
       const conflict = slotJadwal.find((j) => (
-        Number(j?.dosen_id) === selectedDosenId || Number(j?.penguji_id) === selectedDosenId
+        normalizeId(j?.dosen_id) === selectedDosenId || normalizeId(j?.penguji_id) === selectedDosenId
       ));
       if (conflict) {
         return `Dosen pembimbing (${conflict.dosen_nama || conflict.penguji_nama || 'dosen'}) sudah dijadwalkan pada slot ini.`;
@@ -266,10 +271,10 @@ export default function JadwalSidangPage() {
 
     if (pengujiId) {
       const conflict = slotJadwal.find((j) => (
-        Number(j?.dosen_id) === pengujiId || Number(j?.penguji_id) === pengujiId
+        normalizeId(j?.dosen_id) === pengujiId || normalizeId(j?.penguji_id) === pengujiId
       ));
       if (conflict) {
-        return `Penguji yang dipilih sudah dijadwalkan sebagai ${Number(conflict.dosen_id) === pengujiId ? 'pembimbing' : 'penguji'} pada slot ini.`;
+        return `Penguji yang dipilih sudah dijadwalkan sebagai ${normalizeId(conflict.dosen_id) === pengujiId ? 'pembimbing' : 'penguji'} pada slot ini.`;
       }
     }
 
@@ -348,7 +353,7 @@ export default function JadwalSidangPage() {
     }
 
     const payloadBase = {
-      penguji_id: Number(form.penguji_id),
+      penguji_id: form.penguji_id,
       tanggal: form.tanggal,
       waktu: form.waktu.length === 5 ? `${form.waktu}:00` : form.waktu,
       ruangan: form.ruangan.trim(),

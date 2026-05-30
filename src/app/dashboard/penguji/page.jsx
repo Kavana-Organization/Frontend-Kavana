@@ -15,16 +15,21 @@ function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
 }
 
+function normalizeId(value) {
+  const id = String(value ?? '').trim();
+  return id || null;
+}
+
 function getProfileIds(profile) {
   return [profile?.id, profile?.dosen_id, profile?.user_id]
-    .map((id) => Number(id))
-    .filter((id) => Number.isFinite(id) && id > 0);
+    .map(normalizeId)
+    .filter(Boolean);
 }
 
 function isMySidang(item, profile) {
   const profileIds = getProfileIds(profile);
-  const pengujiId = Number(item?.penguji_id);
-  if (profileIds.length > 0 && Number.isFinite(pengujiId)) {
+  const pengujiId = normalizeId(item?.penguji_id);
+  if (profileIds.length > 0 && pengujiId) {
     return profileIds.includes(pengujiId);
   }
 
