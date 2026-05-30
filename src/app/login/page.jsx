@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Button } from '@/components/ui/button';
@@ -361,6 +361,17 @@ export default function LoginPage() {
                   {errors.turnstile ? (
                     <p className="text-xs text-center text-[hsl(var(--ctp-red))]">{errors.turnstile}</p>
                   ) : null}
+                </div>
+
+                <div
+                  data-testid="developer-device-section"
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-crust)/0.48)] px-4 py-3 text-xs text-[hsl(var(--ctp-subtext1))]"
+                >
+                  <span className="inline-flex items-center gap-2 font-semibold">
+                    <KeyRound className="h-4 w-4 text-[hsl(var(--ctp-blue))]" />
+                    Device developer
+                  </span>
+                  <span className="text-right text-[hsl(var(--ctp-overlay1))]">Device lock aktif</span>
                 </div>
 
                 <Button
