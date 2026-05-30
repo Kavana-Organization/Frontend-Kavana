@@ -11,6 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authAPI } from '@/lib/api';
+import { trackAuthPageView } from '@/lib/auth-tracker';
 import { useAuthStore } from '@/store/auth-store';
 import { validateEmail, validateNPM } from '@/lib/validators';
 import { ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
@@ -37,6 +38,10 @@ export default function LoginPage() {
   const [turnstileScriptLoaded, setTurnstileScriptLoaded] = useState(false);
   const turnstileContainerRef = useRef(null);
   const turnstileWidgetId = useRef(null);
+
+  useEffect(() => {
+    trackAuthPageView('login');
+  }, []);
 
   // Render the Turnstile widget once the script is loaded
   const renderTurnstile = useCallback(() => {

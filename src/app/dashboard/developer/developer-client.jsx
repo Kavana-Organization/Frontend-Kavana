@@ -14,6 +14,8 @@ import {
   KeyRound,
   ListChecks,
   LockKeyhole,
+  MapPin,
+  MonitorSmartphone,
   RefreshCw,
   Server,
   Shield,
@@ -34,6 +36,7 @@ const MODE_LABELS = {
   health: 'System Health',
   'audit-logs': 'Audit Logs',
   'auth-logs': 'Auth Logs',
+  'auth-trackers': 'Auth Tracker',
   devices: 'Device Lock',
   'redis-cache': 'Redis Cache',
   'permission-matrix': 'Permission Matrix',
@@ -44,6 +47,7 @@ const MODE_DESCRIPTIONS = {
   health: 'Status dependency utama, runtime, dan hasil synthetic test.',
   'audit-logs': 'Riwayat aksi penting lintas role dengan metadata yang sudah dirapikan.',
   'auth-logs': 'Riwayat login dan logout untuk investigasi akses akun.',
+  'auth-trackers': 'Metadata kunjungan halaman login dan daftar.',
   devices: 'Device developer yang dikonfigurasi dan yang pernah dienroll.',
   'redis-cache': 'Key cache Redis yang aktif dan kontrol clear cache per prefix.',
   'permission-matrix': 'Peta akses efektif tiap role di sistem.',
@@ -292,6 +296,90 @@ function LogsView({ data, type }) {
   );
 }
 
+function AuthTrackerView({ data }) {
+  const rows = Array.isArray(data) ? data : [];
+  const loginCount = rows.filter((row) => row.event_type === 'login').length;
+  const registerCount = rows.filter((row) => row.event_type === 'register').length;
+  const uniqueIps = new Set(rows.map((row) => row.isp_ip || row.request_ip).filter(Boolean)).size;
+
+  if (rows.length === 0) {
+    return <EmptyState title="Tracker kosong" description="Belum ada kunjungan halaman login atau daftar yang tercatat." />;
+  }
+
+  return (
+    <div className="space-y-4">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
+        <StatusCard title="Total Tracker" value={rows.length} description="Kunjungan login dan daftar" icon={Globe2} />
+        <StatusCard title="Login" value={loginCount} description="Halaman masuk" icon={Shield} />
+        <StatusCard title="Daftar" value={registerCount} description={`${uniqueIps} IP unik`} icon={MonitorSmartphone} />
+      </div>
+
+      <div className="space-y-3">
+        {rows.map((row) => (
+          <article key={row.id} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.48)] p-4">
+            <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+              <div className="min-w-0 space-y-2">
+                <div className="flex flex-wrap items-center gap-2">
+                  <StatusPill value={row.event_type === 'register' ? 'Daftar' : 'Login'} ok />
+                  <span className="rounded-full border border-[hsl(var(--ctp-overlay0)/0.45)] px-3 py-1 text-xs text-[hsl(var(--ctp-subtext0))]">
+                    {row.hostname || '-'}
+                  </span>
+                </div>
+                <h3 className="break-all text-base font-semibold text-[hsl(var(--ctp-text))]">{row.url || '-'}</h3>
+                <p className="truncate text-sm text-[hsl(var(--ctp-subtext0))]">{row.browser || '-'}</p>
+              </div>
+              <div className="text-left text-xs text-[hsl(var(--ctp-subtext0))] lg:text-right">
+                <p className="flex items-center gap-1 lg:justify-end">
+                  <Clock className="h-3.5 w-3.5" />
+                  {formatDateTime(row.created_at)}
+                </p>
+                <p className="mt-1 flex items-center gap-1 lg:justify-end">
+                  <MapPin className="h-3.5 w-3.5" />
+                  {[row.city, row.region, row.country_name].filter(Boolean).join(', ') || '-'}
+                </p>
+                <p className="mt-1">IP: {row.isp_ip || row.request_ip || '-'}</p>
+              </div>
+            </div>
+
+            <div className="mt-4 grid gap-4 xl:grid-cols-2">
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">Client</p>
+                <KeyValueGrid
+                  items={{
+                    browser_language: row.browser_language,
+                    screen_resolution: row.screen_resolution,
+                    timezone: row.timezone,
+                    ontouchstart: row.ontouchstart,
+                    tanggal_ambil: formatDateTime(row.tanggal_ambil),
+                    request_ip: row.request_ip,
+                  }}
+                />
+              </div>
+              <div>
+                <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">ISP</p>
+                <KeyValueGrid
+                  items={{
+                    ip: row.isp_ip,
+                    city: row.city,
+                    region: row.region,
+                    country_name: row.country_name,
+                    postal: row.postal,
+                    latitude: row.latitude,
+                    longitude: row.longitude,
+                    timezone: row.isp_timezone,
+                    asn: row.asn,
+                    org: row.org,
+                  }}
+                />
+              </div>
+            </div>
+          </article>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function DevicesView({ data, onRevoke }) {
   const configured = Array.isArray(data?.configured) ? data.configured : [];
   const database = Array.isArray(data?.database) ? data.database : [];
@@ -428,6 +516,7 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
       health: developerAPI.getHealth,
       'audit-logs': () => developerAPI.getAuditLogs(100),
       'auth-logs': () => developerAPI.getAuthLogs(100),
+      'auth-trackers': () => developerAPI.getAuthTrackers(100),
       devices: developerAPI.getDevices,
       'redis-cache': () => developerAPI.getRedisKeys('kavana:*'),
       'permission-matrix': developerAPI.getPermissionMatrix,
@@ -495,6 +584,7 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
   if (mode === 'dashboard' || mode === 'health') renderedContent = <HealthView data={health || data} />;
   if (mode === 'audit-logs') renderedContent = <LogsView data={data} type="audit" />;
   if (mode === 'auth-logs') renderedContent = <LogsView data={data} type="auth" />;
+  if (mode === 'auth-trackers') renderedContent = <AuthTrackerView data={data} />;
   if (mode === 'devices') renderedContent = <DevicesView data={data} onRevoke={revokeDevice} />;
   if (mode === 'redis-cache') {
     renderedContent = <RedisView data={data} cachePrefix={cachePrefix} setCachePrefix={setCachePrefix} onClear={clearCache} />;

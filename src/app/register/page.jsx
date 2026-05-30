@@ -25,6 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { authAPI } from '@/lib/api';
+import { trackAuthPageView } from '@/lib/auth-tracker';
 import { validateRegisterEmail, validateNPM, validateWhatsApp, validatePassword } from '@/lib/validators';
 
 function OTPInput({ value, onChange, disabled }) {
@@ -113,6 +114,10 @@ export default function RegisterPage() {
 
   const angkatanOptions = useMemo(() => getAngkatanOptions(), []);
   const passwordCheck = useMemo(() => validatePassword(formData.password), [formData.password]);
+
+  useEffect(() => {
+    trackAuthPageView('register');
+  }, []);
 
   useEffect(() => {
     if (countdown <= 0) return;

@@ -23,6 +23,7 @@ import {
     Database,
     KeyRound,
     TerminalSquare,
+    Globe2,
 } from 'lucide-react';
 
 // ---------- MENU CONFIG ----------
@@ -112,6 +113,7 @@ export const MENU_CONFIG = {
         { id: 'health', label: 'System Health', icon: Server },
         { id: 'audit-logs', label: 'Audit Logs', icon: Activity },
         { id: 'auth-logs', label: 'Auth Logs', icon: Shield },
+        { id: 'auth-trackers', label: 'Auth Tracker', icon: Globe2 },
         { id: 'devices', label: 'Device Lock', icon: KeyRound },
         { id: 'redis-cache', label: 'Redis Cache', icon: Database },
         { id: 'permission-matrix', label: 'Permission Matrix', icon: TerminalSquare },
@@ -163,6 +165,7 @@ export const TITLE_MAP = {
     health: 'System Health',
     'audit-logs': 'Audit Logs',
     'auth-logs': 'Auth Logs',
+    'auth-trackers': 'Auth Tracker',
     devices: 'Device Lock',
     'redis-cache': 'Redis Cache',
     'permission-matrix': 'Permission Matrix',

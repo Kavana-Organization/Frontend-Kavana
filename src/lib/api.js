@@ -290,6 +290,7 @@ export const developerAPI = {
     getSystemConfig: () => apiRequest('/api/developer/system/config'),
     getAuditLogs: (limit = 100) => apiRequest(`/api/developer/audit-logs?limit=${limit}`),
     getAuthLogs: (limit = 100) => apiRequest(`/api/developer/auth-logs?limit=${limit}`),
+    getAuthTrackers: (limit = 100) => apiRequest(`/api/developer/auth-trackers?limit=${limit}`),
     getDevices: () => apiRequest('/api/developer/devices'),
     revokeDevice: (id) => apiRequest(`/api/developer/devices/${id}/revoke`, { method: 'POST' }),
     getRedisKeys: (pattern = 'kavana:*') => apiRequest(`/api/developer/redis/keys?pattern=${encodeURIComponent(pattern)}`),
