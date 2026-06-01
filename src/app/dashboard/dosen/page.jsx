@@ -58,7 +58,7 @@ export default function DosenDashboard() {
   useEffect(() => {
     if (role && !['dosen', 'penguji'].includes(role)) { router.replace(`/dashboard/${role}`); return; }
     loadDashboard();
-  }, [role]);
+  }, [role, router]);
 
   const loadDashboard = async () => {
     try {

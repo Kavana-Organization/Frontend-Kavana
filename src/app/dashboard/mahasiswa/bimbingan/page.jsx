@@ -77,7 +77,7 @@ export default function BimbinganPage() {
   useEffect(() => {
     if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
     loadAll();
-  }, [role]);
+  }, [role, router]);
 
   const loadAll = async () => {
     try {

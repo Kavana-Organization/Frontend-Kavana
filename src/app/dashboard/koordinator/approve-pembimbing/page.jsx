@@ -47,7 +47,7 @@ export default function ApprovePembimbingPage() {
       return;
     }
     loadData();
-  }, [role]);
+  }, [role, router]);
 
   const loadData = async () => {
     try {

@@ -54,7 +54,7 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (role && role !== 'admin') { router.replace(`/dashboard/${role}`); return; }
     loadDashboard();
-  }, [role]);
+  }, [role, router]);
 
   const loadDashboard = async () => {
     try {

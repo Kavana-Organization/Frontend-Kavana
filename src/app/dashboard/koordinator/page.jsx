@@ -54,7 +54,7 @@ export default function KoordinatorDashboard() {
   useEffect(() => {
     if (role && role !== 'koordinator') { router.replace(`/dashboard/${role}`); return; }
     loadDashboard();
-  }, [role]);
+  }, [role, router]);
 
   const loadDashboard = async () => {
     try {

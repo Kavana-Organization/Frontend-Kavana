@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Upload, AlertTriangle, CheckCircle2, Layers } from 'lucide-react';
 import { motion } from 'framer-motion';
@@ -52,12 +52,7 @@ export default function ProposalPage() {
   const [submitting, setSubmitting] = useState(false);
   const [form, setForm] = useState({ nama: '', npm: '', judul: '', dosen: '', dosen2: '', partnerNama: '', link: '' });
 
-  useEffect(() => {
-    if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
-    loadData();
-  }, [role]);
-
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     try {
       const profileRes = await mahasiswaAPI.getProfile();
       if (profileRes.ok) {
@@ -66,11 +61,13 @@ export default function ProposalPage() {
 
         // Get enrollments from profile
         const activeEnrollments = Array.isArray(p.enrollments) ? p.enrollments.filter((e) => e.status === 'active') : [];
+        let nextSelectedEnrollmentId = null;
         setEnrollments(activeEnrollments);
 
         if (activeEnrollments.length === 1) {
           // Single enrollment: auto-select
           const enr = activeEnrollments[0];
+          nextSelectedEnrollmentId = enr.id;
           setSelectedEnrollmentId(enr.id);
           setTrack(enr.track || p.track || '');
 
@@ -86,6 +83,7 @@ export default function ProposalPage() {
           );
           if (needsProposal.length === 1) {
             const enr = needsProposal[0];
+            nextSelectedEnrollmentId = enr.id;
             setSelectedEnrollmentId(enr.id);
             setTrack(enr.track || '');
           } else if (needsProposal.length === 0) {
@@ -105,7 +103,7 @@ export default function ProposalPage() {
 
         // Load kelompok members
         const selectedTrack = activeEnrollments.length > 0
-          ? (activeEnrollments.find((e) => e.id === selectedEnrollmentId)?.track || activeEnrollments[0]?.track)
+          ? (activeEnrollments.find((e) => sameId(e.id, nextSelectedEnrollmentId))?.track || activeEnrollments[0]?.track)
           : p.track;
 
         if (String(selectedTrack || '').includes('proyek')) {
@@ -123,7 +121,12 @@ export default function ProposalPage() {
       if (dosenRes.ok) setDosenList(Array.isArray(dosenRes.data) ? dosenRes.data : []);
     } catch (err) { console.error(err); }
     finally { setLoading(false); }
-  };
+  }, [user?.name]);
+
+  useEffect(() => {
+    if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
+    loadData();
+  }, [loadData, role, router]);
 
   const handleEnrollmentSelect = (enrollmentId) => {
     const enr = enrollments.find((e) => sameId(e.id, enrollmentId));

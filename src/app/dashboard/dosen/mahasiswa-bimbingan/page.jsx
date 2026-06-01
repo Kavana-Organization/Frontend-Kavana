@@ -24,7 +24,7 @@ export default function MahasiswaBimbinganPage() {
   useEffect(() => {
     if (role && !['dosen','penguji','koordinator','kaprodi'].includes(role)) { router.replace(`/dashboard/${role}`); return; }
     loadData();
-  }, [role]);
+  }, [role, router]);
 
   const loadData = async () => {
     try {

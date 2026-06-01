@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { CheckCircle2, XCircle, MessageSquare, QrCode, ExternalLink, Copy, ShieldX } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
@@ -334,9 +335,12 @@ export default function BimbinganApprovePage() {
 
             <div className="flex flex-col items-center gap-2">
               {qrModal.signature.qr_data_url ? (
-                <img
+                <Image
                   src={qrModal.signature.qr_data_url}
                   alt="QR tanda tangan bimbingan"
+                  width={176}
+                  height={176}
+                  unoptimized
                   className="h-44 w-44 rounded-xl border border-[hsl(var(--ctp-overlay0)/0.45)] bg-white p-2"
                 />
               ) : (

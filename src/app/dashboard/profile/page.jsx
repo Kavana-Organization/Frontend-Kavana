@@ -121,9 +121,7 @@ export default function ProfilePage() {
 
   const isMahasiswa = role === 'mahasiswa';
 
-  useEffect(() => { loadProfile(); }, [role]);
-
-  const loadProfile = async () => {
+  const loadProfile = useCallback(async () => {
     setLoading(true);
     try {
       const fetchProfile = getProfileAPI(role);
@@ -142,7 +140,9 @@ export default function ProfilePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [role, setUser]);
+
+  useEffect(() => { loadProfile(); }, [loadProfile]);
 
   const handleSave = async (e) => {
     e.preventDefault();

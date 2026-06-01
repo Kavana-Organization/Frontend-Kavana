@@ -33,7 +33,7 @@ export default function HasilPage() {
   useEffect(() => {
     if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
     loadData();
-  }, [role]);
+  }, [role, router]);
 
   const loadData = async () => {
     try {

@@ -28,7 +28,7 @@ export default function KelolaDosenPage() {
   useEffect(() => {
     if (role && role !== 'admin') { router.replace(`/dashboard/${role}`); return; }
     loadData();
-  }, [role]);
+  }, [role, router]);
 
   const loadData = async () => {
     try {
