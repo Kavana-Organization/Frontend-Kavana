@@ -25,7 +25,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { authAPI } from '@/lib/api';
-import { trackAuthPageView } from '@/lib/auth-tracker';
+import { trackAuthEvent, trackAuthPageView } from '@/lib/auth-tracker';
 import { validateRegisterEmail, validateNPM, validateWhatsApp, validatePassword } from '@/lib/validators';
 
 function OTPInput({ value, onChange, disabled }) {
@@ -163,6 +163,12 @@ export default function RegisterPage() {
     e.preventDefault();
     if (!validate()) return;
 
+    const identifier = formData.email.trim() || formData.npm.trim();
+    void trackAuthEvent('register_attempt', {
+      identifier,
+      auth_stage: 'request_otp',
+    });
+
     setLoading(true);
     try {
       const result = await authAPI.requestRegisterOTP({
@@ -176,10 +182,19 @@ export default function RegisterPage() {
       });
 
       if (result.ok) {
+        void trackAuthEvent('register_otp_sent', {
+          identifier,
+          auth_stage: 'request_otp',
+        });
         toast.success('Kode OTP telah dikirim ke email Anda!');
         setCountdown(result.data.expires_in || 300);
         setStep('otp');
       } else {
+        void trackAuthEvent('register_failed', {
+          identifier,
+          auth_stage: 'request_otp',
+          failure_reason: result.error || `HTTP ${result.status || 'unknown'}`,
+        });
         const errorLower = (result.error || '').toLowerCase();
         if (errorLower.includes('email') && (errorLower.includes('sudah') || errorLower.includes('already'))) {
           setErrors((prev) => ({ ...prev, email: 'Email sudah terdaftar' }));
@@ -193,6 +208,11 @@ export default function RegisterPage() {
       }
     } catch (err) {
       console.error('Registration OTP error:', err);
+      void trackAuthEvent('register_failed', {
+        identifier,
+        auth_stage: 'request_otp',
+        failure_reason: 'network_error',
+      });
       toast.error('Tidak dapat terhubung ke server.');
     } finally {
       setLoading(false);
@@ -207,15 +227,35 @@ export default function RegisterPage() {
     }
 
     setLoading(true);
+    const identifier = formData.email.trim() || formData.npm.trim();
+    void trackAuthEvent('register_attempt', {
+      identifier,
+      auth_stage: 'verify_otp',
+    });
+
     try {
       const result = await authAPI.verifyRegisterOTP(formData.email.trim(), otp);
       if (result.ok) {
+        void trackAuthEvent('register_success', {
+          identifier,
+          auth_stage: 'verify_otp',
+        });
         toast.success('Registrasi berhasil!');
         setStep('success');
       } else {
+        void trackAuthEvent('register_failed', {
+          identifier,
+          auth_stage: 'verify_otp',
+          failure_reason: result.error || result.data?.message || `HTTP ${result.status || 'unknown'}`,
+        });
         toast.error(result.error || result.data?.message || 'Kode OTP tidak valid');
       }
     } catch {
+      void trackAuthEvent('register_failed', {
+        identifier,
+        auth_stage: 'verify_otp',
+        failure_reason: 'network_error',
+      });
       toast.error('Tidak dapat terhubung ke server.');
     } finally {
       setLoading(false);
@@ -225,6 +265,7 @@ export default function RegisterPage() {
   const handleResend = async () => {
     setOtp('');
     setLoading(true);
+    const identifier = formData.email.trim() || formData.npm.trim();
     try {
       const result = await authAPI.requestRegisterOTP({
         nama: formData.nama.trim(),
@@ -236,12 +277,26 @@ export default function RegisterPage() {
         password: formData.password,
       });
       if (result.ok) {
+        void trackAuthEvent('register_otp_resend', {
+          identifier,
+          auth_stage: 'resend_otp',
+        });
         toast.success('Kode OTP baru telah dikirim!');
         setCountdown(result.data.expires_in || 300);
       } else {
+        void trackAuthEvent('register_failed', {
+          identifier,
+          auth_stage: 'resend_otp',
+          failure_reason: result.error || `HTTP ${result.status || 'unknown'}`,
+        });
         toast.error(result.error || 'Gagal mengirim ulang OTP');
       }
     } catch {
+      void trackAuthEvent('register_failed', {
+        identifier,
+        auth_stage: 'resend_otp',
+        failure_reason: 'network_error',
+      });
       toast.error('Tidak dapat terhubung ke server.');
     } finally {
       setLoading(false);

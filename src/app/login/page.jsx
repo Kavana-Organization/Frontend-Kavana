@@ -11,7 +11,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { authAPI } from '@/lib/api';
-import { trackAuthPageView } from '@/lib/auth-tracker';
+import { trackAuthEvent, trackAuthPageView } from '@/lib/auth-tracker';
 import { useAuthStore } from '@/store/auth-store';
 import { validateEmail, validateNPM } from '@/lib/validators';
 import { ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
@@ -133,15 +133,26 @@ export default function LoginPage() {
     e.preventDefault();
     if (!validate()) return;
 
+    const identifier = formData.identifier.trim();
+    void trackAuthEvent('login_attempt', {
+      identifier,
+      auth_stage: 'submit',
+    });
+
     setLoading(true);
     try {
       const result = await authAPI.login(
-        formData.identifier.trim(),
+        identifier,
         formData.password,
         turnstileToken || undefined
       );
 
       if (result.ok) {
+        void trackAuthEvent('login_success', {
+          identifier,
+          auth_stage: 'submit',
+        });
+
         storeLogin(result.data.token, result.data.role, result.data.user_id, result.data.roles || []);
         setUser({ nama: result.data.nama, email: result.data.email, roles: result.data.roles });
 
@@ -154,6 +165,12 @@ export default function LoginPage() {
           router.push(dashboardUrl);
         }, 500);
       } else {
+        void trackAuthEvent('login_failed', {
+          identifier,
+          auth_stage: 'submit',
+          failure_reason: result.error || `HTTP ${result.status || 'unknown'}`,
+        });
+
         // Reset Turnstile on any login failure
         resetTurnstile();
 
@@ -178,6 +195,11 @@ export default function LoginPage() {
       }
     } catch (err) {
       console.error('Login error:', err);
+      void trackAuthEvent('login_failed', {
+        identifier,
+        auth_stage: 'submit',
+        failure_reason: 'network_error',
+      });
       resetTurnstile();
       toast.error('Tidak dapat terhubung ke server. Periksa koneksi internet Anda.');
     } finally {
