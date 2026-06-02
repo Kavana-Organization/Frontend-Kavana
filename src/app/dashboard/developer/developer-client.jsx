@@ -581,7 +581,6 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
     if (result.ok) {
       toast.success('Synthetic test selesai');
       setData(result.data);
-      if (mode === 'dashboard' || mode === 'health') setHealth(result.data);
       return;
     }
     toast.error(result.error || 'Synthetic test gagal');
@@ -616,8 +615,10 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
   }
 
   const isDashboard = mode === 'dashboard';
+  const isSyntheticResult = Array.isArray(data?.checks);
+  const healthContentData = isSyntheticResult ? data : health || data;
   let renderedContent = <HealthView data={data} />;
-  if (mode === 'dashboard' || mode === 'health') renderedContent = <HealthView data={health || data} />;
+  if (mode === 'dashboard' || mode === 'health') renderedContent = <HealthView data={healthContentData} />;
   if (mode === 'audit-logs') renderedContent = <LogsView data={data} type="audit" />;
   if (mode === 'auth-logs') renderedContent = <LogsView data={data} type="auth" />;
   if (mode === 'auth-trackers') renderedContent = <AuthTrackerView data={data} />;
