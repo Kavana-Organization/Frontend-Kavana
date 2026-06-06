@@ -88,15 +88,15 @@ export default function SettingsPage() {
 
   const handleChangePw = async (e) => {
     e.preventDefault();
-    if (!oldPw || !newPw) { toast.error('Field wajib diisi'); return; }
+    if (!oldPw || !newPw) { toast.error('Semua field wajib diisi'); return; }
     if (newPw !== confirmPw) { toast.error('Konfirmasi password tidak cocok'); return; }
-    if (newPw.length < 6) { toast.error('Password minimal 6 karakter'); return; }
+    if (newPw.length < 8) { toast.error('Password minimal 8 karakter'); return; }
 
     setPwSaving(true);
     try {
       const res = await authAPI.changePassword(oldPw, newPw);
       if (res.ok) {
-        toast.success('Password berhasil diubah!');
+        toast.success('Password berhasil diubah');
         setOldPw(''); setNewPw(''); setConfirmPw('');
       } else {
         toast.error(res.error || 'Gagal mengubah password');
