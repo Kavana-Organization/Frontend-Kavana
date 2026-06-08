@@ -5,441 +5,486 @@ import Link from 'next/link';
 import { useState } from 'react';
 import {
   ArrowRight,
-  BookOpenText,
-  CalendarClock,
+  BookOpenCheck,
+  CalendarDays,
+  Check,
   CheckCircle2,
   ClipboardList,
+  FileCheck2,
+  FileText,
   GraduationCap,
+  Landmark,
   Menu,
-  MessageSquareText,
+  MessagesSquare,
+  Route,
   ShieldCheck,
-  Sparkles,
+  UserPlus,
   Users,
   X,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { Button } from '@/components/ui/button';
-import { CAMPUS_CONTACT, LANDING_CONTENT, PROJECT_OUTPUTS, SOCIAL_PROOF_CONFIG } from '@/lib/constants';
+import { CAMPUS_CONTACT } from '@/lib/constants';
 
-const ROLE_ICONS = [GraduationCap, Users, ShieldCheck, ClipboardList];
-const FEATURE_ICONS = [BookOpenText, MessageSquareText, ShieldCheck, CalendarClock];
-const STEP_ICONS = [Sparkles, BookOpenText, ClipboardList, MessageSquareText, CheckCircle2];
-const projectOne = PROJECT_OUTPUTS.project1;
-const projectTwo = PROJECT_OUTPUTS.project2;
-const projectThree = PROJECT_OUTPUTS.project3;
+const NAV_ITEMS = [
+  { label: 'Beranda', href: '#top' },
+  { label: 'Fitur', href: '#fitur' },
+  { label: 'Peran', href: '#peran' },
+  { label: 'Alur', href: '#alur' },
+  { label: 'Kontak', href: '#kontak' },
+];
 
-const fadeUp = {
-  hidden: { opacity: 0, y: 24 },
-  show: { opacity: 1, y: 0, transition: { duration: 0.55, ease: [0.22, 1, 0.36, 1] } },
-};
-
-const stagger = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: { staggerChildren: 0.08, delayChildren: 0.06 },
+const HIGHLIGHTS = [
+  {
+    title: 'Data Terpusat',
+    description: 'Informasi bimbingan tersimpan dalam satu sistem agar lebih mudah dikelola.',
+    icon: ClipboardList,
   },
-};
+  {
+    title: 'Proses Terdokumentasi',
+    description: 'Setiap tahapan bimbingan dapat dicatat dan ditinjau kembali saat dibutuhkan.',
+    icon: FileCheck2,
+  },
+  {
+    title: 'Validasi Lebih Jelas',
+    description: 'Status pengajuan dan validasi dapat dipantau secara lebih transparan.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Progress Mudah Dipantau',
+    description: 'Mahasiswa dan dosen dapat melihat perkembangan proses bimbingan dengan lebih praktis.',
+    icon: BookOpenCheck,
+  },
+];
+
+const FEATURES = [
+  {
+    title: 'Registrasi Akun',
+    description: 'Pengguna dapat membuat akun sesuai peran akademik yang dimiliki.',
+    icon: UserPlus,
+  },
+  {
+    title: 'Pemilihan Track',
+    description: 'Mahasiswa dapat memilih jalur proyek atau internship sesuai kebutuhan akademik.',
+    icon: Route,
+  },
+  {
+    title: 'Pengajuan Proposal',
+    description: 'Proposal dapat diajukan melalui sistem agar proses administrasi lebih terstruktur.',
+    icon: FileText,
+  },
+  {
+    title: 'Validasi Pengelola',
+    description: 'Pengelola prodi dapat memeriksa dan memvalidasi data pengajuan mahasiswa.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Bimbingan Online',
+    description: 'Dosen dan mahasiswa dapat mencatat proses bimbingan secara lebih terdokumentasi.',
+    icon: MessagesSquare,
+  },
+  {
+    title: 'Riwayat dan Monitoring',
+    description: 'Aktivitas bimbingan dapat dipantau melalui riwayat dan status yang tersimpan.',
+    icon: ClipboardList,
+  },
+];
+
+const ROLES = [
+  {
+    badge: 'Mahasiswa',
+    title: 'Kelola proses akademik dengan langkah yang jelas.',
+    icon: GraduationCap,
+    items: ['Mengajukan proposal', 'Melihat status validasi', 'Mencatat proses bimbingan', 'Memantau progress akademik'],
+  },
+  {
+    badge: 'Dosen Pembimbing',
+    title: 'Dampingi mahasiswa dengan informasi yang tertata.',
+    icon: Users,
+    items: ['Melihat daftar mahasiswa bimbingan', 'Memberi arahan dan catatan', 'Memantau perkembangan mahasiswa', 'Meninjau riwayat bimbingan'],
+  },
+  {
+    badge: 'Pengelola Prodi',
+    title: 'Jaga alur akademik tetap rapi dan terpantau.',
+    icon: Landmark,
+    items: ['Memvalidasi data pengajuan', 'Mengelola alur akademik', 'Memantau rekap proses bimbingan', 'Menjaga proses administrasi tetap rapi'],
+  },
+];
+
+const STEPS = [
+  { title: 'Registrasi', description: 'Pengguna membuat akun sesuai peran akademik.' },
+  { title: 'Pilih Track', description: 'Mahasiswa memilih jalur proyek atau internship.' },
+  { title: 'Ajukan Proposal', description: 'Mahasiswa mengirimkan proposal melalui sistem.' },
+  { title: 'Validasi', description: 'Pengelola memeriksa dan memvalidasi pengajuan.' },
+  { title: 'Bimbingan', description: 'Mahasiswa dan dosen menjalankan sesi bimbingan.' },
+  { title: 'Monitoring', description: 'Progress bimbingan dapat dipantau melalui sistem.' },
+];
+
+const BENEFITS = [
+  {
+    title: 'Mengurangi proses manual',
+    description: 'Dokumen, status, dan catatan bimbingan dapat dikelola dalam satu tempat.',
+  },
+  {
+    title: 'Memudahkan koordinasi',
+    description: 'Mahasiswa, dosen, dan pengelola dapat mengikuti proses yang sama secara lebih jelas.',
+  },
+  {
+    title: 'Meningkatkan transparansi',
+    description: 'Status pengajuan dan progress bimbingan lebih mudah dilihat.',
+  },
+  {
+    title: 'Membantu dokumentasi akademik',
+    description: 'Riwayat proses bimbingan tersimpan sehingga lebih mudah ditinjau kembali.',
+  },
+];
+
+function SectionHeading({ eyebrow, title, description, centered = false }) {
+  return (
+    <div className={centered ? 'mx-auto max-w-3xl text-center' : 'max-w-3xl'}>
+      <p className="text-sm font-bold uppercase tracking-normal text-blue-600">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-base leading-8 text-slate-600 sm:text-lg">{description}</p>
+    </div>
+  );
+}
+
+function PrimaryLink({ href, children, className = '' }) {
+  return (
+    <Button
+      asChild
+      size="lg"
+      className={`h-12 rounded-xl bg-blue-600 px-6 text-white shadow-sm hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md ${className}`}
+    >
+      <Link href={href}>{children}</Link>
+    </Button>
+  );
+}
+
+function SecondaryLink({ href, children, className = '' }) {
+  return (
+    <Button
+      asChild
+      variant="outline"
+      size="lg"
+      className={`h-12 rounded-xl border-slate-300 bg-white px-6 text-slate-800 shadow-sm hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-300 dark:bg-white dark:text-slate-800 dark:hover:border-blue-300 dark:hover:bg-blue-50 dark:hover:text-blue-700 ${className}`}
+    >
+      <Link href={href}>{children}</Link>
+    </Button>
+  );
+}
 
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div id="top" className="relative min-h-screen overflow-x-clip text-[hsl(var(--ctp-text))]">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[640px] bg-[radial-gradient(circle_at_top_left,hsl(var(--ctp-sky)/0.18),transparent_35%),radial-gradient(circle_at_top_right,hsl(var(--ctp-lavender)/0.2),transparent_30%)]" />
-
-      <header className="sticky top-0 z-50 border-b border-[hsl(var(--ctp-surface1)/0.75)] bg-[hsl(var(--ctp-base)/0.8)] backdrop-blur-xl">
-        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-3" aria-label="Kavana Home">
-            <span className="grid h-11 w-11 place-items-center rounded-2xl">
-              <Image src="/D4TI.png" alt="D4TI" width={30} height={30} className="h-8 w-8 object-contain" />
+    <div id="top" className="relative min-h-screen overflow-x-clip bg-white text-slate-900">
+      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
+        <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
+          <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Kavana, kembali ke beranda">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50">
+              <Image src="/D4TI.png" alt="Logo D4 Teknik Informatika ULBI" width={32} height={32} className="h-8 w-8 object-contain" priority />
             </span>
-            <span>
-              <span className="block text-xl font-black tracking-tight">{LANDING_CONTENT.brand.name}</span>
-              <span className="block text-xs text-[hsl(var(--ctp-subtext0))]">{LANDING_CONTENT.brand.subtitle}</span>
+            <span className="min-w-0">
+              <span className="block text-lg font-bold leading-6 tracking-normal text-slate-950">Kavana</span>
+              <span className="block truncate text-xs text-slate-500">Sistem Bimbingan Online</span>
             </span>
           </Link>
 
-          <nav className="hidden items-center gap-7 md:flex" aria-label="Navigasi utama">
-            {LANDING_CONTENT.nav.map((item) => (
-              <a
-                key={item.label}
-                href={item.href}
-                className="text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))]"
-              >
+          <nav className="hidden items-center gap-7 lg:flex" aria-label="Navigasi utama">
+            {NAV_ITEMS.map((item) => (
+              <a key={item.label} href={item.href} className="text-sm font-semibold text-slate-600 transition-colors hover:text-blue-600">
                 {item.label}
               </a>
             ))}
           </nav>
 
-          <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="hidden text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))] md:inline-flex"
-            >
-              Masuk
-            </Link>
-            <Link href="/register">
-              <Button className="px-5">Daftar</Button>
-            </Link>
+          <div className="flex items-center gap-2">
+            <Button asChild variant="ghost" className="hidden h-11 rounded-xl px-4 text-slate-700 hover:bg-blue-50 hover:text-blue-700 sm:inline-flex">
+              <Link href="/login">Masuk</Link>
+            </Button>
+            <Button asChild className="hidden h-11 rounded-xl bg-blue-600 px-5 text-white shadow-sm hover:bg-blue-700 sm:inline-flex">
+              <Link href="/register">Daftar</Link>
+            </Button>
             <Button
-              variant="ghost"
-              size="icon"
-              className="md:hidden"
-              onClick={() => setMobileMenuOpen((prev) => !prev)}
+              variant="outline"
+              size="icon-lg"
+              className="rounded-xl border-slate-300 bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-300 dark:bg-white dark:text-slate-700 dark:hover:bg-blue-50 dark:hover:text-blue-700 lg:hidden"
+              onClick={() => setMobileMenuOpen((open) => !open)}
+              aria-expanded={mobileMenuOpen}
+              aria-controls="mobile-navigation"
               aria-label={mobileMenuOpen ? 'Tutup menu navigasi' : 'Buka menu navigasi'}
             >
-              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+              {mobileMenuOpen ? <X /> : <Menu />}
             </Button>
           </div>
         </div>
 
         {mobileMenuOpen && (
-          <div className="border-t border-[hsl(var(--ctp-surface1)/0.75)] bg-[hsl(var(--ctp-base)/0.95)] px-4 py-4 md:hidden">
-            <div className="flex flex-col gap-2">
-              {LANDING_CONTENT.nav.map((item) => (
+          <div id="mobile-navigation" className="border-t border-slate-200 bg-white px-4 py-4 lg:hidden">
+            <nav className="mx-auto flex max-w-7xl flex-col gap-1" aria-label="Navigasi mobile">
+              {NAV_ITEMS.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="rounded-2xl px-4 py-3 text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:bg-[hsl(var(--ctp-crust))] hover:text-[hsl(var(--ctp-blue))]"
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
                 </a>
               ))}
-            </div>
+              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4">
+                <SecondaryLink href="/login" className="w-full">Masuk</SecondaryLink>
+                <PrimaryLink href="/register" className="w-full">Daftar</PrimaryLink>
+              </div>
+            </nav>
           </div>
         )}
       </header>
 
-      <main className="relative z-10">
-        <section className="mx-auto max-w-7xl px-4 pb-14 pt-14 sm:px-6 lg:px-8 lg:pb-20 lg:pt-20">
-          <motion.div initial="hidden" animate="show" variants={stagger} className="grid gap-8 lg:grid-cols-[1.15fr_0.85fr] lg:items-center">
-            <motion.div variants={stagger} className="space-y-7">
-              <motion.div variants={fadeUp} className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--ctp-blue))]">
-                <Sparkles className="h-3.5 w-3.5" />
-                {LANDING_CONTENT.hero.badge}
-              </motion.div>
-
-              <motion.div variants={fadeUp} className="space-y-4">
-                <h1 className="max-w-3xl text-4xl font-black leading-[1.02] tracking-tight sm:text-5xl lg:text-6xl">
-                  {LANDING_CONTENT.hero.title}
-                </h1>
-                <p className="max-w-2xl text-base leading-8 text-[hsl(var(--ctp-subtext1))] sm:text-lg">
-                  {LANDING_CONTENT.hero.description}
-                </p>
-              </motion.div>
-
-              <motion.div variants={fadeUp} className="flex flex-col gap-3 sm:flex-row">
-                <Link href={LANDING_CONTENT.hero.primaryCta.href}>
-                  <Button size="lg" className="w-full px-7 sm:w-auto">
-                    {LANDING_CONTENT.hero.primaryCta.label}
-                    <ArrowRight className="h-4 w-4" />
-                  </Button>
-                </Link>
-                <Link href={LANDING_CONTENT.hero.secondaryCta.href}>
-                  <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                    {LANDING_CONTENT.hero.secondaryCta.label}
-                  </Button>
-                </Link>
-              </motion.div>
-
-              <motion.div variants={stagger} className="grid gap-3 sm:grid-cols-3">
-                {LANDING_CONTENT.stats.map((stat) => (
-                  <motion.article key={stat.label} variants={fadeUp} className="soft-card rounded-[28px] p-5">
-                    <p className="text-lg font-black text-[hsl(var(--ctp-text))]">{stat.value}</p>
-                    <p className="mt-2 text-sm leading-6 text-[hsl(var(--ctp-subtext0))]">{stat.label}</p>
-                  </motion.article>
-                ))}
-              </motion.div>
-            </motion.div>
-
-            <motion.aside variants={fadeUp} className="soft-panel rounded-[32px] p-6 sm:p-7">
-              <div className="flex items-start justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[hsl(var(--ctp-subtext0))]">
-                    Alur yang Jelas
-                  </p>
-                  <h2 className="mt-2 text-2xl font-black tracking-tight">Satu portal untuk seluruh proses bimbingan.</h2>
-                </div>
-                <span className="rounded-full border border-[hsl(var(--ctp-green)/0.25)] bg-[hsl(var(--ctp-green)/0.12)] px-3 py-1 text-xs font-semibold text-[hsl(var(--ctp-green))]">
-                  Terstruktur
-                </span>
+      <main>
+        <section className="relative overflow-hidden border-b border-blue-100 bg-gradient-to-br from-sky-50 via-white to-blue-50">
+          <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:px-8 lg:py-20">
+            <div>
+              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
+                <Landmark className="h-4 w-4" />
+                Portal Akademik D4TI ULBI
               </div>
+              <h1 className="mt-7 max-w-3xl text-4xl font-bold leading-[1.12] tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
+                Bimbingan Akademik Lebih Mudah, Terarah, dan Transparan
+              </h1>
+              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+                Kavana membantu mahasiswa, dosen pembimbing, dan pengelola prodi dalam mengelola proses bimbingan akademik secara
+                terstruktur, terdokumentasi, dan mudah dipantau.
+              </p>
+              <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+                <PrimaryLink href="/register" className="w-full sm:w-auto">
+                  Daftar Akun
+                  <ArrowRight className="h-4 w-4" />
+                </PrimaryLink>
+                <SecondaryLink href="/login" className="w-full sm:w-auto">Masuk Sistem</SecondaryLink>
+              </div>
+              <div className="mt-9 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:gap-6">
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" />Alur akademik terdokumentasi</span>
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" />Informasi mudah dipantau</span>
+              </div>
+            </div>
 
-              <div className="mt-6 space-y-3">
-                {LANDING_CONTENT.steps.slice(0, 4).map((step) => {
-                  const Icon = STEP_ICONS[step.num - 1] || CheckCircle2;
-                  return (
-                    <div key={step.num} className="flex items-start gap-4 rounded-[24px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.7)] p-4">
-                      <span className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl bg-[hsl(var(--ctp-blue)/0.1)] text-[hsl(var(--ctp-blue))]">
-                        <Icon className="h-5 w-5" />
-                      </span>
+            <div className="relative mx-auto w-full max-w-xl">
+              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-blue-900/10 sm:p-6">
+                <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-5">
+                  <div>
+                    <p className="text-sm font-semibold text-blue-600">Portal Mahasiswa</p>
+                    <h2 className="mt-1 text-xl font-bold tracking-normal text-slate-950">Ringkasan Bimbingan</h2>
+                  </div>
+                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Aktif</span>
+                </div>
+
+                <div className="mt-5 grid gap-4 sm:grid-cols-2">
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-100 text-blue-700"><FileText className="h-5 w-5" /></span>
+                      <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Diproses</span>
+                    </div>
+                    <p className="mt-4 text-sm font-semibold text-slate-950">Status Proposal</p>
+                    <p className="mt-1 text-sm text-slate-500">Menunggu Validasi</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-100 text-sky-700"><CalendarDays className="h-5 w-5" /></span>
+                    <p className="mt-4 text-sm font-semibold text-slate-950">Jadwal Bimbingan</p>
+                    <p className="mt-1 text-sm text-slate-500">Sesi berikutnya tersedia</p>
+                  </div>
+                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                    <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
-                          Tahap {step.num}: {step.title}
-                        </p>
-                        <p className="mt-1 text-sm leading-6 text-[hsl(var(--ctp-subtext0))]">{step.desc}</p>
+                        <p className="text-sm font-semibold text-slate-950">Progress Akademik</p>
+                        <p className="mt-1 text-sm text-slate-500">Tahap pengajuan proposal</p>
+                      </div>
+                      <Route className="h-5 w-5 text-blue-600" />
+                    </div>
+                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200" aria-label="Progress berada pada tahap pengajuan proposal">
+                      <div className="h-full w-2/5 rounded-full bg-blue-600" />
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:col-span-2">
+                    <div className="flex items-start gap-3">
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-blue-700 shadow-sm"><MessagesSquare className="h-5 w-5" /></span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-950">Catatan Dosen</p>
+                        <p className="mt-1 text-sm leading-6 text-slate-600">Belum ada catatan baru</p>
                       </div>
                     </div>
-                  );
-                })}
-              </div>
-            </motion.aside>
-          </motion.div>
-        </section>
-
-        <section id="features" className="border-y border-[hsl(var(--ctp-surface1)/0.85)] bg-[hsl(var(--ctp-mantle)/0.45)] py-16 md:py-20">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="max-w-2xl">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-blue))]">Fitur Utama</p>
-              <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{LANDING_CONTENT.about.title}</h2>
-              <p className="mt-4 text-base leading-8 text-[hsl(var(--ctp-subtext1))]">{LANDING_CONTENT.about.description}</p>
-            </div>
-
-            <div className="mt-10 grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-              {LANDING_CONTENT.features.map((feature, index) => {
-                const Icon = FEATURE_ICONS[index] || BookOpenText;
-                return (
-                  <article key={feature.num} className="soft-card rounded-[28px] p-6">
-                    <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--ctp-blue)/0.1)] text-[hsl(var(--ctp-blue))]">
-                      <Icon className="h-5 w-5" />
-                    </span>
-                    <p className="mt-5 text-sm font-semibold text-[hsl(var(--ctp-subtext0))]">{feature.num}</p>
-                    <h3 className="mt-2 text-xl font-bold">{feature.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{feature.desc}</p>
-                  </article>
-                );
-              })}
-            </div>
-
-            <div className="mt-10 grid gap-6 lg:grid-cols-[1fr_1.1fr]">
-              <div className="soft-card rounded-[30px] p-6">
-                <h3 className="text-xl font-bold">Apa yang pengguna dapatkan?</h3>
-                <ul className="mt-5 space-y-4">
-                  {LANDING_CONTENT.about.bullets.map((text) => (
-                    <li key={text} className="flex items-start gap-3 text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
-                      <CheckCircle2 className="mt-1 h-4 w-4 text-[hsl(var(--ctp-green))]" />
-                      <span>{text}</span>
-                    </li>
-                  ))}
-                </ul>
-              </div>
-
-              <div id="roles" className="grid gap-4 sm:grid-cols-2">
-                {LANDING_CONTENT.roles.map((role, index) => {
-                  const Icon = ROLE_ICONS[index] || Users;
-                  return (
-                    <article key={role.title} className="soft-card rounded-[28px] p-6">
-                      <div className="flex items-center gap-3">
-                        <span className="grid h-12 w-12 place-items-center rounded-2xl bg-[linear-gradient(135deg,hsl(var(--ctp-blue)/0.2),hsl(var(--ctp-teal)/0.16))] text-[hsl(var(--ctp-blue))]">
-                          <Icon className="h-5 w-5" />
-                        </span>
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[hsl(var(--ctp-subtext0))]">Peran {role.letter}</p>
-                          <h3 className="text-lg font-bold">{role.title}</h3>
-                        </div>
-                      </div>
-                      <p className="mt-4 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{role.desc}</p>
-                    </article>
-                  );
-                })}
+                  </div>
+                </div>
               </div>
             </div>
           </div>
         </section>
 
-        <section id="how" className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8 lg:py-20">
-          <div className="grid gap-5 lg:grid-cols-5">
-            {LANDING_CONTENT.steps.map((step) => (
-              <article key={step.num} className="soft-card rounded-[28px] p-5">
-                <span className="inline-flex rounded-full border border-[hsl(var(--ctp-blue)/0.18)] bg-[hsl(var(--ctp-blue)/0.08)] px-3 py-1 text-xs font-semibold text-[hsl(var(--ctp-blue))]">
-                  Tahap {step.num}
-                </span>
-                <h3 className="mt-4 text-lg font-bold">{step.title}</h3>
-                <p className="mt-2 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{step.desc}</p>
+        <section aria-label="Keunggulan Kavana" className="bg-white py-14">
+          <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
+            {HIGHLIGHTS.map(({ title, description, icon: Icon }) => (
+              <article key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md">
+                <Icon className="h-5 w-5 text-blue-600" />
+                <h2 className="mt-4 text-base font-bold tracking-normal text-slate-950">{title}</h2>
+                <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8">
-          <div className="soft-panel overflow-hidden rounded-[38px]">
-            <div className="grid gap-0 xl:grid-cols-[0.78fr_1.22fr]">
-              <div className="relative border-b border-[hsl(var(--ctp-surface1)/0.8)] px-6 py-8 sm:px-8 lg:px-10 xl:border-b-0 xl:border-r">
-                <div className="pointer-events-none absolute -left-24 top-0 h-64 w-64 rounded-full bg-[hsl(var(--ctp-sky)/0.12)] blur-3xl" />
-                <div className="relative">
-                  <span className="inline-flex rounded-full border border-[hsl(var(--ctp-blue)/0.22)] bg-[hsl(var(--ctp-blue)/0.1)] px-4 py-2 text-xs font-bold uppercase tracking-[0.2em] text-[hsl(var(--ctp-blue))]">
-                    Luaran Akademik
+        <section id="fitur" className="scroll-mt-20 border-y border-slate-200 bg-slate-50 py-20 lg:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading
+              eyebrow="Fitur"
+              title="Fitur Utama Kavana"
+              description="Dirancang untuk membantu proses bimbingan akademik menjadi lebih rapi, jelas, dan mudah dipantau."
+            />
+            <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+              {FEATURES.map(({ title, description, icon: Icon }) => (
+                <article key={title} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md">
+                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                    <Icon className="h-6 w-6" />
                   </span>
-                  <h2 className="mt-5 max-w-xl text-3xl font-black tracking-tight sm:text-4xl lg:text-5xl">
-                    Peta luaran proyek ditampilkan lebih jelas untuk presentasi dan review.
-                  </h2>
-                  <p className="mt-5 max-w-2xl text-base leading-8 text-[hsl(var(--ctp-subtext1))]">
-                    Setiap tahap proyek memiliki artefak yang berbeda. Mahasiswa dan dosen bisa melihat fokus luaran,
-                    status kesiapan, dan detail yang perlu disiapkan tanpa harus membuka dokumen terpisah terlebih dahulu.
-                  </p>
+                  <h3 className="mt-5 text-lg font-bold tracking-normal text-slate-950">{title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
 
-                  <div className="mt-7 grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-                    {[
-                      { value: '01', label: 'Demo aplikasi implementor' },
-                      { value: '02', label: 'CRUD RDBMS dan riset' },
-                      { value: '03', label: 'Web services dan Doc API' },
-                    ].map((item) => (
-                      <div key={item.value} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.5)] p-4">
-                        <p className="text-2xl font-black text-[hsl(var(--ctp-blue))]">{item.value}</p>
-                        <p className="mt-1 text-sm leading-6 text-[hsl(var(--ctp-subtext1))]">{item.label}</p>
-                      </div>
+        <section id="peran" className="scroll-mt-20 bg-white py-20 lg:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading
+              centered
+              eyebrow="Peran Pengguna"
+              title="Satu Sistem untuk Beberapa Peran Akademik"
+              description="Kavana membantu setiap pengguna menjalankan tugasnya dengan alur yang lebih jelas."
+            />
+            <div className="mt-12 grid gap-6 lg:grid-cols-3">
+              {ROLES.map(({ badge, title, icon: Icon, items }) => (
+                <article key={badge} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md sm:p-7">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{badge}</span>
+                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-sky-100 text-sky-700"><Icon className="h-6 w-6" /></span>
+                  </div>
+                  <h3 className="mt-6 text-xl font-bold leading-8 tracking-normal text-slate-950">{title}</h3>
+                  <ul className="mt-6 space-y-3">
+                    {items.map((item) => (
+                      <li key={item} className="flex items-start gap-3 text-sm leading-6 text-slate-600">
+                        <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700"><Check className="h-3.5 w-3.5" /></span>
+                        {item}
+                      </li>
                     ))}
-                  </div>
-
-                  <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:flex-wrap">
-                    <Link href="/luaran-proyek-1">
-                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                        Proyek 1
-                      </Button>
-                    </Link>
-                    <Link href="/luaran-proyek-2">
-                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                        Proyek 2
-                      </Button>
-                    </Link>
-                    <Link href="/luaran-proyek-3">
-                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                        Proyek 3
-                      </Button>
-                    </Link>
-                    <Link href="/panduan-pengguna">
-                      <Button variant="outline" size="lg" className="w-full px-7 sm:w-auto">
-                        Panduan
-                      </Button>
-                    </Link>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid gap-4 p-4 sm:p-5 lg:p-6">
-                {[projectOne, projectTwo, projectThree].map((project, index) => (
-                  <article
-                    key={project.label}
-                    className="group rounded-[30px] border border-[hsl(var(--ctp-surface1))] bg-[linear-gradient(135deg,hsl(var(--ctp-base)/0.84),hsl(var(--ctp-mantle)/0.66))] p-5 transition-all hover:-translate-y-0.5 hover:border-[hsl(var(--ctp-blue)/0.45)]"
-                  >
-                    <div className="grid gap-5 lg:grid-cols-[0.72fr_1.28fr] lg:items-start">
-                      <div>
-                        <span className="inline-flex rounded-full border border-[hsl(var(--ctp-green)/0.24)] bg-[hsl(var(--ctp-green)/0.12)] px-3 py-1 text-xs font-bold uppercase tracking-[0.14em] text-[hsl(var(--ctp-green))]">
-                          Tahap {index + 1}
-                        </span>
-                        <h3 className="mt-4 text-2xl font-black tracking-tight text-[hsl(var(--ctp-text))]">{project.title}</h3>
-                        <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{project.summary}</p>
-                      </div>
-
-                      <div className="grid gap-3 sm:grid-cols-2">
-                        {project.deliverables.slice(0, 4).map((item) => (
-                          <div key={item.title} className="rounded-3xl border border-[hsl(var(--ctp-overlay0)/0.38)] bg-[hsl(var(--ctp-surface0)/0.5)] p-4">
-                            <div className="flex items-start justify-between gap-3">
-                              <h4 className="text-sm font-black leading-6 text-[hsl(var(--ctp-text))]">{item.title}</h4>
-                              <span className="shrink-0 rounded-full border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.1)] px-2.5 py-1 text-[10px] font-bold text-[hsl(var(--ctp-blue))]">
-                                {item.status}
-                              </span>
-                            </div>
-                            <p className="mt-3 line-clamp-3 text-xs leading-6 text-[hsl(var(--ctp-subtext0))]">{item.description}</p>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </article>
-                ))}
-              </div>
+                  </ul>
+                </article>
+              ))}
             </div>
           </div>
         </section>
 
-        <section className="mx-auto max-w-7xl px-4 pb-16 sm:px-6 lg:px-8 lg:pb-20">
-          <div className="soft-panel rounded-[34px] px-6 py-8 sm:px-8 lg:px-10 lg:py-10">
-            <div className="grid gap-8 lg:grid-cols-[1fr_0.9fr] lg:items-center">
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-blue))]">Siap Dipakai</p>
-                <h2 className="mt-3 text-3xl font-black tracking-tight sm:text-4xl">{LANDING_CONTENT.cta.title}</h2>
-                <p className="mt-4 max-w-2xl text-base leading-8 text-[hsl(var(--ctp-subtext1))]">{LANDING_CONTENT.cta.description}</p>
-                <div className="mt-6">
-                  <Link href={LANDING_CONTENT.cta.button.href}>
-                    <Button size="lg" className="px-7">
-                      {LANDING_CONTENT.cta.button.label}
-                      <ArrowRight className="h-4 w-4" />
-                    </Button>
-                  </Link>
-                </div>
-              </div>
+        <section id="alur" className="scroll-mt-20 border-y border-slate-200 bg-gradient-to-b from-sky-50 to-white py-20 lg:py-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <SectionHeading
+              eyebrow="Alur Bimbingan"
+              title="Alur Bimbingan yang Lebih Terarah"
+              description="Setiap proses dibuat bertahap agar mahasiswa, dosen, dan pengelola prodi dapat mengikuti alur dengan lebih mudah."
+            />
+            <ol className="relative mt-12 grid gap-5 lg:grid-cols-6 lg:gap-3">
+              <div className="absolute left-[8.33%] right-[8.33%] top-6 hidden h-px bg-blue-200 lg:block" aria-hidden="true" />
+              {STEPS.map((step, index) => (
+                <li key={step.title} className="relative flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:block lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+                  <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full border-4 border-sky-50 bg-blue-600 text-sm font-bold text-white shadow-sm">
+                    {index + 1}
+                  </span>
+                  <div className="lg:mt-5">
+                    <h3 className="text-base font-bold tracking-normal text-slate-950">{step.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </div>
+        </section>
 
-              <div id="contact" className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-[24px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.72)] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[hsl(var(--ctp-subtext0))]">Kontak</p>
-                  <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">{CAMPUS_CONTACT.address}</p>
-                  <p className="mt-3 text-sm text-[hsl(var(--ctp-text))]">{CAMPUS_CONTACT.phone}</p>
-                  <p className="mt-1 text-sm text-[hsl(var(--ctp-text))]">{CAMPUS_CONTACT.email}</p>
-                </div>
-                <div className="rounded-[24px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.72)] p-5">
-                  <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[hsl(var(--ctp-subtext0))]">Jam Layanan</p>
-                  <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">{CAMPUS_CONTACT.officeHours}</p>
-                  {SOCIAL_PROOF_CONFIG.notice ? (
-                    <p className="mt-5 rounded-2xl bg-[hsl(var(--ctp-yellow)/0.15)] px-4 py-3 text-sm leading-6 text-[hsl(var(--ctp-subtext1))]">
-                      {SOCIAL_PROOF_CONFIG.notice}
-                    </p>
-                  ) : null}
-                </div>
-              </div>
+        <section className="bg-white py-20 lg:py-24">
+          <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:px-8">
+            <SectionHeading
+              eyebrow="Manfaat"
+              title="Mengapa Kavana Dibutuhkan?"
+              description="Satu ruang kerja akademik membantu proses bimbingan lebih mudah dipahami, dijalankan, dan ditinjau kembali."
+            />
+            <div className="grid gap-4 sm:grid-cols-2">
+              {BENEFITS.map((benefit, index) => (
+                <article key={benefit.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
+                  <span className="text-sm font-bold text-blue-600">0{index + 1}</span>
+                  <h3 className="mt-4 text-lg font-bold tracking-normal text-slate-950">{benefit.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-slate-600">{benefit.description}</p>
+                </article>
+              ))}
             </div>
           </div>
         </section>
 
-        <footer className="border-t border-[hsl(var(--ctp-surface1)/0.85)] bg-[hsl(var(--ctp-mantle)/0.42)]">
-          <div className="mx-auto grid max-w-7xl gap-10 px-4 py-12 sm:px-6 lg:grid-cols-[1.1fr_0.9fr_0.9fr] lg:px-8">
-            <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-blue))]">
-                Kavana
-              </p>
-              <p className="mt-4 max-w-md text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
-                Platform bimbingan online untuk membantu mahasiswa, dosen, dan pengelola prodi
-                bekerja dalam alur akademik yang lebih rapi dan terdokumentasi.
-              </p>
-            </div>
-
-            <div>
-              <p className="text-sm font-bold text-[hsl(var(--ctp-text))]">Akses Platform</p>
-              <div className="mt-4 flex flex-col gap-3">
-                {LANDING_CONTENT.footer.platformLinks.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="text-sm text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))]"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+        <section className="bg-white pb-20 lg:pb-24">
+          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+            <div className="overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-100 px-6 py-10 sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-12 lg:py-12">
+              <div className="max-w-3xl">
+                <p className="text-sm font-bold uppercase tracking-normal text-blue-600">Mulai Menggunakan Kavana</p>
+                <h2 className="mt-3 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">
+                  Mulai kelola bimbingan akademik dengan lebih terstruktur.
+                </h2>
+                <p className="mt-4 text-base leading-8 text-slate-600">
+                  Gunakan Kavana untuk membantu proses bimbingan menjadi lebih rapi, terdokumentasi, dan mudah dipantau.
+                </p>
               </div>
-            </div>
-
-            <div>
-              <p className="text-sm font-bold text-[hsl(var(--ctp-text))]">Sumber Daya</p>
-              <div className="mt-4 flex flex-col gap-3">
-                {LANDING_CONTENT.footer.resourceLinks.map((item) => (
-                  <Link
-                    key={item.label}
-                    href={item.href}
-                    className="text-sm text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))]"
-                  >
-                    {item.label}
-                  </Link>
-                ))}
+              <div className="mt-8 flex shrink-0 flex-col gap-3 sm:flex-row lg:mt-0 lg:flex-col xl:flex-row">
+                <PrimaryLink href="/register" className="w-full xl:w-auto">Daftar Sekarang</PrimaryLink>
+                <SecondaryLink href="/login" className="w-full xl:w-auto">Masuk ke Sistem</SecondaryLink>
               </div>
             </div>
           </div>
-
-          <div className="border-t border-[hsl(var(--ctp-surface1)/0.85)] px-4 py-5 text-center text-sm text-[hsl(var(--ctp-subtext0))] sm:px-6 lg:px-8">
-            {LANDING_CONTENT.footer.copyright}
-          </div>
-        </footer>
+        </section>
       </main>
+
+      <footer id="kontak" className="scroll-mt-20 border-t border-slate-200 bg-slate-950 text-slate-300">
+        <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_1fr] lg:px-8">
+          <div>
+            <div className="flex items-center gap-3">
+              <span className="grid h-11 w-11 place-items-center rounded-xl bg-white">
+                <Image src="/D4TI.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
+              </span>
+              <div>
+                <p className="text-lg font-bold tracking-normal text-white">Kavana</p>
+                <p className="text-sm text-slate-400">Sistem Bimbingan Online</p>
+              </div>
+            </div>
+            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">Program Studi D4 Teknik Informatika ULBI</p>
+            <p className="mt-2 max-w-md text-sm leading-7 text-slate-400">{CAMPUS_CONTACT.address}</p>
+          </div>
+
+          <div>
+            <p className="text-sm font-bold text-white">Navigasi</p>
+            <nav className="mt-4 grid grid-cols-2 gap-3" aria-label="Navigasi footer">
+              {NAV_ITEMS.map((item) => (
+                <a key={item.label} href={item.href} className="text-sm text-slate-400 transition-colors hover:text-sky-300">{item.label}</a>
+              ))}
+            </nav>
+          </div>
+
+          <div>
+            <p className="text-sm font-bold text-white">Kontak Prodi</p>
+            <div className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
+              <p>{CAMPUS_CONTACT.email}</p>
+              <p>{CAMPUS_CONTACT.phone}</p>
+              <p>{CAMPUS_CONTACT.officeHours}</p>
+            </div>
+          </div>
+        </div>
+        <div className="border-t border-slate-800 px-4 py-5 text-center text-sm text-slate-500">
+          © 2026 Kavana. Program Studi D4 Teknik Informatika ULBI.
+        </div>
+      </footer>
     </div>
   );
 }
