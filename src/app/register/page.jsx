@@ -12,11 +12,12 @@ import {
   Check,
   X as XIcon,
   ShieldCheck,
+  ClipboardList,
   RotateCcw,
-  Sparkles,
+  LoaderCircle,
   CheckCircle2,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion, AnimatePresence, MotionConfig } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
@@ -103,7 +104,8 @@ function OTPInput({ value, onChange, disabled }) {
           onKeyDown={(e) => handleKeyDown(i, e)}
           onPaste={i === 0 ? handlePaste : undefined}
           disabled={disabled}
-          className="h-14 w-11 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.88)] text-center text-xl font-bold text-[hsl(var(--ctp-text))] transition-all focus:border-[hsl(var(--ctp-blue)/0.35)] focus:outline-none focus:ring-2 focus:ring-[hsl(var(--ctp-blue)/0.18)] disabled:opacity-50"
+          aria-label={`Digit OTP ${i + 1}`}
+          className="h-14 w-11 rounded-xl border border-slate-300 bg-white text-center text-xl font-bold text-slate-900 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
         />
       ))}
     </div>
@@ -122,10 +124,22 @@ function getAngkatanOptions() {
   return options;
 }
 
-const onboardingNotes = [
-  'Data identitas mahasiswa divalidasi sebelum akun aktif.',
-  'OTP email memastikan akun dibuat oleh pemilik alamat yang benar.',
-  'Setelah login, seluruh proses proposal dan bimbingan ada di satu tempat.',
+const registerBenefits = [
+  {
+    title: 'Data akademik lebih rapi',
+    description: 'Informasi pengguna dan proses bimbingan tersimpan dalam satu sistem.',
+    icon: ShieldCheck,
+  },
+  {
+    title: 'Status mudah dipantau',
+    description: 'Mahasiswa dapat melihat status pengajuan dan perkembangan proses akademik.',
+    icon: ClipboardList,
+  },
+  {
+    title: 'Proses lebih terstruktur',
+    description: 'Setiap tahapan bimbingan mengikuti alur yang jelas dan terdokumentasi.',
+    icon: CheckCircle2,
+  },
 ];
 
 export default function RegisterPage() {
@@ -231,6 +245,14 @@ export default function RegisterPage() {
     }
   };
 
+  const handleInvalidSubmit = (formErrors) => {
+    if (formErrors.confirmPassword?.message === 'Password tidak cocok') {
+      toast.error('Konfirmasi password tidak sesuai.');
+      return;
+    }
+    toast.error('Mohon lengkapi data pendaftaran yang masih belum valid.');
+  };
+
   const handleVerifyOTP = async (e) => {
     e?.preventDefault();
     if (otp.length < 6) {
@@ -318,17 +340,17 @@ export default function RegisterPage() {
   const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   const inputCls =
-    'h-12 rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.84)] text-[hsl(var(--ctp-text))] placeholder:text-[hsl(var(--ctp-overlay1))] focus-visible:ring-[hsl(var(--ctp-blue)/0.2)] focus-visible:border-[hsl(var(--ctp-blue)/0.35)]';
-  const errCls = 'border-[hsl(var(--ctp-red)/0.55)] focus-visible:ring-[hsl(var(--ctp-red)/0.2)]';
+    'h-12 rounded-xl border-slate-300 bg-white px-4 text-slate-900 shadow-sm placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-blue-500/20 dark:border-slate-300 dark:bg-white dark:text-slate-900 dark:placeholder:text-slate-400';
+  const errCls = 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20';
 
   const PasswordReq = ({ met, text }) => (
-    <span className={`flex items-center gap-1 text-xs ${met ? 'text-[hsl(var(--ctp-green))]' : 'text-[hsl(var(--ctp-overlay1))]'}`}>
+    <span className={`flex items-center gap-1.5 text-xs font-medium ${met ? 'text-emerald-600' : 'text-slate-500'}`}>
       {met ? <Check className="h-3 w-3" /> : <XIcon className="h-3 w-3" />}
       {text}
     </span>
   );
 
-  const FieldError = ({ msg }) => (msg ? <p className="text-xs text-[hsl(var(--ctp-red))]">{msg}</p> : null);
+  const FieldError = ({ msg }) => (msg ? <p className="text-xs font-medium text-red-600">{msg}</p> : null);
 
   const stepVariants = {
     initial: { opacity: 0, x: 24 },
@@ -337,42 +359,44 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="relative min-h-screen overflow-hidden px-4 py-8 sm:px-6 lg:px-8">
-      <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_left,hsl(var(--ctp-lavender)/0.18),transparent_28%),radial-gradient(circle_at_bottom_right,hsl(var(--ctp-teal)/0.14),transparent_26%)]" />
-
-      <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-7xl items-center gap-8 lg:grid-cols-[0.9fr_1.1fr]">
+    <MotionConfig reducedMotion="user">
+    <div className="relative min-h-screen overflow-x-clip bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-6 text-slate-900 selection:bg-blue-200 selection:text-slate-950 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
+      <div className="relative mx-auto grid w-full max-w-7xl items-start gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:gap-14">
         <motion.section
           initial={{ opacity: 0, x: -24 }}
           animate={{ opacity: 1, x: 0 }}
           transition={{ duration: 0.5 }}
-          className="soft-panel hidden rounded-[36px] p-8 lg:block"
+          className="lg:sticky lg:top-10 lg:pt-2"
         >
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))]">
+          <Link href="/" className="inline-flex min-h-11 items-center gap-2 rounded-xl px-1 text-sm font-semibold text-slate-600 transition-colors hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
             <ArrowLeft className="h-4 w-4" />
             Kembali ke Beranda
           </Link>
 
-          <div className="mt-10 max-w-lg">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--ctp-blue))]">
-              <Sparkles className="h-3.5 w-3.5" />
-              Registrasi Mahasiswa
+          <div className="mt-6 max-w-xl lg:mt-12">
+            <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-normal text-blue-700">
+              <GraduationCap className="h-4 w-4" />
+              Portal Akademik D4TI ULBI
             </span>
-            <h1 className="mt-5 text-4xl font-black leading-tight tracking-tight text-[hsl(var(--ctp-text))]">
-              Buat akun dengan alur yang singkat dan mudah dipahami.
+            <h1 className="mt-5 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl lg:text-5xl">
+              Buat akun untuk mulai mengelola proses bimbingan akademik.
             </h1>
-            <p className="mt-5 text-base leading-8 text-[hsl(var(--ctp-subtext1))]">
-              Informasi yang dibutuhkan hanya yang relevan untuk proses akademik. Setelah itu,
-              verifikasi email menyelesaikan pembuatan akun dengan aman.
+            <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
+              Melalui akun Kavana, mahasiswa dapat mengajukan proposal, mengikuti proses validasi,
+              mencatat bimbingan, dan memantau progress akademik dalam satu sistem.
             </p>
           </div>
 
-          <div className="mt-8 space-y-4">
-            {onboardingNotes.map((item) => (
-              <div key={item} className="flex items-start gap-3 rounded-[24px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.72)] p-4">
-                <span className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-[hsl(var(--ctp-teal)/0.12)] text-[hsl(var(--ctp-teal))]">
-                  <ShieldCheck className="h-4 w-4" />
+          <div className="mt-8 hidden gap-4 sm:grid lg:mt-10">
+            {registerBenefits.map(({ title, description, icon: Icon }) => (
+              <div key={title} className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
+                <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600">
+                  <Icon className="h-5 w-5" />
                 </span>
-                <p className="text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">{item}</p>
+                <span>
+                  <span className="block text-sm font-bold text-slate-900">{title}</span>
+                  <span className="mt-1 block text-sm leading-6 text-slate-600">{description}</span>
+                </span>
               </div>
             ))}
           </div>
@@ -384,67 +408,62 @@ export default function RegisterPage() {
           transition={{ duration: 0.5, ease: 'easeOut' }}
           className="relative w-full max-w-2xl justify-self-center"
         >
-          <Link href="/" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))] lg:hidden">
-            <ArrowLeft className="h-4 w-4" />
-            Kembali ke Beranda
-          </Link>
-
-          <Card className="rounded-[32px] border-[hsl(var(--ctp-surface1)/0.9)] bg-[hsl(var(--ctp-base)/0.84)]">
+          <Card className="gap-0 rounded-3xl border-slate-200 bg-white py-0 text-slate-900 shadow-xl shadow-blue-950/10 backdrop-blur-none dark:border-slate-200 dark:bg-white dark:text-slate-900">
             <CardHeader className="pb-1 pt-8 text-center">
-              <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-[22px] bg-[linear-gradient(135deg,hsl(var(--ctp-teal)/0.18),hsl(var(--ctp-lavender)/0.18))]">
+              <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50">
                 {step === 'success' ? (
-                  <CheckCircle2 className="h-8 w-8 text-[hsl(var(--ctp-green))]" />
+                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
                 ) : step === 'otp' ? (
-                  <ShieldCheck className="h-8 w-8 text-[hsl(var(--ctp-blue))]" />
+                  <ShieldCheck className="h-8 w-8 text-blue-600" />
                 ) : (
-                  <GraduationCap className="h-8 w-8 text-[hsl(var(--ctp-teal))]" />
+                  <GraduationCap className="h-8 w-8 text-blue-600" />
                 )}
               </div>
-              <CardTitle className="text-3xl font-black tracking-tight text-[hsl(var(--ctp-text))]">
+              <CardTitle className="text-3xl font-bold tracking-normal text-slate-950">
                 {step === 'success' ? 'Registrasi Berhasil' : step === 'otp' ? 'Verifikasi Email' : 'Daftar Akun Baru'}
               </CardTitle>
-              <CardDescription className="mt-2 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">
+              <CardDescription className="mx-auto mt-2 max-w-lg text-sm leading-7 text-slate-600 dark:text-slate-600">
                 {step === 'success'
                   ? 'Akun Anda sudah siap digunakan.'
                   : step === 'otp'
                     ? `Masukkan kode 6 digit yang dikirim ke ${formData.email}`
-                    : 'Lengkapi data mahasiswa untuk mulai menggunakan sistem bimbingan.'}
+                    : 'Lengkapi data berikut untuk mulai menggunakan Kavana sebagai sistem bimbingan akademik.'}
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="px-6 pb-8 sm:px-8">
+            <CardContent className="px-5 pb-7 sm:px-8 sm:pb-8">
               <AnimatePresence mode="wait">
                 {step === 'form' && (
                   <motion.form
                     key="form"
                     {...stepVariants}
                     transition={{ duration: 0.25 }}
-                    onSubmit={handleFormSubmit(handleSubmit)}
+                    onSubmit={handleFormSubmit(handleSubmit, handleInvalidSubmit)}
                     noValidate
-                    className="space-y-4"
+                    className="space-y-5"
                   >
                     <div className="space-y-2">
-                      <Label htmlFor="nama" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Nama Lengkap</Label>
+                      <Label htmlFor="nama" className="text-sm font-semibold text-slate-700">Nama Lengkap</Label>
                       <Input id="nama" placeholder="Masukkan nama lengkap" aria-invalid={Boolean(errors.nama)} {...register('nama')} className={`${inputCls} ${errors.nama ? errCls : ''}`} />
                       <FieldError msg={errors.nama?.message} />
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="npm" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">NPM</Label>
+                        <Label htmlFor="npm" className="text-sm font-semibold text-slate-700">NPM</Label>
                         <Input id="npm" placeholder="1234567890" inputMode="numeric" aria-invalid={Boolean(errors.npm)} {...register('npm')} className={`${inputCls} ${errors.npm ? errCls : ''}`} />
                         <FieldError msg={errors.npm?.message} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="angkatan" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Angkatan</Label>
+                        <Label htmlFor="angkatan" className="text-sm font-semibold text-slate-700">Angkatan</Label>
                         <Select
                           value={formData.angkatan}
                           onValueChange={(value) => setValue('angkatan', value, { shouldDirty: true, shouldValidate: true })}
                         >
-                          <SelectTrigger id="angkatan" aria-invalid={Boolean(errors.angkatan)} className={`h-12 rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.84)] text-[hsl(var(--ctp-text))] ${errors.angkatan ? errCls : ''}`}>
+                          <SelectTrigger id="angkatan" aria-invalid={Boolean(errors.angkatan)} className={`h-12 rounded-xl border-slate-300 bg-white text-slate-900 shadow-sm focus-visible:border-blue-500 focus-visible:ring-blue-500/20 dark:border-slate-300 dark:bg-white dark:text-slate-900 ${errors.angkatan ? errCls : ''}`}>
                             <SelectValue placeholder="Pilih angkatan" />
                           </SelectTrigger>
-                          <SelectContent className="rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)]">
+                          <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 dark:border-slate-200 dark:bg-white dark:text-slate-900">
                             {angkatanOptions.map((year) => (
                               <SelectItem key={year} value={year}>
                                 {year}
@@ -457,39 +476,39 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="jalur" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Jalur Mahasiswa</Label>
+                      <Label htmlFor="jalur" className="text-sm font-semibold text-slate-700">Jalur Mahasiswa</Label>
                       <Select
                         value={formData.jalur}
                         onValueChange={(value) => setValue('jalur', value, { shouldDirty: true, shouldValidate: true })}
                       >
-                        <SelectTrigger id="jalur" className="h-12 rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.84)] text-[hsl(var(--ctp-text))]">
+                        <SelectTrigger id="jalur" className="h-12 rounded-xl border-slate-300 bg-white text-slate-900 shadow-sm focus-visible:border-blue-500 focus-visible:ring-blue-500/20 dark:border-slate-300 dark:bg-white dark:text-slate-900">
                           <SelectValue placeholder="Pilih jalur" />
                         </SelectTrigger>
-                        <SelectContent className="rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)]">
+                        <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 dark:border-slate-200 dark:bg-white dark:text-slate-900">
                           <SelectItem value="regular">Regular</SelectItem>
                           <SelectItem value="rpl">RPL</SelectItem>
                         </SelectContent>
                       </Select>
-                      <p className="text-xs leading-6 text-[hsl(var(--ctp-subtext0))]">
-                        Regular mengikuti semester akademik. RPL dapat memilih track yang sedang dibuka koordinator.
+                      <p className="text-xs leading-6 text-slate-500">
+                        Mahasiswa reguler mengikuti semester akademik. Mahasiswa RPL dapat memilih track sesuai ketentuan program studi.
                       </p>
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-2">
-                        <Label htmlFor="email" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Email</Label>
+                        <Label htmlFor="email" className="text-sm font-semibold text-slate-700">Email</Label>
                         <Input id="email" type="email" placeholder="contoh@email.com" aria-invalid={Boolean(errors.email)} {...register('email')} className={`${inputCls} ${errors.email ? errCls : ''}`} />
                         <FieldError msg={errors.email?.message} />
                       </div>
                       <div className="space-y-2">
-                        <Label htmlFor="whatsapp" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Nomor WhatsApp</Label>
+                        <Label htmlFor="whatsapp" className="text-sm font-semibold text-slate-700">Nomor WhatsApp</Label>
                         <Input id="whatsapp" placeholder="08123456789" inputMode="tel" aria-invalid={Boolean(errors.whatsapp)} {...register('whatsapp')} className={`${inputCls} ${errors.whatsapp ? errCls : ''}`} />
                         <FieldError msg={errors.whatsapp?.message} />
                       </div>
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="password" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Password</Label>
+                      <Label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</Label>
                       <div className="relative">
                         <Input
                           id="password"
@@ -501,7 +520,7 @@ export default function RegisterPage() {
                         />
                         <button
                           type="button"
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--ctp-overlay1))] transition-colors hover:text-[hsl(var(--ctp-subtext1))]"
+                          className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
                           aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                           onClick={() => setShowPassword((prev) => !prev)}
                         >
@@ -519,7 +538,7 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Konfirmasi Password</Label>
+                      <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700">Konfirmasi Password</Label>
                       <Input
                         id="confirmPassword"
                         type="password"
@@ -532,30 +551,38 @@ export default function RegisterPage() {
                     </div>
 
                     <div className="space-y-1">
-                      <div className="flex items-start gap-3 rounded-[22px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-crust)/0.62)] p-4">
+                      <div className={`flex items-start gap-3 rounded-xl border bg-slate-50 p-4 ${errors.terms ? 'border-red-300' : 'border-slate-200'}`}>
                         <Checkbox
                           id="terms"
                           checked={formData.terms}
                           onCheckedChange={(checked) => setValue('terms', checked === true, { shouldDirty: true, shouldValidate: true })}
-                          className="mt-1 border-[hsl(var(--ctp-overlay0)/0.7)] data-[state=checked]:border-[hsl(var(--ctp-blue))] data-[state=checked]:bg-[hsl(var(--ctp-blue))]"
+                          className="mt-1 border-slate-400 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
                         />
-                        <label htmlFor="terms" className="text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
-                          Saya menyetujui syarat dan ketentuan serta kebijakan privasi platform.
+                        <label htmlFor="terms" className="text-sm leading-7 text-slate-600">
+                          Saya menyetujui{' '}
+                          <Link href="/syarat-layanan" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                            syarat dan ketentuan
+                          </Link>{' '}
+                          serta{' '}
+                          <Link href="/kebijakan-privasi" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
+                            kebijakan privasi
+                          </Link>{' '}
+                          platform.
                         </label>
                       </div>
                       <FieldError msg={errors.terms?.message} />
                     </div>
 
-                    <Button type="submit" className="h-12 w-full text-base" size="lg" disabled={loading}>
+                    <Button type="submit" className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white shadow-sm hover:bg-blue-700 hover:shadow-md" size="lg" disabled={loading}>
                       {loading ? (
                         <span className="flex items-center gap-2">
-                          <Sparkles className="h-4 w-4 animate-spin" />
+                          <LoaderCircle className="h-4 w-4 animate-spin" />
                           Mengirim OTP...
                         </span>
                       ) : (
                         <span className="flex items-center gap-2">
                           <UserPlus className="h-4 w-4" />
-                          Daftar
+                          Daftar Akun
                         </span>
                       )}
                     </Button>
@@ -566,7 +593,7 @@ export default function RegisterPage() {
                   <motion.form key="otp" {...stepVariants} transition={{ duration: 0.25 }} onSubmit={handleVerifyOTP}>
                     <div className="space-y-6">
                       {countdown > 0 ? (
-                        <p className="text-center text-sm font-medium text-[hsl(var(--ctp-peach))]">
+                        <p className="text-center text-sm font-semibold text-amber-700">
                           Berlaku: {formatTime(countdown)}
                         </p>
                       ) : null}
@@ -578,17 +605,17 @@ export default function RegisterPage() {
                           type="button"
                           onClick={handleResend}
                           disabled={loading || countdown > 240}
-                          className="inline-flex items-center gap-1 text-sm font-medium text-[hsl(var(--ctp-subtext0))] transition-colors hover:text-[hsl(var(--ctp-blue))] disabled:cursor-not-allowed disabled:opacity-40"
+                          className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
                         >
                           <RotateCcw className="h-3.5 w-3.5" />
                           Kirim ulang kode
                         </button>
                       </div>
 
-                      <Button type="submit" disabled={loading || otp.length < 6} className="h-12 w-full text-base">
+                      <Button type="submit" disabled={loading || otp.length < 6} className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white shadow-sm hover:bg-blue-700">
                         {loading ? (
                           <span className="flex items-center gap-2">
-                            <Sparkles className="h-4 w-4 animate-spin" />
+                            <LoaderCircle className="h-4 w-4 animate-spin" />
                             Memverifikasi...
                           </span>
                         ) : (
@@ -605,7 +632,7 @@ export default function RegisterPage() {
                           setStep('form');
                           setOtp('');
                         }}
-                        className="flex w-full items-center justify-center gap-2 text-sm font-medium text-[hsl(var(--ctp-subtext0))] transition-colors hover:text-[hsl(var(--ctp-text))]"
+                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
                       >
                         <ArrowLeft className="h-4 w-4" />
                         Kembali ke form
@@ -618,14 +645,14 @@ export default function RegisterPage() {
                   <motion.div key="success" {...stepVariants} transition={{ duration: 0.25 }}>
                     <div className="space-y-6 text-center">
                       <div className="flex justify-center">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-[hsl(var(--ctp-green)/0.3)] bg-[hsl(var(--ctp-green)/0.12)]">
-                          <CheckCircle2 className="h-10 w-10 text-[hsl(var(--ctp-green))]" />
+                        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50">
+                          <CheckCircle2 className="h-10 w-10 text-emerald-600" />
                         </div>
                       </div>
-                      <p className="text-base leading-8 text-[hsl(var(--ctp-subtext1))]">
+                      <p className="text-base leading-8 text-slate-600">
                         Akun mahasiswa berhasil dibuat. Silakan login untuk mulai mengelola bimbingan.
                       </p>
-                      <Button onClick={() => router.push('/login')} className="h-12 w-full text-base">
+                      <Button onClick={() => router.push('/login')} className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white hover:bg-blue-700">
                         Lanjut ke Login
                       </Button>
                     </div>
@@ -636,14 +663,14 @@ export default function RegisterPage() {
               {step === 'form' ? (
                 <>
                   <div className="my-6 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-[hsl(var(--ctp-surface1))]" />
-                    <span className="text-xs font-medium uppercase tracking-[0.14em] text-[hsl(var(--ctp-overlay1))]">sudah punya akun</span>
-                    <div className="h-px flex-1 bg-[hsl(var(--ctp-surface1))]" />
+                    <div className="h-px flex-1 bg-slate-200" />
+                    <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">sudah punya akun</span>
+                    <div className="h-px flex-1 bg-slate-200" />
                   </div>
 
-                  <div className="rounded-[24px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-crust)/0.68)] p-4 text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
+                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-sm leading-7 text-slate-600">
                     Sudah pernah membuat akun?{' '}
-                    <Link href="/login" className="font-semibold text-[hsl(var(--ctp-blue))] transition-colors hover:text-[hsl(var(--ctp-teal))]">
+                    <Link href="/login" className="font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline">
                       Masuk ke akun Anda
                     </Link>
                     .
@@ -655,5 +682,6 @@ export default function RegisterPage() {
         </motion.div>
       </div>
     </div>
+    </MotionConfig>
   );
 }
