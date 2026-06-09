@@ -145,6 +145,7 @@ const registerBenefits = [
 export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const {
     register,
@@ -539,14 +540,24 @@ export default function RegisterPage() {
 
                     <div className="space-y-2">
                       <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700">Konfirmasi Password</Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        placeholder="Ulangi password"
-                        aria-invalid={Boolean(errors.confirmPassword)}
-                        {...register('confirmPassword')}
-                        className={`${inputCls} ${errors.confirmPassword ? errCls : ''}`}
-                      />
+                      <div className="relative">
+                        <Input
+                          id="confirmPassword"
+                          type={showConfirmPassword ? 'text' : 'password'}
+                          placeholder="Ulangi password"
+                          aria-invalid={Boolean(errors.confirmPassword)}
+                          {...register('confirmPassword')}
+                          className={`${inputCls} pr-11 ${errors.confirmPassword ? errCls : ''}`}
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
+                          aria-label={showConfirmPassword ? 'Sembunyikan konfirmasi password' : 'Tampilkan konfirmasi password'}
+                          onClick={() => setShowConfirmPassword((prev) => !prev)}
+                        >
+                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
                       <FieldError msg={errors.confirmPassword?.message} />
                     </div>
 
