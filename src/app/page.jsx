@@ -22,7 +22,10 @@ import {
   Users,
   X,
 } from 'lucide-react';
+import { motion, MotionConfig } from 'framer-motion';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { Progress } from '@/components/ui/progress';
 import { CAMPUS_CONTACT } from '@/lib/constants';
 
 const NAV_ITEMS = [
@@ -173,11 +176,26 @@ function SecondaryLink({ href, children, className = '' }) {
   );
 }
 
+function Reveal({ children, className = '', delay = 0 }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, amount: 0.18 }}
+      transition={{ duration: 0.45, delay, ease: 'easeOut' }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
 export default function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
-    <div id="top" className="relative min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-blue-200 selection:text-slate-950">
+    <MotionConfig reducedMotion="user">
+      <div id="top" className="relative min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-blue-200 selection:text-slate-950">
       <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Kavana, kembali ke beranda">
@@ -244,7 +262,7 @@ export default function LandingPage() {
       <main>
         <section className="relative overflow-hidden border-b border-blue-100 bg-gradient-to-br from-sky-50 via-white to-blue-50">
           <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:px-8 lg:py-20">
-            <div>
+            <Reveal>
               <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
                 <Landmark className="h-4 w-4" />
                 Portal Akademik D4TI ULBI
@@ -267,23 +285,27 @@ export default function LandingPage() {
                 <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" />Alur akademik terdokumentasi</span>
                 <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" />Informasi mudah dipantau</span>
               </div>
-            </div>
+            </Reveal>
 
-            <div className="relative mx-auto w-full max-w-xl">
+            <Reveal className="relative mx-auto w-full max-w-xl" delay={0.1}>
               <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-blue-900/10 sm:p-6">
                 <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-5">
                   <div>
                     <p className="text-sm font-semibold text-blue-600">Portal Mahasiswa</p>
                     <h2 className="mt-1 text-xl font-bold tracking-normal text-slate-950">Ringkasan Bimbingan</h2>
                   </div>
-                  <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">Aktif</span>
+                  <Badge className="border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 dark:bg-emerald-50 dark:text-emerald-700">
+                    Aktif
+                  </Badge>
                 </div>
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
                   <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
                     <div className="flex items-center justify-between gap-3">
                       <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-100 text-blue-700"><FileText className="h-5 w-5" /></span>
-                      <span className="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Diproses</span>
+                      <Badge className="bg-amber-100 px-2.5 py-1 text-amber-700 dark:bg-amber-100 dark:text-amber-700">
+                        Diproses
+                      </Badge>
                     </div>
                     <p className="mt-4 text-sm font-semibold text-slate-950">Status Proposal</p>
                     <p className="mt-1 text-sm text-slate-500">Menunggu Validasi</p>
@@ -301,9 +323,11 @@ export default function LandingPage() {
                       </div>
                       <Route className="h-5 w-5 text-blue-600" />
                     </div>
-                    <div className="mt-4 h-2 overflow-hidden rounded-full bg-slate-200" aria-label="Progress berada pada tahap pengajuan proposal">
-                      <div className="h-full w-2/5 rounded-full bg-blue-600" />
-                    </div>
+                    <Progress
+                      value={40}
+                      aria-label="Progress berada pada tahap pengajuan proposal"
+                      className="mt-4 bg-slate-200 [&_[data-slot=progress-indicator]]:bg-blue-600"
+                    />
                   </div>
                   <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:col-span-2">
                     <div className="flex items-start gap-3">
@@ -316,7 +340,7 @@ export default function LandingPage() {
                   </div>
                 </div>
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -339,7 +363,7 @@ export default function LandingPage() {
               title="Fitur Utama Kavana"
               description="Dirancang untuk membantu proses bimbingan akademik menjadi lebih rapi, jelas, dan mudah dipantau."
             />
-            <div className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
+            <Reveal className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map(({ title, description, icon: Icon }) => (
                 <article key={title} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md">
                   <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-600 group-hover:text-white">
@@ -349,7 +373,7 @@ export default function LandingPage() {
                   <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
                 </article>
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -361,7 +385,7 @@ export default function LandingPage() {
               title="Satu Sistem untuk Beberapa Peran Akademik"
               description="Kavana membantu setiap pengguna menjalankan tugasnya dengan alur yang lebih jelas."
             />
-            <div className="mt-12 grid gap-6 lg:grid-cols-3">
+            <Reveal className="mt-12 grid gap-6 lg:grid-cols-3">
               {ROLES.map(({ badge, title, icon: Icon, items }) => (
                 <article key={badge} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md sm:p-7">
                   <div className="flex items-center justify-between gap-4">
@@ -379,7 +403,7 @@ export default function LandingPage() {
                   </ul>
                 </article>
               ))}
-            </div>
+            </Reveal>
           </div>
         </section>
 
@@ -428,7 +452,7 @@ export default function LandingPage() {
 
         <section className="bg-white pb-20 lg:pb-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-100 px-6 py-10 sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-12 lg:py-12">
+            <Reveal className="overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-100 px-6 py-10 sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-12 lg:py-12">
               <div className="max-w-3xl">
                 <p className="text-sm font-bold uppercase tracking-normal text-blue-600">Mulai Menggunakan Kavana</p>
                 <h2 className="mt-3 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">
@@ -442,7 +466,7 @@ export default function LandingPage() {
                 <PrimaryLink href="/register" className="w-full xl:w-auto">Daftar Sekarang</PrimaryLink>
                 <SecondaryLink href="/login" className="w-full xl:w-auto">Masuk ke Sistem</SecondaryLink>
               </div>
-            </div>
+            </Reveal>
           </div>
         </section>
       </main>
@@ -485,6 +509,7 @@ export default function LandingPage() {
           © 2026 Kavana. Program Studi D4 Teknik Informatika ULBI.
         </div>
       </footer>
-    </div>
+      </div>
+    </MotionConfig>
   );
 }

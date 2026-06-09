@@ -5,6 +5,9 @@ import { useRouter } from 'next/navigation';
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from '@/lib/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -19,6 +22,15 @@ import Script from 'next/script';
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
 
+const loginSchema = z.object({
+  identifier: z
+    .string()
+    .trim()
+    .min(1, 'Email atau NPM wajib diisi')
+    .refine((value) => validateEmail(value) || validateNPM(value), 'Masukkan email yang valid atau NPM (angka)'),
+  password: z.string().min(1, 'Password wajib diisi'),
+});
+
 const highlights = [
   'Riwayat bimbingan tersimpan rapi dalam satu akun.',
   'Status proposal, laporan, dan jadwal lebih mudah dipantau.',
@@ -31,7 +43,18 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errors, setErrors] = useState({});
-  const [formData, setFormData] = useState({ identifier: '', password: '' });
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    setError,
+    clearErrors,
+    formState: { errors: formErrors },
+  } = useForm({
+    resolver: zodResolver(loginSchema),
+    defaultValues: { identifier: '', password: '' },
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
+  });
 
   // Turnstile state
   const [turnstileToken, setTurnstileToken] = useState('');
@@ -102,38 +125,13 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleChange = (field) => (e) => {
-    setFormData((prev) => ({ ...prev, [field]: e.target.value }));
-    setErrors((prev) => ({ ...prev, [field]: '' }));
-  };
-
-  const validate = () => {
-    const errs = {};
-    const { identifier, password } = formData;
-
-    if (!identifier.trim()) {
-      errs.identifier = 'Email atau NPM wajib diisi';
-    } else if (!validateEmail(identifier.trim()) && !validateNPM(identifier.trim())) {
-      errs.identifier = 'Masukkan email yang valid atau NPM (angka)';
-    }
-
-    if (!password) {
-      errs.password = 'Password wajib diisi';
-    }
-
+  const handleSubmit = async ({ identifier: rawIdentifier, password }) => {
     if (TURNSTILE_SITE_KEY && !turnstileToken) {
-      errs.turnstile = 'Selesaikan verifikasi keamanan terlebih dahulu';
+      setErrors((prev) => ({ ...prev, turnstile: 'Selesaikan verifikasi keamanan terlebih dahulu' }));
+      return;
     }
 
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    const identifier = formData.identifier.trim();
+    const identifier = rawIdentifier.trim();
     void trackAuthEvent('login_attempt', {
       identifier,
       auth_stage: 'submit',
@@ -143,7 +141,7 @@ export default function LoginPage() {
     try {
       const result = await authAPI.login(
         identifier,
-        formData.password,
+        password,
         turnstileToken || undefined
       );
 
@@ -177,17 +175,17 @@ export default function LoginPage() {
         if (result.status === 403) {
           const isDeveloperDeviceError = /developer|device|token/i.test(result.error || '');
           if (isDeveloperDeviceError) {
-            setErrors({ identifier: result.error || 'Device belum diizinkan untuk akun developer' });
+            setError('identifier', { type: 'server', message: result.error || 'Device belum diizinkan untuk akun developer' });
             toast.error(result.error || 'Device belum diizinkan untuk akun developer');
           } else {
             setErrors((prev) => ({ ...prev, turnstile: result.error || 'Verifikasi keamanan gagal. Silakan coba lagi.' }));
             toast.error(result.error || 'Verifikasi keamanan gagal');
           }
         } else if (result.status === 401) {
-          setErrors({ password: 'Email/NPM atau password salah' });
+          setError('password', { type: 'server', message: 'Email/NPM atau password salah' });
           toast.error('Email/NPM atau password salah');
         } else if (result.status === 404) {
-          setErrors({ identifier: 'Akun tidak ditemukan' });
+          setError('identifier', { type: 'server', message: 'Akun tidak ditemukan' });
           toast.error('Akun tidak ditemukan');
         } else {
           toast.error(result.error || 'Login gagal. Silakan coba lagi.');
@@ -298,19 +296,26 @@ export default function LoginPage() {
             </CardHeader>
 
             <CardContent className="px-6 pb-8 sm:px-8">
-              <form onSubmit={handleSubmit} className="space-y-5">
+              <form onSubmit={handleFormSubmit(handleSubmit)} className="space-y-5" noValidate>
                 <div className="space-y-2">
                   <Label htmlFor="identifier" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Email atau NPM</Label>
                   <Input
                     id="identifier"
                     type="text"
                     placeholder="contoh@email.com atau 1234567890"
-                    value={formData.identifier}
-                    onChange={handleChange('identifier')}
-                    className={`${inputCls} ${errors.identifier ? errCls : ''}`}
+                    {...register('identifier', {
+                      onChange: () => {
+                        clearErrors('identifier');
+                        setErrors((prev) => ({ ...prev, identifier: '' }));
+                      },
+                    })}
+                    className={`${inputCls} ${formErrors.identifier || errors.identifier ? errCls : ''}`}
                     autoComplete="username"
+                    aria-invalid={Boolean(formErrors.identifier || errors.identifier)}
                   />
-                  {errors.identifier ? <p className="text-xs text-[hsl(var(--ctp-red))]">{errors.identifier}</p> : null}
+                  {formErrors.identifier?.message || errors.identifier ? (
+                    <p className="text-xs text-[hsl(var(--ctp-red))]">{formErrors.identifier?.message || errors.identifier}</p>
+                  ) : null}
                 </div>
 
                 <div className="space-y-2">
@@ -325,10 +330,15 @@ export default function LoginPage() {
                       id="password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Masukkan password"
-                      value={formData.password}
-                      onChange={handleChange('password')}
-                      className={`${inputCls} pr-11 ${errors.password ? errCls : ''}`}
+                      {...register('password', {
+                        onChange: () => {
+                          clearErrors('password');
+                          setErrors((prev) => ({ ...prev, password: '' }));
+                        },
+                      })}
+                      className={`${inputCls} pr-11 ${formErrors.password || errors.password ? errCls : ''}`}
                       autoComplete="current-password"
+                      aria-invalid={Boolean(formErrors.password || errors.password)}
                     />
                     <button
                       type="button"
@@ -339,7 +349,9 @@ export default function LoginPage() {
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>
                   </div>
-                  {errors.password ? <p className="text-xs text-[hsl(var(--ctp-red))]">{errors.password}</p> : null}
+                  {formErrors.password?.message || errors.password ? (
+                    <p className="text-xs text-[hsl(var(--ctp-red))]">{formErrors.password?.message || errors.password}</p>
+                  ) : null}
                 </div>
 
                 {/* Cloudflare Turnstile Widget */}

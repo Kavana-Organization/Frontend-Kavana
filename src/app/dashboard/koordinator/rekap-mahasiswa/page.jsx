@@ -4,6 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, RotateCcw, ArrowRightCircle, ShieldCheck, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import {
+  flexRender,
+  getCoreRowModel,
+  getFilteredRowModel,
+  useReactTable,
+} from '@tanstack/react-table';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -15,6 +21,9 @@ import {
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
+import {
+  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+} from '@/components/ui/table';
 import { useAuthStore } from '@/store/auth-store';
 import { kaprodiAPI, koordinatorAPI } from '@/lib/api';
 
@@ -56,6 +65,129 @@ function getRepeatBadge(mahasiswa) {
   };
 }
 
+const REKAP_COLUMNS = [
+  {
+    id: 'mahasiswa',
+    accessorFn: (mahasiswa) => mahasiswa.nama || '',
+    header: 'Mahasiswa',
+    cell: ({ row }) => (
+      <div className="flex items-center gap-2">
+        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[hsl(var(--ctp-lavender)/0.20)] text-xs font-bold text-[hsl(var(--ctp-text))]">
+          {getInitials(row.original.nama)}
+        </div>
+        <span className="font-medium text-[hsl(var(--ctp-text))]">{row.original.nama || '-'}</span>
+      </div>
+    ),
+  },
+  {
+    accessorKey: 'npm',
+    header: 'NPM',
+    cell: ({ row }) => <span className="text-[hsl(var(--ctp-subtext0))]">{row.original.npm || '-'}</span>,
+  },
+  {
+    accessorKey: 'jalur',
+    header: 'Jalur',
+    cell: ({ row }) => (
+      <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+        {JALUR_LABELS[row.original.jalur] || 'Regular'}
+      </Badge>
+    ),
+  },
+  {
+    accessorKey: 'track',
+    header: 'Track',
+    cell: ({ row }) => (
+      <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
+        {formatTrack(row.original.track)}
+      </Badge>
+    ),
+  },
+  {
+    id: 'status_akademik',
+    accessorFn: (mahasiswa) => `${mahasiswa.repeat_track || ''} ${mahasiswa.next_allowed_track || ''} ${(mahasiswa.converted_tracks || []).join(' ')}`,
+    header: 'Status Akademik',
+    cell: ({ row }) => {
+      const repeatBadge = getRepeatBadge(row.original);
+      return (
+        <div className="flex flex-wrap gap-1.5">
+          <Badge className={`rounded-xl ${repeatBadge.className}`}>{repeatBadge.label}</Badge>
+          {(row.original.converted_tracks || []).map((track) => (
+            <Badge
+              key={track}
+              className="rounded-xl border border-[hsl(var(--ctp-green)/0.28)] bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))]"
+            >
+              Konversi {formatTrack(track)}
+            </Badge>
+          ))}
+        </div>
+      );
+    },
+  },
+  {
+    accessorKey: 'status_proposal',
+    header: 'Proposal',
+    cell: ({ row }) => <span className="capitalize text-[hsl(var(--ctp-subtext0))]">{row.original.status_proposal || '-'}</span>,
+  },
+  {
+    accessorKey: 'dosen_nama',
+    header: 'Pembimbing',
+    cell: ({ row }) => <span className="text-[hsl(var(--ctp-subtext0))]">{row.original.dosen_nama || '-'}</span>,
+  },
+  {
+    id: 'actions',
+    header: 'Aksi',
+    enableGlobalFilter: false,
+    cell: ({ row, table }) => {
+      const { clearRepeatStatus, isKaprodi, openDialog, saving } = table.options.meta;
+      if (!isKaprodi) return null;
+
+      return (
+        <div className="flex flex-wrap gap-2">
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => openDialog('repeat', row.original)}
+            className="rounded-xl border border-[hsl(var(--ctp-red)/0.28)] bg-[hsl(var(--ctp-red)/0.16)] text-[hsl(var(--ctp-red))] hover:bg-[hsl(var(--ctp-red)/0.24)]"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
+            Set Repeat
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            onClick={() => openDialog('next', row.original)}
+            className="rounded-xl border border-[hsl(var(--ctp-blue)/0.28)] bg-[hsl(var(--ctp-blue)/0.16)] text-[hsl(var(--ctp-blue))] hover:bg-[hsl(var(--ctp-blue)/0.24)]"
+          >
+            <ArrowRightCircle className="h-3.5 w-3.5" />
+            Izin Lanjut
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            disabled={saving}
+            onClick={() => clearRepeatStatus(row.original)}
+            className="rounded-xl border border-[hsl(var(--ctp-green)/0.28)] bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] hover:bg-[hsl(var(--ctp-green)/0.24)]"
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            Clear
+          </Button>
+          {row.original.jalur === 'rpl' ? (
+            <Button
+              type="button"
+              size="sm"
+              onClick={() => openDialog('conversion', row.original)}
+              className="rounded-xl border border-[hsl(var(--ctp-green)/0.28)] bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] hover:bg-[hsl(var(--ctp-green)/0.24)]"
+            >
+              <BadgeCheck className="h-3.5 w-3.5" />
+              Konversi
+            </Button>
+          ) : null}
+        </div>
+      );
+    },
+  },
+];
+
 export default function RekapMahasiswaPage() {
   const router = useRouter();
   const { role } = useAuthStore();
@@ -86,8 +218,6 @@ export default function RekapMahasiswaPage() {
     if (role && !['koordinator','kaprodi'].includes(role)) { router.replace(`/dashboard/${role}`); return; }
     loadData();
   }, [loadData, role, router]);
-
-  const filtered = list.filter(m => !search || (m.nama||'').toLowerCase().includes(search.toLowerCase()) || (m.npm||'').includes(search));
 
   const stats = {
     proyek: list.filter(m => m.track?.includes('proyek')).length,
@@ -205,6 +335,16 @@ export default function RekapMahasiswaPage() {
     }
   };
 
+  const table = useReactTable({
+    data: list,
+    columns: isKaprodi ? REKAP_COLUMNS : REKAP_COLUMNS.filter((column) => column.id !== 'actions'),
+    state: { globalFilter: search },
+    onGlobalFilterChange: setSearch,
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    meta: { clearRepeatStatus, isKaprodi, openDialog, saving },
+  });
+
   if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" /></div>;
 
   return (
@@ -221,107 +361,40 @@ export default function RekapMahasiswaPage() {
       <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><Users className="h-4 w-4" /> Rekap Mahasiswa</CardTitle>
-          <Input placeholder="Cari..." value={search} onChange={e => setSearch(e.target.value)} className="w-64 bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
+          <Input
+            aria-label="Cari mahasiswa berdasarkan nama, NPM, track, atau pembimbing"
+            placeholder="Cari mahasiswa..."
+            value={search}
+            onChange={(event) => setSearch(event.target.value)}
+            className="w-64 border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-mantle)/0.5)] text-[hsl(var(--ctp-text))]"
+          />
         </CardHeader>
         <CardContent>
-          {filtered.length === 0 ? (
+          {table.getRowModel().rows.length === 0 ? (
             <div className="text-center py-12"><Users className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" /><p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada data</p></div>
           ) : (
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead><tr className="border-b border-[hsl(var(--ctp-overlay0)/0.35)]">
-                  <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">Mahasiswa</th>
-                  <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">NPM</th>
-                  <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">Jalur</th>
-                  <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">Track</th>
-                  <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">Status Akademik</th>
-                  <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">Proposal</th>
-                  <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">Pembimbing</th>
-                  {isKaprodi ? <th className="text-left py-2 px-3 text-xs text-[hsl(var(--ctp-subtext0))] font-medium">Aksi</th> : null}
-                </tr></thead>
-                <tbody>
-                  {filtered.map((m, i) => (
-                    <tr key={m.id || i} className="border-b border-[hsl(var(--ctp-surface1)/0.35)]">
-                      <td className="py-2 px-3">
-                        <div className="flex items-center gap-2">
-                          <div className="h-8 w-8 rounded-full bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-xs font-bold">{getInitials(m.nama)}</div>
-                          <span className="font-medium text-[hsl(var(--ctp-text))]">{m.nama || '-'}</span>
-                        </div>
-                      </td>
-                      <td className="py-2 px-3 text-[hsl(var(--ctp-subtext0))]">{m.npm || '-'}</td>
-                      <td className="py-2 px-3">
-                        <Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
-                          {JALUR_LABELS[m.jalur] || 'Regular'}
-                        </Badge>
-                      </td>
-                      <td className="py-2 px-3"><Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">{formatTrack(m.track)}</Badge></td>
-                      <td className="py-2 px-3">
-                        <div className="flex flex-wrap gap-1.5">
-                          <Badge className={`rounded-xl ${getRepeatBadge(m).className}`}>
-                            {getRepeatBadge(m).label}
-                          </Badge>
-                          {(m.converted_tracks || []).map((track) => (
-                            <Badge
-                              key={track}
-                              className="rounded-xl bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] border border-[hsl(var(--ctp-green)/0.28)]"
-                            >
-                              Konversi {formatTrack(track)}
-                            </Badge>
-                          ))}
-                        </div>
-                      </td>
-                      <td className="py-2 px-3 text-[hsl(var(--ctp-subtext0))] capitalize">{m.status_proposal || '-'}</td>
-                      <td className="py-2 px-3 text-[hsl(var(--ctp-subtext0))]">{m.dosen_nama || '-'}</td>
-                      {isKaprodi ? (
-                        <td className="py-2 px-3">
-                          <div className="flex flex-wrap gap-2">
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => openDialog('repeat', m)}
-                              className="rounded-xl bg-[hsl(var(--ctp-red)/0.16)] text-[hsl(var(--ctp-red))] hover:bg-[hsl(var(--ctp-red)/0.24)] border border-[hsl(var(--ctp-red)/0.28)]"
-                            >
-                              <RotateCcw className="h-3.5 w-3.5 mr-1" />
-                              Set Repeat
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              onClick={() => openDialog('next', m)}
-                              className="rounded-xl bg-[hsl(var(--ctp-blue)/0.16)] text-[hsl(var(--ctp-blue))] hover:bg-[hsl(var(--ctp-blue)/0.24)] border border-[hsl(var(--ctp-blue)/0.28)]"
-                            >
-                              <ArrowRightCircle className="h-3.5 w-3.5 mr-1" />
-                              Izin Lanjut
-                            </Button>
-                            <Button
-                              type="button"
-                              size="sm"
-                              disabled={saving}
-                              onClick={() => clearRepeatStatus(m)}
-                              className="rounded-xl bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] hover:bg-[hsl(var(--ctp-green)/0.24)] border border-[hsl(var(--ctp-green)/0.28)]"
-                            >
-                              <ShieldCheck className="h-3.5 w-3.5 mr-1" />
-                              Clear
-                            </Button>
-                            {m.jalur === 'rpl' ? (
-                              <Button
-                                type="button"
-                                size="sm"
-                                onClick={() => openDialog('conversion', m)}
-                                className="rounded-xl bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] hover:bg-[hsl(var(--ctp-green)/0.24)] border border-[hsl(var(--ctp-green)/0.28)]"
-                              >
-                                <BadgeCheck className="h-3.5 w-3.5 mr-1" />
-                                Konversi
-                              </Button>
-                            ) : null}
-                          </div>
-                        </td>
-                      ) : null}
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <Table>
+              <TableHeader>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow key={headerGroup.id} className="border-[hsl(var(--ctp-overlay0)/0.35)]">
+                    {headerGroup.headers.map((header) => (
+                      <TableHead key={header.id} className="text-xs text-[hsl(var(--ctp-subtext0))]">
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      </TableHead>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableHeader>
+              <TableBody>
+                {table.getRowModel().rows.map((row) => (
+                  <TableRow key={row.id} className="border-[hsl(var(--ctp-surface1)/0.35)]">
+                    {row.getVisibleCells().map((cell) => (
+                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                    ))}
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
