@@ -17,6 +17,9 @@ import {
   CheckCircle2,
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { useForm } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { z } from 'zod';
 import { toast } from '@/lib/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -27,6 +30,40 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { authAPI } from '@/lib/api';
 import { trackAuthEvent, trackAuthPageView } from '@/lib/auth-tracker';
 import { validateRegisterEmail, validateNPM, validateWhatsApp, validatePassword } from '@/lib/validators';
+
+const registerSchema = z
+  .object({
+    nama: z.string().trim().min(1, 'Nama lengkap wajib diisi').min(3, 'Nama minimal 3 karakter'),
+    npm: z.string().trim().min(1, 'NPM wajib diisi').refine(validateNPM, 'NPM harus berupa angka'),
+    angkatan: z.string().min(1, 'Pilih angkatan'),
+    jalur: z.enum(['regular', 'rpl']),
+    email: z.string().trim().superRefine((value, context) => {
+      const result = validateRegisterEmail(value);
+      if (!result.valid) {
+        context.addIssue({ code: 'custom', message: result.error });
+      }
+    }),
+    whatsapp: z
+      .string()
+      .trim()
+      .min(1, 'Nomor WhatsApp wajib diisi')
+      .refine(validateWhatsApp, 'Format nomor tidak valid (contoh: 08123456789)'),
+    password: z
+      .string()
+      .min(1, 'Password wajib diisi')
+      .refine((value) => validatePassword(value).isValid, 'Password belum memenuhi persyaratan'),
+    confirmPassword: z.string().min(1, 'Konfirmasi password wajib diisi'),
+    terms: z.boolean().refine(Boolean, 'Anda harus menyetujui syarat dan ketentuan'),
+  })
+  .superRefine(({ password, confirmPassword }, context) => {
+    if (password !== confirmPassword) {
+      context.addIssue({
+        code: 'custom',
+        path: ['confirmPassword'],
+        message: 'Password tidak cocok',
+      });
+    }
+  });
 
 function OTPInput({ value, onChange, disabled }) {
   const inputRefs = useRef([]);
@@ -95,18 +132,30 @@ export default function RegisterPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [formData, setFormData] = useState({
-    nama: '',
-    npm: '',
-    angkatan: '',
-    jalur: 'regular',
-    email: '',
-    whatsapp: '',
-    password: '',
-    confirmPassword: '',
-    terms: false,
+  const {
+    register,
+    handleSubmit: handleFormSubmit,
+    setError,
+    setValue,
+    watch,
+    formState: { errors },
+  } = useForm({
+    resolver: zodResolver(registerSchema),
+    defaultValues: {
+      nama: '',
+      npm: '',
+      angkatan: '',
+      jalur: 'regular',
+      email: '',
+      whatsapp: '',
+      password: '',
+      confirmPassword: '',
+      terms: false,
+    },
+    mode: 'onTouched',
+    reValidateMode: 'onChange',
   });
+  const formData = watch();
 
   const [step, setStep] = useState('form');
   const [otp, setOtp] = useState('');
@@ -125,45 +174,8 @@ export default function RegisterPage() {
     return () => clearInterval(timer);
   }, [countdown]);
 
-  const handleChange = (field) => (e) => {
-    const value = e?.target ? e.target.value : e;
-    setFormData((prev) => ({ ...prev, [field]: value }));
-    setErrors((prev) => ({ ...prev, [field]: '' }));
-  };
-
-  const handleTermsChange = (checked) => {
-    setFormData((prev) => ({ ...prev, terms: checked === true }));
-    setErrors((prev) => ({ ...prev, terms: '' }));
-  };
-
-  const validate = () => {
-    const errs = {};
-    if (!formData.nama.trim()) errs.nama = 'Nama lengkap wajib diisi';
-    else if (formData.nama.trim().length < 3) errs.nama = 'Nama minimal 3 karakter';
-    if (!formData.npm.trim()) errs.npm = 'NPM wajib diisi';
-    else if (!validateNPM(formData.npm.trim())) errs.npm = 'NPM harus berupa angka';
-    if (!formData.angkatan) errs.angkatan = 'Pilih angkatan';
-    if (!formData.email.trim()) errs.email = 'Email wajib diisi';
-    else {
-      const emailResult = validateRegisterEmail(formData.email.trim());
-      if (!emailResult.valid) errs.email = emailResult.error;
-    }
-    if (!formData.whatsapp.trim()) errs.whatsapp = 'Nomor WhatsApp wajib diisi';
-    else if (!validateWhatsApp(formData.whatsapp.trim())) errs.whatsapp = 'Format nomor tidak valid (contoh: 08123456789)';
-    if (!formData.password) errs.password = 'Password wajib diisi';
-    else if (!passwordCheck.isValid) errs.password = 'Password belum memenuhi persyaratan';
-    if (!formData.confirmPassword) errs.confirmPassword = 'Konfirmasi password wajib diisi';
-    else if (formData.password !== formData.confirmPassword) errs.confirmPassword = 'Password tidak cocok';
-    if (!formData.terms) errs.terms = 'Anda harus menyetujui syarat dan ketentuan';
-    setErrors(errs);
-    return Object.keys(errs).length === 0;
-  };
-
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    if (!validate()) return;
-
-    const identifier = formData.email.trim() || formData.npm.trim();
+  const handleSubmit = async (data) => {
+    const identifier = data.email.trim() || data.npm.trim();
     void trackAuthEvent('register_attempt', {
       identifier,
       auth_stage: 'request_otp',
@@ -172,13 +184,13 @@ export default function RegisterPage() {
     setLoading(true);
     try {
       const result = await authAPI.requestRegisterOTP({
-        nama: formData.nama.trim(),
-        npm: formData.npm.trim(),
-        angkatan: parseInt(formData.angkatan),
-        jalur: formData.jalur,
-        email: formData.email.trim(),
-        no_wa: formData.whatsapp.trim(),
-        password: formData.password,
+        nama: data.nama.trim(),
+        npm: data.npm.trim(),
+        angkatan: parseInt(data.angkatan),
+        jalur: data.jalur,
+        email: data.email.trim(),
+        no_wa: data.whatsapp.trim(),
+        password: data.password,
       });
 
       if (result.ok) {
@@ -197,10 +209,10 @@ export default function RegisterPage() {
         });
         const errorLower = (result.error || '').toLowerCase();
         if (errorLower.includes('email') && (errorLower.includes('sudah') || errorLower.includes('already'))) {
-          setErrors((prev) => ({ ...prev, email: 'Email sudah terdaftar' }));
+          setError('email', { type: 'server', message: 'Email sudah terdaftar' });
           toast.error('Email sudah terdaftar');
         } else if (errorLower.includes('npm') && (errorLower.includes('sudah') || errorLower.includes('already'))) {
-          setErrors((prev) => ({ ...prev, npm: 'NPM sudah terdaftar' }));
+          setError('npm', { type: 'server', message: 'NPM sudah terdaftar' });
           toast.error('NPM sudah terdaftar');
         } else {
           toast.error(result.error || 'Gagal mengirim OTP. Silakan coba lagi.');
@@ -407,25 +419,29 @@ export default function RegisterPage() {
                     key="form"
                     {...stepVariants}
                     transition={{ duration: 0.25 }}
-                    onSubmit={handleSubmit}
+                    onSubmit={handleFormSubmit(handleSubmit)}
+                    noValidate
                     className="space-y-4"
                   >
                     <div className="space-y-2">
                       <Label htmlFor="nama" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Nama Lengkap</Label>
-                      <Input id="nama" placeholder="Masukkan nama lengkap" value={formData.nama} onChange={handleChange('nama')} className={`${inputCls} ${errors.nama ? errCls : ''}`} />
-                      <FieldError msg={errors.nama} />
+                      <Input id="nama" placeholder="Masukkan nama lengkap" aria-invalid={Boolean(errors.nama)} {...register('nama')} className={`${inputCls} ${errors.nama ? errCls : ''}`} />
+                      <FieldError msg={errors.nama?.message} />
                     </div>
 
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="npm" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">NPM</Label>
-                        <Input id="npm" placeholder="1234567890" value={formData.npm} onChange={handleChange('npm')} className={`${inputCls} ${errors.npm ? errCls : ''}`} />
-                        <FieldError msg={errors.npm} />
+                        <Input id="npm" placeholder="1234567890" inputMode="numeric" aria-invalid={Boolean(errors.npm)} {...register('npm')} className={`${inputCls} ${errors.npm ? errCls : ''}`} />
+                        <FieldError msg={errors.npm?.message} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="angkatan" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Angkatan</Label>
-                        <Select value={formData.angkatan} onValueChange={handleChange('angkatan')}>
-                          <SelectTrigger id="angkatan" className={`h-12 rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.84)] text-[hsl(var(--ctp-text))] ${errors.angkatan ? errCls : ''}`}>
+                        <Select
+                          value={formData.angkatan}
+                          onValueChange={(value) => setValue('angkatan', value, { shouldDirty: true, shouldValidate: true })}
+                        >
+                          <SelectTrigger id="angkatan" aria-invalid={Boolean(errors.angkatan)} className={`h-12 rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.84)] text-[hsl(var(--ctp-text))] ${errors.angkatan ? errCls : ''}`}>
                             <SelectValue placeholder="Pilih angkatan" />
                           </SelectTrigger>
                           <SelectContent className="rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)]">
@@ -436,13 +452,16 @@ export default function RegisterPage() {
                             ))}
                           </SelectContent>
                         </Select>
-                        <FieldError msg={errors.angkatan} />
+                        <FieldError msg={errors.angkatan?.message} />
                       </div>
                     </div>
 
                     <div className="space-y-2">
                       <Label htmlFor="jalur" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Jalur Mahasiswa</Label>
-                      <Select value={formData.jalur} onValueChange={handleChange('jalur')}>
+                      <Select
+                        value={formData.jalur}
+                        onValueChange={(value) => setValue('jalur', value, { shouldDirty: true, shouldValidate: true })}
+                      >
                         <SelectTrigger id="jalur" className="h-12 rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.84)] text-[hsl(var(--ctp-text))]">
                           <SelectValue placeholder="Pilih jalur" />
                         </SelectTrigger>
@@ -459,13 +478,13 @@ export default function RegisterPage() {
                     <div className="grid gap-3 sm:grid-cols-2">
                       <div className="space-y-2">
                         <Label htmlFor="email" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Email</Label>
-                        <Input id="email" type="email" placeholder="contoh@email.com" value={formData.email} onChange={handleChange('email')} className={`${inputCls} ${errors.email ? errCls : ''}`} />
-                        <FieldError msg={errors.email} />
+                        <Input id="email" type="email" placeholder="contoh@email.com" aria-invalid={Boolean(errors.email)} {...register('email')} className={`${inputCls} ${errors.email ? errCls : ''}`} />
+                        <FieldError msg={errors.email?.message} />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="whatsapp" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Nomor WhatsApp</Label>
-                        <Input id="whatsapp" placeholder="08123456789" value={formData.whatsapp} onChange={handleChange('whatsapp')} className={`${inputCls} ${errors.whatsapp ? errCls : ''}`} />
-                        <FieldError msg={errors.whatsapp} />
+                        <Input id="whatsapp" placeholder="08123456789" inputMode="tel" aria-invalid={Boolean(errors.whatsapp)} {...register('whatsapp')} className={`${inputCls} ${errors.whatsapp ? errCls : ''}`} />
+                        <FieldError msg={errors.whatsapp?.message} />
                       </div>
                     </div>
 
@@ -476,8 +495,8 @@ export default function RegisterPage() {
                           id="password"
                           type={showPassword ? 'text' : 'password'}
                           placeholder="Minimal 8 karakter"
-                          value={formData.password}
-                          onChange={handleChange('password')}
+                          aria-invalid={Boolean(errors.password)}
+                          {...register('password')}
                           className={`${inputCls} pr-11 ${errors.password ? errCls : ''}`}
                         />
                         <button
@@ -496,7 +515,7 @@ export default function RegisterPage() {
                           <PasswordReq met={passwordCheck.number} text="Angka" />
                         </div>
                       ) : null}
-                      <FieldError msg={errors.password} />
+                      <FieldError msg={errors.password?.message} />
                     </div>
 
                     <div className="space-y-2">
@@ -505,11 +524,11 @@ export default function RegisterPage() {
                         id="confirmPassword"
                         type="password"
                         placeholder="Ulangi password"
-                        value={formData.confirmPassword}
-                        onChange={handleChange('confirmPassword')}
+                        aria-invalid={Boolean(errors.confirmPassword)}
+                        {...register('confirmPassword')}
                         className={`${inputCls} ${errors.confirmPassword ? errCls : ''}`}
                       />
-                      <FieldError msg={errors.confirmPassword} />
+                      <FieldError msg={errors.confirmPassword?.message} />
                     </div>
 
                     <div className="space-y-1">
@@ -517,14 +536,14 @@ export default function RegisterPage() {
                         <Checkbox
                           id="terms"
                           checked={formData.terms}
-                          onCheckedChange={handleTermsChange}
+                          onCheckedChange={(checked) => setValue('terms', checked === true, { shouldDirty: true, shouldValidate: true })}
                           className="mt-1 border-[hsl(var(--ctp-overlay0)/0.7)] data-[state=checked]:border-[hsl(var(--ctp-blue))] data-[state=checked]:bg-[hsl(var(--ctp-blue))]"
                         />
                         <label htmlFor="terms" className="text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
                           Saya menyetujui syarat dan ketentuan serta kebijakan privasi platform.
                         </label>
                       </div>
-                      <FieldError msg={errors.terms} />
+                      <FieldError msg={errors.terms?.message} />
                     </div>
 
                     <Button type="submit" className="h-12 w-full text-base" size="lg" disabled={loading}>
