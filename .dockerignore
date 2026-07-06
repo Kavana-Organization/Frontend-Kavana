@@ -1,0 +1,13 @@
+# Frontend-Kavana
+node_modules
+.next
+.env
+.env.local
+.env.production.local
+npm-debug.log*
+.vscode
+.DS_Store
+*.tsbuildinfo
+next-env.d.ts
+playwright-report
+test-results
