@@ -49,128 +49,130 @@
 
 :root {
   --font-ui: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
-  --ctp-rosewater: 18 58% 76%;
-  --ctp-flamingo: 9 52% 72%;
-  --ctp-pink: 338 41% 74%;
-  --ctp-mauve: 260 34% 70%;
-  --ctp-red: 6 67% 58%;
-  --ctp-maroon: 354 46% 64%;
-  --ctp-peach: 28 80% 70%;
-  --ctp-yellow: 44 78% 74%;
-  --ctp-green: 149 34% 47%;
-  --ctp-teal: 176 34% 48%;
-  --ctp-sky: 197 60% 67%;
-  --ctp-sapphire: 203 43% 59%;
-  --ctp-blue: 214 53% 58%;
-  --ctp-lavender: 232 52% 74%;
+  /* Corporate-clean palette (slate + blue), mapped onto the legacy ctp-* tokens
+     so the whole token-driven UI shifts to the landing-page look at once. */
+  --ctp-rosewater: 24 95% 63%;
+  --ctp-flamingo: 20 90% 60%;
+  --ctp-pink: 330 81% 60%;
+  --ctp-mauve: 258 90% 66%;
+  --ctp-red: 0 72% 51%;
+  --ctp-maroon: 349 75% 55%;
+  --ctp-peach: 25 95% 53%;
+  --ctp-yellow: 38 92% 50%;
+  --ctp-green: 160 84% 39%;
+  --ctp-teal: 199 89% 48%;
+  --ctp-sky: 199 89% 48%;
+  --ctp-sapphire: 221 83% 53%;
+  --ctp-blue: 221 83% 53%;
+  --ctp-lavender: 217 91% 60%;
 
-  --ctp-text: 223 26% 23%;
-  --ctp-subtext1: 222 18% 37%;
-  --ctp-subtext0: 221 14% 47%;
-  --ctp-overlay2: 221 12% 57%;
-  --ctp-overlay1: 220 11% 65%;
-  --ctp-overlay0: 219 14% 74%;
-  --ctp-surface2: 216 24% 82%;
-  --ctp-surface1: 214 28% 88%;
-  --ctp-surface0: 211 34% 93%;
-  --ctp-base: 34 33% 98%;
-  --ctp-mantle: 210 38% 96%;
-  --ctp-crust: 210 46% 94%;
+  --ctp-text: 222 47% 11%;
+  --ctp-subtext1: 215 19% 35%;
+  --ctp-subtext0: 215 16% 47%;
+  --ctp-overlay2: 215 16% 47%;
+  --ctp-overlay1: 215 20% 65%;
+  --ctp-overlay0: 213 27% 84%;
+  --ctp-surface2: 213 27% 84%;
+  --ctp-surface1: 214 32% 91%;
+  --ctp-surface0: 210 40% 96%;
+  --ctp-base: 0 0% 100%;
+  --ctp-mantle: 210 40% 98%;
+  --ctp-crust: 210 40% 96%;
 
-  --radius: 1.2rem;
+  --radius: 1rem;
   --background: hsl(var(--ctp-base));
   --foreground: hsl(var(--ctp-text));
-  --card: hsl(var(--ctp-base) / 0.88);
+  --card: hsl(var(--ctp-base));
   --card-foreground: hsl(var(--ctp-text));
-  --popover: hsl(var(--ctp-base) / 0.96);
+  --popover: hsl(var(--ctp-base));
   --popover-foreground: hsl(var(--ctp-text));
   --primary: hsl(var(--ctp-blue));
   --primary-foreground: hsl(0 0% 100%);
-  --secondary: hsl(var(--ctp-crust) / 0.9);
+  --secondary: hsl(var(--ctp-surface0));
   --secondary-foreground: hsl(var(--ctp-text));
-  --muted: hsl(var(--ctp-surface0) / 0.9);
+  --muted: hsl(var(--ctp-surface0));
   --muted-foreground: hsl(var(--ctp-subtext0));
-  --accent: hsl(var(--ctp-crust) / 0.92);
+  --accent: hsl(var(--ctp-surface0));
   --accent-foreground: hsl(var(--ctp-text));
   --destructive: hsl(var(--ctp-red));
-  --border: hsl(var(--ctp-surface1) / 0.9);
-  --input: hsl(var(--ctp-surface1) / 0.95);
+  --border: hsl(var(--ctp-surface1));
+  --input: hsl(var(--ctp-surface1));
   --ring: hsl(var(--ctp-blue) / 0.35);
   --chart-1: hsl(var(--ctp-blue));
   --chart-2: hsl(var(--ctp-teal));
   --chart-3: hsl(var(--ctp-lavender));
   --chart-4: hsl(var(--ctp-peach));
   --chart-5: hsl(var(--ctp-green));
-  --sidebar: hsl(var(--ctp-base) / 0.78);
+  --sidebar: hsl(var(--ctp-base));
   --sidebar-foreground: hsl(var(--ctp-text));
   --sidebar-primary: hsl(var(--ctp-blue));
   --sidebar-primary-foreground: hsl(0 0% 100%);
-  --sidebar-accent: hsl(var(--ctp-crust) / 0.92);
+  --sidebar-accent: hsl(var(--ctp-surface0));
   --sidebar-accent-foreground: hsl(var(--ctp-text));
-  --sidebar-border: hsl(var(--ctp-surface1) / 0.82);
+  --sidebar-border: hsl(var(--ctp-surface1));
   --sidebar-ring: hsl(var(--ctp-blue) / 0.3);
 }
 
 .dark {
-  --ctp-rosewater: 17 42% 77%;
-  --ctp-flamingo: 10 36% 72%;
-  --ctp-pink: 336 28% 74%;
-  --ctp-mauve: 257 26% 73%;
-  --ctp-red: 6 72% 70%;
-  --ctp-maroon: 352 34% 70%;
-  --ctp-peach: 29 75% 71%;
-  --ctp-yellow: 43 72% 74%;
-  --ctp-green: 147 28% 64%;
-  --ctp-teal: 178 27% 61%;
-  --ctp-sky: 197 48% 67%;
-  --ctp-sapphire: 205 35% 64%;
-  --ctp-blue: 214 52% 72%;
-  --ctp-lavender: 232 46% 80%;
+  --ctp-rosewater: 24 95% 63%;
+  --ctp-flamingo: 20 90% 60%;
+  --ctp-pink: 330 81% 70%;
+  --ctp-mauve: 258 90% 76%;
+  --ctp-red: 0 84% 65%;
+  --ctp-maroon: 349 75% 65%;
+  --ctp-peach: 25 95% 63%;
+  --ctp-yellow: 38 92% 60%;
+  --ctp-green: 158 64% 52%;
+  --ctp-teal: 199 89% 60%;
+  --ctp-sky: 199 89% 60%;
+  --ctp-sapphire: 213 94% 68%;
+  --ctp-blue: 213 94% 68%;
+  --ctp-lavender: 217 91% 72%;
 
-  --ctp-text: 210 33% 92%;
-  --ctp-subtext1: 214 18% 79%;
-  --ctp-subtext0: 215 14% 68%;
-  --ctp-overlay2: 216 12% 56%;
-  --ctp-overlay1: 217 11% 47%;
-  --ctp-overlay0: 219 13% 37%;
-  --ctp-surface2: 221 17% 30%;
-  --ctp-surface1: 222 20% 24%;
-  --ctp-surface0: 223 24% 18%;
-  --ctp-base: 224 30% 12%;
-  --ctp-mantle: 225 28% 10%;
-  --ctp-crust: 225 24% 8%;
+  --ctp-text: 210 40% 98%;
+  --ctp-subtext1: 214 32% 82%;
+  --ctp-subtext0: 215 20% 65%;
+  --ctp-overlay2: 215 16% 57%;
+  --ctp-overlay1: 215 19% 47%;
+  --ctp-overlay0: 215 25% 33%;
+  --ctp-surface2: 215 25% 33%;
+  --ctp-surface1: 215 28% 25%;
+  --ctp-surface0: 217 33% 20%;
+  --ctp-base: 222 47% 11%;
+  --ctp-mantle: 222 47% 9%;
+  --ctp-crust: 222 47% 7%;
 
   --background: hsl(var(--ctp-base));
   --foreground: hsl(var(--ctp-text));
-  --card: hsl(var(--ctp-surface0) / 0.84);
+  --card: hsl(var(--ctp-mantle));
   --card-foreground: hsl(var(--ctp-text));
-  --popover: hsl(var(--ctp-mantle) / 0.96);
+  --popover: hsl(var(--ctp-mantle));
   --popover-foreground: hsl(var(--ctp-text));
-  --primary: hsl(var(--ctp-sky));
-  --primary-foreground: hsl(var(--ctp-crust));
-  --secondary: hsl(var(--ctp-surface0) / 0.84);
+  --primary: hsl(var(--ctp-blue));
+  --primary-foreground: hsl(222 47% 11%);
+  --secondary: hsl(var(--ctp-surface0));
   --secondary-foreground: hsl(var(--ctp-text));
-  --muted: hsl(var(--ctp-surface0) / 0.72);
+  --muted: hsl(var(--ctp-surface0));
   --muted-foreground: hsl(var(--ctp-subtext0));
-  --accent: hsl(var(--ctp-surface1) / 0.9);
+  --accent: hsl(var(--ctp-surface1));
   --accent-foreground: hsl(var(--ctp-text));
   --destructive: hsl(var(--ctp-red));
-  --border: hsl(var(--ctp-overlay0) / 0.7);
-  --input: hsl(var(--ctp-overlay0) / 0.74);
-  --ring: hsl(var(--ctp-sky) / 0.36);
+  --border: hsl(var(--ctp-surface1));
+  --input: hsl(var(--ctp-surface1));
+  --ring: hsl(var(--ctp-blue) / 0.4);
   --chart-1: hsl(var(--ctp-sky));
   --chart-2: hsl(var(--ctp-teal));
   --chart-3: hsl(var(--ctp-lavender));
   --chart-4: hsl(var(--ctp-peach));
   --chart-5: hsl(var(--ctp-green));
-  --sidebar: hsl(var(--ctp-mantle) / 0.82);
+  --sidebar: hsl(var(--ctp-mantle));
   --sidebar-foreground: hsl(var(--ctp-text));
-  --sidebar-primary: hsl(var(--ctp-sky));
-  --sidebar-primary-foreground: hsl(var(--ctp-crust));
-  --sidebar-accent: hsl(var(--ctp-surface0) / 0.88);
+  --sidebar-primary: hsl(var(--ctp-blue));
+  --sidebar-primary-foreground: hsl(222 47% 11%);
+  --sidebar-accent: hsl(var(--ctp-surface0));
   --sidebar-accent-foreground: hsl(var(--ctp-text));
-  --sidebar-border: hsl(var(--ctp-overlay0) / 0.7);
-  --sidebar-ring: hsl(var(--ctp-sky) / 0.35);
+  --sidebar-border: hsl(var(--ctp-surface1));
+  --sidebar-ring: hsl(var(--ctp-blue) / 0.35);
 }
 
 @layer base {
@@ -191,10 +193,7 @@
     min-height: 100vh;
     font-feature-settings: "ss01", "cv02", "cv03";
     text-rendering: optimizeLegibility;
-    background-image:
-      radial-gradient(circle at top left, hsl(var(--ctp-sky) / 0.18), transparent 28%),
-      radial-gradient(circle at top right, hsl(var(--ctp-lavender) / 0.14), transparent 24%),
-      linear-gradient(180deg, hsl(var(--ctp-base)), hsl(var(--ctp-mantle)));
+    background-color: hsl(var(--ctp-mantle));
   }
 
   h1,
@@ -215,23 +214,19 @@
 
 .ctp-noise {
   background-image:
-    radial-gradient(1100px 580px at 10% 6%, hsl(var(--ctp-sky) / 0.16), transparent 56%),
-    radial-gradient(900px 500px at 88% 8%, hsl(var(--ctp-lavender) / 0.15), transparent 54%),
-    radial-gradient(1200px 680px at 52% 100%, hsl(var(--ctp-teal) / 0.12), transparent 58%);
+    linear-gradient(180deg, hsl(var(--ctp-mantle)), hsl(var(--ctp-base)));
 }
 
 .ctp-grid {
   background-image:
-    linear-gradient(hsl(var(--ctp-surface1) / 0.42) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--ctp-surface1) / 0.42) 1px, transparent 1px);
+    linear-gradient(hsl(var(--ctp-surface1) / 0.6) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--ctp-surface1) / 0.6) 1px, transparent 1px);
   background-size: 34px 34px;
   mask-image: radial-gradient(ellipse 78% 64% at 50% 24%, black 54%, transparent 88%);
 }
 
 .ctp-ring {
-  box-shadow:
-    0 1px 0 hsl(0 0% 100% / 0.45) inset,
-    0 18px 48px -34px hsl(var(--ctp-sapphire) / 0.42);
+  box-shadow: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
 }
 
 .ctp-focus:focus-visible {
@@ -240,52 +235,40 @@
 }
 
 .soft-card {
-  background: hsl(var(--ctp-base) / 0.82);
-  border: 1px solid hsl(var(--ctp-surface1) / 0.85);
-  box-shadow:
-    0 1px 0 hsl(0 0% 100% / 0.52) inset,
-    0 24px 60px -40px hsl(var(--ctp-sapphire) / 0.42);
-  backdrop-filter: blur(18px);
+  background: hsl(var(--ctp-base));
+  border: 1px solid hsl(var(--ctp-surface1));
+  box-shadow: 0 1px 2px 0 hsl(222 47% 11% / 0.05);
 }
 
 .soft-panel {
-  background: linear-gradient(180deg, hsl(var(--ctp-base) / 0.9), hsl(var(--ctp-crust) / 0.85));
-  border: 1px solid hsl(var(--ctp-surface1) / 0.85);
-  box-shadow:
-    0 1px 0 hsl(0 0% 100% / 0.45) inset,
-    0 32px 70px -48px hsl(var(--ctp-sapphire) / 0.34);
-  backdrop-filter: blur(22px);
+  background: hsl(var(--ctp-base));
+  border: 1px solid hsl(var(--ctp-surface1));
+  box-shadow: 0 1px 3px 0 hsl(222 47% 11% / 0.08), 0 1px 2px -1px hsl(222 47% 11% / 0.06);
 }
 
 .soft-section-title {
   color: hsl(var(--ctp-text));
-  letter-spacing: -0.03em;
+  letter-spacing: -0.01em;
 }
 
 .dark .ctp-noise {
   background-image:
-    radial-gradient(1100px 580px at 10% 6%, hsl(var(--ctp-sky) / 0.18), transparent 56%),
-    radial-gradient(900px 500px at 88% 8%, hsl(var(--ctp-lavender) / 0.16), transparent 54%),
-    radial-gradient(1200px 680px at 52% 100%, hsl(var(--ctp-teal) / 0.14), transparent 58%);
+    linear-gradient(180deg, hsl(var(--ctp-mantle)), hsl(var(--ctp-base)));
 }
 
 .dark .ctp-grid {
   background-image:
-    linear-gradient(hsl(var(--ctp-overlay0) / 0.26) 1px, transparent 1px),
-    linear-gradient(90deg, hsl(var(--ctp-overlay0) / 0.26) 1px, transparent 1px);
+    linear-gradient(hsl(var(--ctp-surface1) / 0.5) 1px, transparent 1px),
+    linear-gradient(90deg, hsl(var(--ctp-surface1) / 0.5) 1px, transparent 1px);
 }
 
 .dark .ctp-ring {
-  box-shadow:
-    0 1px 0 hsl(0 0% 100% / 0.04) inset,
-    0 22px 60px -38px hsl(var(--ctp-crust) / 0.88);
+  box-shadow: 0 1px 2px 0 hsl(0 0% 0% / 0.4);
 }
 
 .dark .soft-card,
 .dark .soft-panel {
-  box-shadow:
-    0 1px 0 hsl(0 0% 100% / 0.03) inset,
-    0 28px 68px -42px hsl(var(--ctp-crust) / 0.9);
+  box-shadow: 0 1px 3px 0 hsl(0 0% 0% / 0.4);
 }
 
 .recharts-cartesian-grid line {

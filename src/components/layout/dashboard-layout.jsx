@@ -84,7 +84,7 @@ function useFormattedDate() {
   );
 }
 
-const iconBtnCls = "ctp-focus h-10 w-10 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.82)] shadow-[0_1px_0_hsl(0_0%_100%/0.45)_inset] transition-colors hover:bg-[hsl(var(--ctp-crust))]";
+const iconBtnCls = "ctp-focus h-10 w-10 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] transition-colors hover:bg-[hsl(var(--ctp-surface0))]";
 const LIVE_REFRESH_DEBOUNCE = 250;
 const NOTIFICATION_PREFIXES = ['/api/notifications'];
 
@@ -524,9 +524,9 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                       <DropdownMenuTrigger asChild>
                         <Button
                           variant="ghost"
-                          className="ctp-focus h-10 gap-2 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.82)] pl-1.5 pr-2 shadow-[0_1px_0_hsl(0_0%_100%/0.45)_inset] hover:bg-[hsl(var(--ctp-crust))]"
+                          className="ctp-focus h-10 gap-2 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] pl-1.5 pr-2 hover:bg-[hsl(var(--ctp-surface0))]"
                         >
-                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[hsl(var(--ctp-lavender)/0.25)] border border-[hsl(var(--ctp-lavender)/0.40)] text-[10px] font-bold text-[hsl(var(--ctp-text))]">
+                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[hsl(var(--ctp-blue)/0.1)] border border-[hsl(var(--ctp-blue)/0.2)] text-[10px] font-bold text-[hsl(var(--ctp-blue))]">
                             {initials}
                           </span>
                           <span className="hidden sm:inline text-sm text-[hsl(var(--ctp-text))] font-medium">{displayName.split(' ')[0]}</span>

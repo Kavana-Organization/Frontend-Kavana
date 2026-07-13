@@ -121,7 +121,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
         {/* Brand */}
         <div className={cn("flex items-center gap-2 border-b border-[hsl(var(--ctp-surface1))] px-4 py-5", collapsed ? "justify-center" : "justify-between")}>
           <div className="flex items-center gap-3 overflow-hidden">
-            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--ctp-blue)/0.18)] bg-[linear-gradient(135deg,hsl(var(--ctp-blue)/0.14),hsl(var(--ctp-teal)/0.12))] shadow-[0_8px_24px_-18px_hsl(var(--ctp-sapphire)/0.45)]">
+            <div className="grid h-11 w-11 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.08)]">
               <Image
                 src="/D4TI.png"
                 alt="D4TI"
@@ -241,7 +241,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
           {/* User info */}
           <div className={cn('mb-2 flex w-full items-center gap-3 rounded-xl px-3 py-2', collapsed && 'justify-center px-0')}>
             <span className={cn(
-              "grid shrink-0 place-items-center rounded-2xl border border-[hsl(var(--ctp-blue)/0.18)] bg-[linear-gradient(135deg,hsl(var(--ctp-blue)/0.2),hsl(var(--ctp-teal)/0.16))] text-sm font-bold text-[hsl(var(--ctp-text))]",
+              "grid shrink-0 place-items-center rounded-2xl border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.1)] text-sm font-bold text-[hsl(var(--ctp-blue))]",
               collapsed ? "h-10 w-10" : "h-9 w-9"
             )}>
               {initials}
@@ -313,7 +313,7 @@ export function MobileSidebar({ role }) {
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" /></svg>
         </Button>
       </SheetTrigger>
-      <SheetContent side="left" className="w-72 border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)] p-0">
+      <SheetContent side="left" className="w-72 border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] p-0">
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         <SidebarContent role={role} collapsed={false} onItemClick={() => setOpen(false)} />
       </SheetContent>
@@ -328,7 +328,7 @@ export function DesktopSidebar({ role }) {
   return (
     <aside
       className={cn(
-        'relative sticky top-0 hidden h-screen flex-shrink-0 self-start border-r border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.82)] backdrop-blur-xl transition-all duration-200 lg:flex',
+        'relative sticky top-0 hidden h-screen flex-shrink-0 self-start border-r border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] transition-all duration-200 lg:flex',
         collapsed ? 'w-[76px]' : 'w-[272px]'
       )}
     >
