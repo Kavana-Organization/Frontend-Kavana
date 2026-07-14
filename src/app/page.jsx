@@ -144,9 +144,9 @@ const BENEFITS = [
 function SectionHeading({ eyebrow, title, description, centered = false }) {
   return (
     <div className={centered ? 'mx-auto max-w-3xl text-center' : 'max-w-3xl'}>
-      <p className="text-sm font-bold uppercase tracking-normal text-blue-600">{eyebrow}</p>
-      <h2 className="mt-3 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">{title}</h2>
-      <p className="mt-4 text-base leading-8 text-slate-600 sm:text-lg">{description}</p>
+      <p className="text-sm font-bold uppercase tracking-normal text-[hsl(var(--ctp-blue))]">{eyebrow}</p>
+      <h2 className="mt-3 text-3xl font-bold leading-tight tracking-normal text-[hsl(var(--ctp-text))] sm:text-4xl">{title}</h2>
+      <p className="mt-4 text-base leading-8 text-[hsl(var(--ctp-subtext0))] sm:text-lg">{description}</p>
     </div>
   );
 }
@@ -156,7 +156,7 @@ function PrimaryLink({ href, children, className = '' }) {
     <Button
       asChild
       size="lg"
-      className={`h-12 rounded-xl bg-blue-600 px-6 text-white shadow-sm hover:-translate-y-0.5 hover:bg-blue-700 hover:shadow-md ${className}`}
+      className={`h-12 rounded-xl bg-[hsl(var(--ctp-blue))] px-6 text-white shadow-sm hover:-translate-y-0.5 hover:bg-[hsl(var(--ctp-blue)/0.9)] hover:shadow-md ${className}`}
     >
       <Link href={href}>{children}</Link>
     </Button>
@@ -169,7 +169,7 @@ function SecondaryLink({ href, children, className = '' }) {
       asChild
       variant="outline"
       size="lg"
-      className={`h-12 rounded-xl border-slate-300 bg-white px-6 text-slate-800 shadow-sm hover:-translate-y-0.5 hover:border-blue-300 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-300 dark:bg-white dark:text-slate-800 dark:hover:border-blue-300 dark:hover:bg-blue-50 dark:hover:text-blue-700 ${className}`}
+      className={`h-12 rounded-xl border-[hsl(var(--ctp-surface2))] bg-[hsl(var(--ctp-base))] px-6 text-[hsl(var(--ctp-text))] shadow-sm hover:-translate-y-0.5 hover:border-[hsl(var(--ctp-blue)/0.4)] hover:bg-[hsl(var(--ctp-blue)/0.1)] hover:text-[hsl(var(--ctp-blue))] ${className}`}
     >
       <Link href={href}>{children}</Link>
     </Button>
@@ -195,38 +195,38 @@ export default function LandingPage() {
 
   return (
     <MotionConfig reducedMotion="user">
-      <div id="top" className="relative min-h-screen overflow-x-clip bg-white text-slate-900 selection:bg-blue-200 selection:text-slate-950">
-      <header className="sticky top-0 z-50 border-b border-slate-200 bg-white/90 backdrop-blur-md">
+      <div id="top" className="relative min-h-screen overflow-x-clip bg-[hsl(var(--ctp-base))] text-[hsl(var(--ctp-text))] selection:bg-[hsl(var(--ctp-blue)/0.2)] selection:text-[hsl(var(--ctp-text))]">
+      <header className="sticky top-0 z-50 border-b border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.9)] backdrop-blur-md">
         <div className="mx-auto flex h-20 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex min-w-0 items-center gap-3" aria-label="Kavana, kembali ke beranda">
-            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-blue-100 bg-blue-50">
+            <span className="grid h-11 w-11 shrink-0 place-items-center rounded-xl border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.1)]">
               <Image src="/D4TI.png" alt="Logo D4 Teknik Informatika ULBI" width={32} height={32} className="h-8 w-8 object-contain" priority />
             </span>
             <span className="min-w-0">
-              <span className="block text-lg font-bold leading-6 tracking-normal text-slate-950">Kavana</span>
-              <span className="block truncate text-xs text-slate-500">Sistem Bimbingan Online</span>
+              <span className="block text-lg font-bold leading-6 tracking-normal text-[hsl(var(--ctp-text))]">Kavana</span>
+              <span className="block truncate text-xs text-[hsl(var(--ctp-subtext0))]">Sistem Bimbingan Online</span>
             </span>
           </Link>
 
           <nav className="hidden items-center gap-7 lg:flex" aria-label="Navigasi utama">
             {NAV_ITEMS.map((item) => (
-              <a key={item.label} href={item.href} className="text-sm font-semibold text-slate-600 transition-colors hover:text-blue-600">
+              <a key={item.label} href={item.href} className="text-sm font-semibold text-[hsl(var(--ctp-subtext0))] transition-colors hover:text-[hsl(var(--ctp-blue))]">
                 {item.label}
               </a>
             ))}
           </nav>
 
           <div className="flex items-center gap-2">
-            <Button asChild variant="ghost" className="hidden h-11 rounded-xl px-4 text-slate-700 hover:bg-blue-50 hover:text-blue-700 sm:inline-flex">
+            <Button asChild variant="ghost" className="hidden h-11 rounded-xl px-4 text-[hsl(var(--ctp-subtext1))] hover:bg-[hsl(var(--ctp-blue)/0.1)] hover:text-[hsl(var(--ctp-blue))] sm:inline-flex">
               <Link href="/login">Masuk</Link>
             </Button>
-            <Button asChild className="hidden h-11 rounded-xl bg-blue-600 px-5 text-white shadow-sm hover:bg-blue-700 sm:inline-flex">
+            <Button asChild className="hidden h-11 rounded-xl bg-[hsl(var(--ctp-blue))] px-5 text-white shadow-sm hover:bg-[hsl(var(--ctp-blue)/0.9)] sm:inline-flex">
               <Link href="/register">Daftar</Link>
             </Button>
             <Button
               variant="outline"
               size="icon-lg"
-              className="rounded-xl border-slate-300 bg-white text-slate-700 hover:bg-blue-50 hover:text-blue-700 dark:border-slate-300 dark:bg-white dark:text-slate-700 dark:hover:bg-blue-50 dark:hover:text-blue-700 lg:hidden"
+              className="rounded-xl border-[hsl(var(--ctp-surface2))] bg-[hsl(var(--ctp-base))] text-[hsl(var(--ctp-subtext1))] hover:bg-[hsl(var(--ctp-blue)/0.1)] hover:text-[hsl(var(--ctp-blue))] lg:hidden"
               onClick={() => setMobileMenuOpen((open) => !open)}
               aria-expanded={mobileMenuOpen}
               aria-controls="mobile-navigation"
@@ -238,19 +238,19 @@ export default function LandingPage() {
         </div>
 
         {mobileMenuOpen && (
-          <div id="mobile-navigation" className="border-t border-slate-200 bg-white px-4 py-4 lg:hidden">
+          <div id="mobile-navigation" className="border-t border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] px-4 py-4 lg:hidden">
             <nav className="mx-auto flex max-w-7xl flex-col gap-1" aria-label="Navigasi mobile">
               {NAV_ITEMS.map((item) => (
                 <a
                   key={item.label}
                   href={item.href}
-                  className="rounded-xl px-4 py-3 text-sm font-semibold text-slate-700 transition-colors hover:bg-blue-50 hover:text-blue-700"
+                  className="rounded-xl px-4 py-3 text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:bg-[hsl(var(--ctp-blue)/0.1)] hover:text-[hsl(var(--ctp-blue))]"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {item.label}
                 </a>
               ))}
-              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-slate-200 pt-4">
+              <div className="mt-3 grid grid-cols-2 gap-3 border-t border-[hsl(var(--ctp-surface1))] pt-4">
                 <SecondaryLink href="/login" className="w-full">Masuk</SecondaryLink>
                 <PrimaryLink href="/register" className="w-full">Daftar</PrimaryLink>
               </div>
@@ -260,17 +260,17 @@ export default function LandingPage() {
       </header>
 
       <main>
-        <section className="relative overflow-hidden border-b border-blue-100 bg-gradient-to-br from-sky-50 via-white to-blue-50">
+        <section className="relative overflow-hidden border-b border-[hsl(var(--ctp-blue)/0.15)] bg-gradient-to-br from-[hsl(var(--ctp-sky)/0.08)] via-[hsl(var(--ctp-base))] to-[hsl(var(--ctp-blue)/0.08)]">
           <div className="mx-auto grid min-h-[calc(100vh-5rem)] max-w-7xl gap-12 px-4 py-16 sm:px-6 lg:grid-cols-[1.02fr_0.98fr] lg:items-center lg:px-8 lg:py-20">
             <Reveal>
-              <div className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-white px-4 py-2 text-sm font-semibold text-blue-700 shadow-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-base))] px-4 py-2 text-sm font-semibold text-[hsl(var(--ctp-blue))] shadow-sm">
                 <Landmark className="h-4 w-4" />
                 Portal Akademik D4TI ULBI
               </div>
-              <h1 className="mt-7 max-w-3xl text-4xl font-bold leading-[1.12] tracking-normal text-slate-950 sm:text-5xl lg:text-6xl">
+              <h1 className="mt-7 max-w-3xl text-4xl font-bold leading-[1.12] tracking-normal text-[hsl(var(--ctp-text))] sm:text-5xl lg:text-6xl">
                 Bimbingan Akademik Lebih Mudah, Terarah, dan Transparan
               </h1>
-              <p className="mt-6 max-w-2xl text-base leading-8 text-slate-600 sm:text-lg">
+              <p className="mt-6 max-w-2xl text-base leading-8 text-[hsl(var(--ctp-subtext0))] sm:text-lg">
                 Kavana membantu mahasiswa, dosen pembimbing, dan pengelola prodi dalam mengelola proses bimbingan akademik secara
                 terstruktur, terdokumentasi, dan mudah dipantau.
               </p>
@@ -281,60 +281,60 @@ export default function LandingPage() {
                 </PrimaryLink>
                 <SecondaryLink href="/login" className="w-full sm:w-auto">Masuk Sistem</SecondaryLink>
               </div>
-              <div className="mt-9 flex flex-col gap-3 text-sm text-slate-600 sm:flex-row sm:gap-6">
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" />Alur akademik terdokumentasi</span>
-                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-emerald-600" />Informasi mudah dipantau</span>
+              <div className="mt-9 flex flex-col gap-3 text-sm text-[hsl(var(--ctp-subtext0))] sm:flex-row sm:gap-6">
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[hsl(var(--ctp-green))]" />Alur akademik terdokumentasi</span>
+                <span className="flex items-center gap-2"><CheckCircle2 className="h-4 w-4 text-[hsl(var(--ctp-green))]" />Informasi mudah dipantau</span>
               </div>
             </Reveal>
 
             <Reveal className="relative mx-auto w-full max-w-xl" delay={0.1}>
-              <div className="rounded-3xl border border-slate-200 bg-white p-4 shadow-xl shadow-blue-900/10 sm:p-6">
-                <div className="flex items-center justify-between gap-4 border-b border-slate-200 pb-5">
+              <div className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] p-4 shadow-xl shadow-[hsl(var(--ctp-blue)/0.1)] sm:p-6">
+                <div className="flex items-center justify-between gap-4 border-b border-[hsl(var(--ctp-surface1))] pb-5">
                   <div>
-                    <p className="text-sm font-semibold text-blue-600">Portal Mahasiswa</p>
-                    <h2 className="mt-1 text-xl font-bold tracking-normal text-slate-950">Ringkasan Bimbingan</h2>
+                    <p className="text-sm font-semibold text-[hsl(var(--ctp-blue))]">Portal Mahasiswa</p>
+                    <h2 className="mt-1 text-xl font-bold tracking-normal text-[hsl(var(--ctp-text))]">Ringkasan Bimbingan</h2>
                   </div>
-                  <Badge className="border border-emerald-200 bg-emerald-50 px-3 py-1 text-emerald-700 dark:bg-emerald-50 dark:text-emerald-700">
+                  <Badge className="border border-[hsl(var(--ctp-green)/0.3)] bg-[hsl(var(--ctp-green)/0.12)] px-3 py-1 text-[hsl(var(--ctp-green))]">
                     Aktif
                   </Badge>
                 </div>
 
                 <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                  <div className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-surface0))] p-4">
                     <div className="flex items-center justify-between gap-3">
-                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-blue-100 text-blue-700"><FileText className="h-5 w-5" /></span>
-                      <Badge className="bg-amber-100 px-2.5 py-1 text-amber-700 dark:bg-amber-100 dark:text-amber-700">
+                      <span className="grid h-10 w-10 place-items-center rounded-xl bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))]"><FileText className="h-5 w-5" /></span>
+                      <Badge className="bg-[hsl(var(--ctp-peach)/0.15)] px-2.5 py-1 text-[hsl(var(--ctp-peach))]">
                         Diproses
                       </Badge>
                     </div>
-                    <p className="mt-4 text-sm font-semibold text-slate-950">Status Proposal</p>
-                    <p className="mt-1 text-sm text-slate-500">Menunggu Validasi</p>
+                    <p className="mt-4 text-sm font-semibold text-[hsl(var(--ctp-text))]">Status Proposal</p>
+                    <p className="mt-1 text-sm text-[hsl(var(--ctp-subtext0))]">Menunggu Validasi</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4">
-                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-sky-100 text-sky-700"><CalendarDays className="h-5 w-5" /></span>
-                    <p className="mt-4 text-sm font-semibold text-slate-950">Jadwal Bimbingan</p>
-                    <p className="mt-1 text-sm text-slate-500">Sesi berikutnya tersedia</p>
+                  <div className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-surface0))] p-4">
+                    <span className="grid h-10 w-10 place-items-center rounded-xl bg-[hsl(var(--ctp-sky)/0.15)] text-[hsl(var(--ctp-sky))]"><CalendarDays className="h-5 w-5" /></span>
+                    <p className="mt-4 text-sm font-semibold text-[hsl(var(--ctp-text))]">Jadwal Bimbingan</p>
+                    <p className="mt-1 text-sm text-[hsl(var(--ctp-subtext0))]">Sesi berikutnya tersedia</p>
                   </div>
-                  <div className="rounded-2xl border border-slate-200 bg-slate-50 p-4 sm:col-span-2">
+                  <div className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-surface0))] p-4 sm:col-span-2">
                     <div className="flex items-center justify-between gap-3">
                       <div>
-                        <p className="text-sm font-semibold text-slate-950">Progress Akademik</p>
-                        <p className="mt-1 text-sm text-slate-500">Tahap pengajuan proposal</p>
+                        <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">Progress Akademik</p>
+                        <p className="mt-1 text-sm text-[hsl(var(--ctp-subtext0))]">Tahap pengajuan proposal</p>
                       </div>
-                      <Route className="h-5 w-5 text-blue-600" />
+                      <Route className="h-5 w-5 text-[hsl(var(--ctp-blue))]" />
                     </div>
                     <Progress
                       value={40}
                       aria-label="Progress berada pada tahap pengajuan proposal"
-                      className="mt-4 bg-slate-200 [&_[data-slot=progress-indicator]]:bg-blue-600"
+                      className="mt-4 bg-[hsl(var(--ctp-surface1))] [&_[data-slot=progress-indicator]]:bg-[hsl(var(--ctp-blue))]"
                     />
                   </div>
-                  <div className="rounded-2xl border border-blue-100 bg-blue-50 p-4 sm:col-span-2">
+                  <div className="rounded-2xl border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.1)] p-4 sm:col-span-2">
                     <div className="flex items-start gap-3">
-                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-white text-blue-700 shadow-sm"><MessagesSquare className="h-5 w-5" /></span>
+                      <span className="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-[hsl(var(--ctp-base))] text-[hsl(var(--ctp-blue))] shadow-sm"><MessagesSquare className="h-5 w-5" /></span>
                       <div>
-                        <p className="text-sm font-semibold text-slate-950">Catatan Dosen</p>
-                        <p className="mt-1 text-sm leading-6 text-slate-600">Belum ada catatan baru</p>
+                        <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">Catatan Dosen</p>
+                        <p className="mt-1 text-sm leading-6 text-[hsl(var(--ctp-subtext0))]">Belum ada catatan baru</p>
                       </div>
                     </div>
                   </div>
@@ -344,19 +344,19 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section aria-label="Keunggulan Kavana" className="bg-white py-14">
+        <section aria-label="Keunggulan Kavana" className="bg-[hsl(var(--ctp-base))] py-14">
           <div className="mx-auto grid max-w-7xl gap-4 px-4 sm:grid-cols-2 sm:px-6 lg:grid-cols-4 lg:px-8">
             {HIGHLIGHTS.map(({ title, description, icon: Icon }) => (
-              <article key={title} className="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md">
-                <Icon className="h-5 w-5 text-blue-600" />
-                <h2 className="mt-4 text-base font-bold tracking-normal text-slate-950">{title}</h2>
-                <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
+              <article key={title} className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] p-5 shadow-sm transition hover:-translate-y-1 hover:border-[hsl(var(--ctp-blue)/0.3)] hover:shadow-md">
+                <Icon className="h-5 w-5 text-[hsl(var(--ctp-blue))]" />
+                <h2 className="mt-4 text-base font-bold tracking-normal text-[hsl(var(--ctp-text))]">{title}</h2>
+                <p className="mt-2 text-sm leading-6 text-[hsl(var(--ctp-subtext0))]">{description}</p>
               </article>
             ))}
           </div>
         </section>
 
-        <section id="fitur" className="scroll-mt-20 border-y border-slate-200 bg-slate-50 py-20 lg:py-24">
+        <section id="fitur" className="scroll-mt-20 border-y border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-mantle))] py-20 lg:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Fitur"
@@ -365,19 +365,19 @@ export default function LandingPage() {
             />
             <Reveal className="mt-12 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
               {FEATURES.map(({ title, description, icon: Icon }) => (
-                <article key={title} className="group rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md">
-                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-blue-50 text-blue-700 transition-colors group-hover:bg-blue-600 group-hover:text-white">
+                <article key={title} className="group rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] p-6 shadow-sm transition hover:-translate-y-1 hover:border-[hsl(var(--ctp-blue)/0.3)] hover:shadow-md">
+                  <span className="grid h-12 w-12 place-items-center rounded-xl bg-[hsl(var(--ctp-blue)/0.1)] text-[hsl(var(--ctp-blue))] transition-colors group-hover:bg-[hsl(var(--ctp-blue))] group-hover:text-white">
                     <Icon className="h-6 w-6" />
                   </span>
-                  <h3 className="mt-5 text-lg font-bold tracking-normal text-slate-950">{title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{description}</p>
+                  <h3 className="mt-5 text-lg font-bold tracking-normal text-[hsl(var(--ctp-text))]">{title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{description}</p>
                 </article>
               ))}
             </Reveal>
           </div>
         </section>
 
-        <section id="peran" className="scroll-mt-20 bg-white py-20 lg:py-24">
+        <section id="peran" className="scroll-mt-20 bg-[hsl(var(--ctp-base))] py-20 lg:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               centered
@@ -387,16 +387,16 @@ export default function LandingPage() {
             />
             <Reveal className="mt-12 grid gap-6 lg:grid-cols-3">
               {ROLES.map(({ badge, title, icon: Icon, items }) => (
-                <article key={badge} className="rounded-3xl border border-slate-200 bg-white p-6 shadow-sm transition hover:-translate-y-1 hover:border-blue-200 hover:shadow-md sm:p-7">
+                <article key={badge} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] p-6 shadow-sm transition hover:-translate-y-1 hover:border-[hsl(var(--ctp-blue)/0.3)] hover:shadow-md sm:p-7">
                   <div className="flex items-center justify-between gap-4">
-                    <span className="rounded-full border border-blue-200 bg-blue-50 px-3 py-1 text-xs font-bold text-blue-700">{badge}</span>
-                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-sky-100 text-sky-700"><Icon className="h-6 w-6" /></span>
+                    <span className="rounded-full border border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-blue)/0.1)] px-3 py-1 text-xs font-bold text-[hsl(var(--ctp-blue))]">{badge}</span>
+                    <span className="grid h-12 w-12 place-items-center rounded-xl bg-[hsl(var(--ctp-sky)/0.15)] text-[hsl(var(--ctp-sky))]"><Icon className="h-6 w-6" /></span>
                   </div>
-                  <h3 className="mt-6 text-xl font-bold leading-8 tracking-normal text-slate-950">{title}</h3>
+                  <h3 className="mt-6 text-xl font-bold leading-8 tracking-normal text-[hsl(var(--ctp-text))]">{title}</h3>
                   <ul className="mt-6 space-y-3">
                     {items.map((item) => (
-                      <li key={item} className="flex items-start gap-3 text-sm leading-6 text-slate-600">
-                        <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-emerald-50 text-emerald-700"><Check className="h-3.5 w-3.5" /></span>
+                      <li key={item} className="flex items-start gap-3 text-sm leading-6 text-[hsl(var(--ctp-subtext0))]">
+                        <span className="mt-0.5 grid h-5 w-5 shrink-0 place-items-center rounded-full bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))]"><Check className="h-3.5 w-3.5" /></span>
                         {item}
                       </li>
                     ))}
@@ -407,7 +407,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section id="alur" className="scroll-mt-20 border-y border-slate-200 bg-gradient-to-b from-sky-50 to-white py-20 lg:py-24">
+        <section id="alur" className="scroll-mt-20 border-y border-[hsl(var(--ctp-surface1))] bg-gradient-to-b from-[hsl(var(--ctp-sky)/0.08)] to-[hsl(var(--ctp-base))] py-20 lg:py-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
             <SectionHeading
               eyebrow="Alur Bimbingan"
@@ -415,15 +415,15 @@ export default function LandingPage() {
               description="Setiap proses dibuat bertahap agar mahasiswa, dosen, dan pengelola prodi dapat mengikuti alur dengan lebih mudah."
             />
             <ol className="relative mt-12 grid gap-5 lg:grid-cols-6 lg:gap-3">
-              <div className="absolute left-[8.33%] right-[8.33%] top-6 hidden h-px bg-blue-200 lg:block" aria-hidden="true" />
+              <div className="absolute left-[8.33%] right-[8.33%] top-6 hidden h-px bg-[hsl(var(--ctp-blue)/0.3)] lg:block" aria-hidden="true" />
               {STEPS.map((step, index) => (
-                <li key={step.title} className="relative flex gap-4 rounded-2xl border border-slate-200 bg-white p-5 shadow-sm lg:block lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
-                  <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full border-4 border-sky-50 bg-blue-600 text-sm font-bold text-white shadow-sm">
+                <li key={step.title} className="relative flex gap-4 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] p-5 shadow-sm lg:block lg:border-0 lg:bg-transparent lg:p-0 lg:shadow-none">
+                  <span className="relative z-10 grid h-12 w-12 shrink-0 place-items-center rounded-full border-4 border-[hsl(var(--ctp-sky)/0.15)] bg-[hsl(var(--ctp-blue))] text-sm font-bold text-white shadow-sm">
                     {index + 1}
                   </span>
                   <div className="lg:mt-5">
-                    <h3 className="text-base font-bold tracking-normal text-slate-950">{step.title}</h3>
-                    <p className="mt-2 text-sm leading-6 text-slate-600">{step.description}</p>
+                    <h3 className="text-base font-bold tracking-normal text-[hsl(var(--ctp-text))]">{step.title}</h3>
+                    <p className="mt-2 text-sm leading-6 text-[hsl(var(--ctp-subtext0))]">{step.description}</p>
                   </div>
                 </li>
               ))}
@@ -431,7 +431,7 @@ export default function LandingPage() {
           </div>
         </section>
 
-        <section className="bg-white py-20 lg:py-24">
+        <section className="bg-[hsl(var(--ctp-base))] py-20 lg:py-24">
           <div className="mx-auto grid max-w-7xl gap-12 px-4 sm:px-6 lg:grid-cols-[0.78fr_1.22fr] lg:items-start lg:px-8">
             <SectionHeading
               eyebrow="Manfaat"
@@ -440,25 +440,25 @@ export default function LandingPage() {
             />
             <div className="grid gap-4 sm:grid-cols-2">
               {BENEFITS.map((benefit, index) => (
-                <article key={benefit.title} className="rounded-2xl border border-slate-200 bg-slate-50 p-6">
-                  <span className="text-sm font-bold text-blue-600">0{index + 1}</span>
-                  <h3 className="mt-4 text-lg font-bold tracking-normal text-slate-950">{benefit.title}</h3>
-                  <p className="mt-3 text-sm leading-7 text-slate-600">{benefit.description}</p>
+                <article key={benefit.title} className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-surface0))] p-6">
+                  <span className="text-sm font-bold text-[hsl(var(--ctp-blue))]">0{index + 1}</span>
+                  <h3 className="mt-4 text-lg font-bold tracking-normal text-[hsl(var(--ctp-text))]">{benefit.title}</h3>
+                  <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{benefit.description}</p>
                 </article>
               ))}
             </div>
           </div>
         </section>
 
-        <section className="bg-white pb-20 lg:pb-24">
+        <section className="bg-[hsl(var(--ctp-base))] pb-20 lg:pb-24">
           <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <Reveal className="overflow-hidden rounded-3xl border border-blue-200 bg-gradient-to-br from-blue-50 via-white to-sky-100 px-6 py-10 sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-12 lg:py-12">
+            <Reveal className="overflow-hidden rounded-3xl border border-[hsl(var(--ctp-blue)/0.25)] bg-gradient-to-br from-[hsl(var(--ctp-blue)/0.1)] via-[hsl(var(--ctp-base))] to-[hsl(var(--ctp-sky)/0.12)] px-6 py-10 sm:px-10 lg:flex lg:items-center lg:justify-between lg:gap-12 lg:px-12 lg:py-12">
               <div className="max-w-3xl">
-                <p className="text-sm font-bold uppercase tracking-normal text-blue-600">Mulai Menggunakan Kavana</p>
-                <h2 className="mt-3 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl">
+                <p className="text-sm font-bold uppercase tracking-normal text-[hsl(var(--ctp-blue))]">Mulai Menggunakan Kavana</p>
+                <h2 className="mt-3 text-3xl font-bold leading-tight tracking-normal text-[hsl(var(--ctp-text))] sm:text-4xl">
                   Mulai kelola bimbingan akademik dengan lebih terstruktur.
                 </h2>
-                <p className="mt-4 text-base leading-8 text-slate-600">
+                <p className="mt-4 text-base leading-8 text-[hsl(var(--ctp-subtext0))]">
                   Gunakan Kavana untuk membantu proses bimbingan menjadi lebih rapi, terdokumentasi, dan mudah dipantau.
                 </p>
               </div>
@@ -471,41 +471,41 @@ export default function LandingPage() {
         </section>
       </main>
 
-      <footer id="kontak" className="scroll-mt-20 border-t border-slate-200 bg-slate-950 text-slate-300">
+      <footer id="kontak" className="scroll-mt-20 border-t border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-mantle))] text-[hsl(var(--ctp-subtext0))]">
         <div className="mx-auto grid max-w-7xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.2fr_0.8fr_1fr] lg:px-8">
           <div>
             <div className="flex items-center gap-3">
-              <span className="grid h-11 w-11 place-items-center rounded-xl bg-white">
+              <span className="grid h-11 w-11 place-items-center rounded-xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))]">
                 <Image src="/D4TI.png" alt="" width={32} height={32} className="h-8 w-8 object-contain" />
               </span>
               <div>
-                <p className="text-lg font-bold tracking-normal text-white">Kavana</p>
-                <p className="text-sm text-slate-400">Sistem Bimbingan Online</p>
+                <p className="text-lg font-bold tracking-normal text-[hsl(var(--ctp-text))]">Kavana</p>
+                <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Sistem Bimbingan Online</p>
               </div>
             </div>
-            <p className="mt-5 max-w-md text-sm leading-7 text-slate-400">Program Studi D4 Teknik Informatika ULBI</p>
-            <p className="mt-2 max-w-md text-sm leading-7 text-slate-400">{CAMPUS_CONTACT.address}</p>
+            <p className="mt-5 max-w-md text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">Program Studi D4 Teknik Informatika ULBI</p>
+            <p className="mt-2 max-w-md text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">{CAMPUS_CONTACT.address}</p>
           </div>
 
           <div>
-            <p className="text-sm font-bold text-white">Navigasi</p>
+            <p className="text-sm font-bold text-[hsl(var(--ctp-text))]">Navigasi</p>
             <nav className="mt-4 grid grid-cols-2 gap-3" aria-label="Navigasi footer">
               {NAV_ITEMS.map((item) => (
-                <a key={item.label} href={item.href} className="text-sm text-slate-400 transition-colors hover:text-sky-300">{item.label}</a>
+                <a key={item.label} href={item.href} className="text-sm text-[hsl(var(--ctp-subtext0))] transition-colors hover:text-[hsl(var(--ctp-blue))]">{item.label}</a>
               ))}
             </nav>
           </div>
 
           <div>
-            <p className="text-sm font-bold text-white">Kontak Prodi</p>
-            <div className="mt-4 space-y-3 text-sm leading-6 text-slate-400">
+            <p className="text-sm font-bold text-[hsl(var(--ctp-text))]">Kontak Prodi</p>
+            <div className="mt-4 space-y-3 text-sm leading-6 text-[hsl(var(--ctp-subtext0))]">
               <p>{CAMPUS_CONTACT.email}</p>
               <p>{CAMPUS_CONTACT.phone}</p>
               <p>{CAMPUS_CONTACT.officeHours}</p>
             </div>
           </div>
         </div>
-        <div className="border-t border-slate-800 px-4 py-5 text-center text-sm text-slate-500">
+        <div className="border-t border-[hsl(var(--ctp-surface1))] px-4 py-5 text-center text-sm text-[hsl(var(--ctp-subtext0))]">
           © 2026 Kavana. Program Studi D4 Teknik Informatika ULBI.
         </div>
       </footer>
