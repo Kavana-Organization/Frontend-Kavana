@@ -1,25 +1,25 @@
 # Dockerfile for Frontend-Kavana (Next.js)
 # Multi-stage build
 
-# ──────────────────────────────────────────────
+# ----------------------------------------------
 # Base stage
-# ──────────────────────────────────────────────
-FROM node:22-alpine AS base
+# ----------------------------------------------
+FROM node:24-alpine AS base
 
 RUN apk add --no-cache dumb-init curl
 
-# ──────────────────────────────────────────────
+# ----------------------------------------------
 # Dependencies stage
-# ──────────────────────────────────────────────
+# ----------------------------------------------
 FROM base AS deps
 
 WORKDIR /app
 COPY package*.json ./
 RUN npm ci && npm cache clean --force
 
-# ──────────────────────────────────────────────
+# ----------------------------------------------
 # Build stage
-# ──────────────────────────────────────────────
+# ----------------------------------------------
 FROM base AS builder
 
 WORKDIR /app
@@ -34,9 +34,9 @@ ENV NEXT_PUBLIC_TURNSTILE_SITE_KEY=$NEXT_PUBLIC_TURNSTILE_SITE_KEY
 
 RUN npm run build
 
-# ──────────────────────────────────────────────
+# ----------------------------------------------
 # Production stage
-# ──────────────────────────────────────────────
+# ----------------------------------------------
 FROM base AS production
 
 ENV NODE_ENV=production

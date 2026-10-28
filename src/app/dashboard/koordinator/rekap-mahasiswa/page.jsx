@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Users, RotateCcw, ArrowRightCircle, ShieldCheck, BadgeCheck } from 'lucide-react';
 import { motion } from 'framer-motion';
+import { flexRender } from '@tanstack/react-table';
 import {
-  flexRender,
   getCoreRowModel,
   getFilteredRowModel,
-  useReactTable,
-} from '@tanstack/react-table';
+  useLegacyTable as useReactTable,
+} from '@tanstack/react-table/legacy';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
