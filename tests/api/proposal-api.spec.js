@@ -8,8 +8,9 @@ test.describe('Proposal API', () => {
     expect([401, 403]).toContain(response.status());
   });
 
-  test('proposal list/detail without token is rejected', async ({ request }) => {
-    const response = await request.get(apiUrl('/api/mahasiswa/proposal'));
+  test('proposal status without token is rejected', async ({ request }) => {
+    // GET /api/mahasiswa/proposal tidak ada; status proposal ada di /proposal/status.
+    const response = await request.get(apiUrl('/api/mahasiswa/proposal/status'));
     test.skip(isBackendUnavailableStatus(response.status()), `Backend sedang tidak sehat, status ${response.status()}.`);
     expect([401, 403]).toContain(response.status());
   });

@@ -38,6 +38,10 @@ const TEST_USERS = {
     email: process.env.TEST_ADMIN_EMAIL,
     password: process.env.TEST_ADMIN_PASSWORD,
   },
+  penguji: {
+    email: process.env.TEST_PENGUJI_EMAIL,
+    password: process.env.TEST_PENGUJI_PASSWORD,
+  },
   developer: {
     email: process.env.TEST_DEVELOPER_EMAIL,
     password: process.env.TEST_DEVELOPER_PASSWORD,

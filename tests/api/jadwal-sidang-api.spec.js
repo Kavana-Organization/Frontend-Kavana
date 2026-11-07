@@ -9,7 +9,8 @@ test.describe('Jadwal sidang API', () => {
   });
 
   test('jadwal sidang koordinator endpoint without token is rejected', async ({ request }) => {
-    const response = await request.get(apiUrl('/api/koordinator/sidang/schedule'));
+    // GET daftar sidang ada di /api/koordinator/sidang; /schedule hanya untuk POST.
+    const response = await request.get(apiUrl('/api/koordinator/sidang'));
     test.skip(isBackendUnavailableStatus(response.status()), `Backend sedang tidak sehat, status ${response.status()}.`);
     expect([401, 403]).toContain(response.status());
   });
