@@ -36,3 +36,44 @@ test.describe('Auth API', () => {
     expect(await safeJson(result.response)).toBeTruthy();
   });
 });
+
+test.describe('Auth API — registrasi domain kampus', () => {
+  const REJECTED_DOMAINS = [
+    'gmail.com',
+    'tempmail.com',
+    'mailinator.com',
+    'ulbi.ac.id',
+    'std.ulbi.ac.id.evil.com',
+  ];
+
+  for (const domain of REJECTED_DOMAINS) {
+    test(`request-register-otp menolak email @${domain}`, async ({ request }) => {
+      const response = await request.post(apiUrl('/api/auth/request-register-otp'), {
+        data: {
+          email: `qa-domain@${domain}`,
+          password: 'password123',
+          npm: '0000000000',
+          nama: 'QA Domain Test',
+        },
+      });
+
+      test.skip(isBackendUnavailableStatus(response.status()), `Backend sedang tidak sehat, status ${response.status()}.`);
+      expect(response.status()).toBe(400);
+
+      const body = await safeJson(response);
+      expect(String(body?.message || '')).toContain('std.ulbi.ac.id');
+    });
+  }
+
+  test('verify-register-otp menolak email non-kampus', async ({ request }) => {
+    const response = await request.post(apiUrl('/api/auth/verify-register-otp'), {
+      data: { email: 'qa-domain@gmail.com', otp: '123456' },
+    });
+
+    test.skip(isBackendUnavailableStatus(response.status()), `Backend sedang tidak sehat, status ${response.status()}.`);
+    expect(response.status()).toBe(400);
+
+    const body = await safeJson(response);
+    expect(String(body?.message || '')).toContain('std.ulbi.ac.id');
+  });
+});

@@ -6,6 +6,10 @@ export function validateEmail(email) {
 // ---------------------------------------------------------------------------
 // Registration-specific email validator (stricter than validateEmail)
 // ---------------------------------------------------------------------------
+// Mahasiswa wajib memakai domain kampus yang ketat ini (exact match).
+// Domain kampus luas (ulbi.ac.id) dipakai dosen dan TIDAK berlaku di sini.
+const ALLOWED_REGISTER_DOMAINS = ['std.ulbi.ac.id'];
+
 const DISPOSABLE_DOMAINS = new Set([
     'mailinator.com', 'tempmail.com', 'temp-mail.org', 'throwaway.email',
     'guerrillamail.com', 'guerrillamail.net', 'guerrillamail.org',
@@ -66,6 +70,14 @@ export function validateRegisterEmail(email) {
 
     if (!/^[a-z0-9]([a-z0-9-]*[a-z0-9])?(\.[a-z0-9]([a-z0-9-]*[a-z0-9])?)*\.[a-z]{2,}$/.test(domainPart)) {
         return { valid: false, error: 'Domain email tidak valid' };
+    }
+
+    // Exact allowlist — tolak gmail, tempmail, dan domain kampus luas (ulbi.ac.id).
+    if (!ALLOWED_REGISTER_DOMAINS.includes(domainPart)) {
+        return {
+            valid: false,
+            error: `Email harus menggunakan domain @${ALLOWED_REGISTER_DOMAINS[0]}`,
+        };
     }
 
     if (DISPOSABLE_DOMAINS.has(domainPart)) {
