@@ -108,21 +108,25 @@ test.describe('Tokens and Typography (Task 2)', () => {
   });
 
   test('2. Dark --ctp-overlay1 has lightness 62%, and WCAG contrast ratios meet >= 4.5:1', () => {
-    // Check dark --ctp-overlay1 lightness
+    const rootBlock = globalsCss.match(/:root\s*\{([^}]+)\}/)?.[1] || '';
     const darkBlock = globalsCss.match(/\.dark\s*\{([^}]+)\}/)?.[1] || '';
-    const overlay1Match = darkBlock.match(/--ctp-overlay1:\s*([^;]+);/);
-    expect(overlay1Match, 'Dark --ctp-overlay1 must be defined in .dark block').toBeTruthy();
+    const readHsl = (block, tokenName) => {
+      const m = block.match(new RegExp(`${tokenName}:\\s*([^;]+);`));
+      expect(m, `${tokenName} must be defined`).toBeTruthy();
+      const hsl = parseHsl(m[1]);
+      expect(hsl, `${tokenName} must parse as HSL`).not.toBeNull();
+      return hsl;
+    };
 
-    const overlay1Hsl = parseHsl(overlay1Match[1]);
-    expect(overlay1Hsl).not.toBeNull();
+    const overlay1Hsl = readHsl(darkBlock, '--ctp-overlay1');
     expect(overlay1Hsl[2]).toBe(62);
 
-    // Light theme token values
-    const lightBase = [0, 0, 100];
-    const lightMantle = [210, 40, 98];
-    const lightStrong = [222, 47, 11];
-    const lightBody = [215, 19, 35];
-    const lightMuted = [215, 16, 47];
+    // Light theme token values parsed from globals.css :root
+    const lightBase = readHsl(rootBlock, '--ctp-base');
+    const lightMantle = readHsl(rootBlock, '--ctp-mantle');
+    const lightStrong = readHsl(rootBlock, '--ctp-text');
+    const lightBody = readHsl(rootBlock, '--ctp-subtext1');
+    const lightMuted = readHsl(rootBlock, '--ctp-subtext0');
 
     expect(contrastRatio(lightStrong, lightBase)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(lightStrong, lightMantle)).toBeGreaterThanOrEqual(4.5);
@@ -131,12 +135,12 @@ test.describe('Tokens and Typography (Task 2)', () => {
     expect(contrastRatio(lightMuted, lightBase)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(lightMuted, lightMantle)).toBeGreaterThanOrEqual(4.5);
 
-    // Dark theme token values
-    const darkBase = [222, 47, 11];
-    const darkMantle = [222, 47, 9];
-    const darkStrong = [210, 40, 98];
-    const darkBody = [214, 32, 82];
-    const darkMuted = [215, 20, 65];
+    // Dark theme token values parsed from globals.css .dark
+    const darkBase = readHsl(darkBlock, '--ctp-base');
+    const darkMantle = readHsl(darkBlock, '--ctp-mantle');
+    const darkStrong = readHsl(darkBlock, '--ctp-text');
+    const darkBody = readHsl(darkBlock, '--ctp-subtext1');
+    const darkMuted = readHsl(darkBlock, '--ctp-subtext0');
 
     expect(contrastRatio(darkStrong, darkBase)).toBeGreaterThanOrEqual(4.5);
     expect(contrastRatio(darkStrong, darkMantle)).toBeGreaterThanOrEqual(4.5);

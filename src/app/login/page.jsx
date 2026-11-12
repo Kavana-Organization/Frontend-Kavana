@@ -300,7 +300,7 @@ export default function LoginPage() {
                 <GraduationCap className="h-6 w-6" />
               </div>
               <CardTitle className="text-2xl font-semibold tracking-tight text-[var(--text-strong)]">
-                <h1>Masuk ke Kavana</h1>
+                <h1 className="leading-8">Masuk ke Kavana</h1>
               </CardTitle>
               <CardDescription className="mt-1.5 text-xs text-[var(--text-muted)]">
                 Gunakan email atau NPM untuk mengakses dashboard Anda.
@@ -330,10 +330,20 @@ export default function LoginPage() {
                   />
                 </Field>
 
-                <div className="relative">
+                <div className="space-y-1.5">
+                  <div className="flex items-center justify-between gap-2">
+                    <label htmlFor="password" className="text-sm font-medium text-[var(--text-strong)]">
+                      Password
+                    </label>
+                    <Link
+                      href="/forgot-password"
+                      className="inline-flex items-center text-xs font-medium text-[var(--accent)] hover:underline transition-colors [@media(pointer:coarse)]:min-h-11"
+                    >
+                      Lupa password?
+                    </Link>
+                  </div>
                   <Field
                     id="password"
-                    label="Password"
                     error={formErrors.password?.message || errors.password}
                   >
                     {(a11y) => (
@@ -367,14 +377,6 @@ export default function LoginPage() {
                       </div>
                     )}
                   </Field>
-                  <div className="absolute right-0 top-0 [@media(pointer:coarse)]:-top-2.5">
-                    <Link
-                      href="/forgot-password"
-                      className="inline-flex items-center text-xs font-medium text-[var(--accent)] hover:underline transition-colors [@media(pointer:coarse)]:min-h-11"
-                    >
-                      Lupa password?
-                    </Link>
-                  </div>
                 </div>
 
                 {/* Developer Device Section (always visible on desktop and mobile) */}
@@ -446,7 +448,7 @@ export default function LoginPage() {
                 >
                   {loading ? (
                     <span className="flex items-center gap-2">
-                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/35 border-t-white" />
+                      <span className="h-4 w-4 animate-spin rounded-full border-2 border-current/30 border-t-current" />
                       Masuk...
                     </span>
                   ) : (

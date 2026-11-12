@@ -918,7 +918,7 @@ test.describe('Step 2: 44px Coarse Pointer Target Check (Pixel 5)', () => {
 
           // Native/Radix checkboxes whose associated <label> provides >= 44px hit target
           if (el.getAttribute('role') === 'checkbox' && el.id) {
-            const assocLabel = document.querySelector(`label[for="${el.id}"]`);
+            const assocLabel = document.querySelector(`label[for="${CSS.escape(el.id)}"]`);
             if (assocLabel) {
               const lRect = assocLabel.getBoundingClientRect();
               if (lRect.height >= 43.5 && lRect.width >= 43.5) continue;
@@ -959,6 +959,10 @@ test.describe('Step 3: Keyboard-Only Walkthrough', () => {
     const emailInput = page.getByTestId('login-email');
     await emailInput.focus();
     await expect(emailInput).toBeFocused();
+
+    await page.keyboard.press('Tab');
+    const forgotLink = page.getByRole('link', { name: /lupa password/i });
+    await expect(forgotLink).toBeFocused();
 
     await page.keyboard.press('Tab');
     const passwordInput = page.getByTestId('login-password');

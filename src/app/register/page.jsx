@@ -438,7 +438,7 @@ export default function RegisterPage() {
                   )}
                 </div>
                 <CardTitle className="text-2xl font-semibold tracking-tight text-[var(--text-strong)]">
-                  <h1>{step === 'success' ? 'Registrasi Berhasil' : step === 'otp' ? 'Verifikasi Email' : 'Daftar Akun Baru'}</h1>
+                  <h1 className="leading-8">{step === 'success' ? 'Registrasi Berhasil' : step === 'otp' ? 'Verifikasi Email' : 'Daftar Akun Baru'}</h1>
                 </CardTitle>
                 <CardDescription className="mt-1.5 text-xs text-[var(--text-muted)]">
                   {step === 'success'
@@ -634,7 +634,7 @@ export default function RegisterPage() {
                             }
                             className="mt-0.5 border-[var(--line)] data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)]"
                           />
-                          <label htmlFor="terms" className="inline-block min-h-11 py-1 text-xs leading-relaxed text-[var(--text-body)]">
+                          <label htmlFor="terms" className="inline-block text-xs leading-relaxed text-[var(--text-body)] [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:py-1">
                             Saya menyetujui{' '}
                             <Link
                               href="/syarat-layanan"

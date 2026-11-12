@@ -46,13 +46,17 @@ function SheetOverlay({
 }
 
 function SheetFocusCapture({ targetRef }) {
-  React.useState(() => {
+  const [capturedEl] = React.useState(() => {
     const active = typeof document !== "undefined" ? document.activeElement : null;
-    if (typeof HTMLElement !== "undefined" && active instanceof HTMLElement && active !== document.body) {
-      targetRef.current = active;
-    }
-    return null;
+    return typeof HTMLElement !== "undefined" && active instanceof HTMLElement && active !== document.body
+      ? active
+      : null;
   });
+
+  React.useLayoutEffect(() => {
+    targetRef.current = capturedEl;
+  }, [targetRef, capturedEl]);
+
   return null;
 }
 
