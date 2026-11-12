@@ -24,13 +24,14 @@ import { z } from 'zod';
 import { toast } from '@/lib/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Field } from '@/components/ui/field';
 import { authAPI } from '@/lib/api';
 import { trackAuthEvent, trackAuthPageView } from '@/lib/auth-tracker';
 import { validateRegisterEmail, validateNPM, validateWhatsApp, validatePassword } from '@/lib/validators';
+import { cn } from '@/lib/utils';
 
 const registerSchema = z
   .object({
@@ -97,6 +98,7 @@ function OTPInput({ value, onChange, disabled }) {
           key={i}
           ref={(el) => (inputRefs.current[i] = el)}
           type="text"
+          name={`otp-${i}`}
           inputMode="numeric"
           maxLength={1}
           value={value[i] || ''}
@@ -105,7 +107,8 @@ function OTPInput({ value, onChange, disabled }) {
           onPaste={i === 0 ? handlePaste : undefined}
           disabled={disabled}
           aria-label={`Digit OTP ${i + 1}`}
-          className="h-14 w-11 rounded-xl border border-slate-300 bg-white text-center text-xl font-bold text-slate-900 shadow-sm transition-all focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 disabled:opacity-50"
+          autoComplete="one-time-code"
+          className="h-12 w-11 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] text-center text-xl font-mono tabular-nums font-semibold text-[var(--text-strong)] transition-colors focus:border-[var(--accent)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] disabled:opacity-50"
         />
       ))}
     </div>
@@ -341,358 +344,446 @@ export default function RegisterPage() {
   const formatTime = (s) => `${Math.floor(s / 60)}:${(s % 60).toString().padStart(2, '0')}`;
 
   const inputCls =
-    'h-12 rounded-xl border-slate-300 bg-white px-4 text-slate-900 shadow-sm placeholder:text-slate-400 focus-visible:border-blue-500 focus-visible:ring-blue-500/20 dark:border-slate-300 dark:bg-white dark:text-slate-900 dark:placeholder:text-slate-400';
-  const errCls = 'border-red-500 focus-visible:border-red-500 focus-visible:ring-red-500/20';
+    'h-11 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 text-sm text-[var(--text-strong)] placeholder:text-[var(--text-muted)] focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)]';
+  const errCls = 'border-[hsl(var(--ctp-red))] focus-visible:ring-[hsl(var(--ctp-red))]';
 
   const PasswordReq = ({ met, text }) => (
-    <span className={`flex items-center gap-1.5 text-xs font-medium ${met ? 'text-emerald-600' : 'text-slate-500'}`}>
+    <span className={cn('flex items-center gap-1.5 text-xs font-medium', met ? 'text-[hsl(var(--ctp-green))]' : 'text-[var(--text-muted)]')}>
       {met ? <Check className="h-3 w-3" /> : <XIcon className="h-3 w-3" />}
       {text}
     </span>
   );
 
-  const FieldError = ({ msg }) => (msg ? <p className="text-xs font-medium text-red-600">{msg}</p> : null);
-
   const stepVariants = {
-    initial: { opacity: 0, x: 24 },
+    initial: { opacity: 0, x: 16 },
     animate: { opacity: 1, x: 0 },
-    exit: { opacity: 0, x: -24 },
+    exit: { opacity: 0, x: -16 },
   };
 
   return (
     <MotionConfig reducedMotion="user">
-    <div className="relative min-h-screen overflow-x-clip bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-6 text-slate-900 selection:bg-blue-200 selection:text-slate-950 sm:px-6 sm:py-8 lg:px-8 lg:py-10">
-      <div className="relative mx-auto grid w-full max-w-7xl items-start gap-8 lg:grid-cols-[0.86fr_1.14fr] lg:gap-14">
-        <motion.section
-          initial={{ opacity: 0, x: -24 }}
-          animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="lg:sticky lg:top-10 lg:pt-2"
-        >
-          <Link href="/" className="inline-flex min-h-11 items-center gap-2 rounded-xl px-1 text-sm font-semibold text-slate-600 transition-colors hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500 focus-visible:ring-offset-2">
-            <ArrowLeft className="h-4 w-4" />
-            Kembali ke Beranda
-          </Link>
+      <div className="min-h-screen bg-[var(--surface-page)] px-4 py-8 sm:px-6 lg:px-8 flex items-center justify-center">
+        <div className="mx-auto grid w-full max-w-6xl items-start gap-12 lg:grid-cols-[1.1fr_500px]">
+          {/* Left Column: Institutional Panel */}
+          <motion.section
+            initial={{ opacity: 0, x: -16 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.3 }}
+            className="hidden rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-8 lg:block"
+          >
+            <Link
+              href="/"
+              className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Kembali ke Beranda
+            </Link>
 
-          <div className="mt-6 max-w-xl lg:mt-12">
-            <span className="inline-flex items-center gap-2 rounded-full border border-blue-200 bg-blue-50 px-4 py-2 text-xs font-bold uppercase tracking-normal text-blue-700">
-              <GraduationCap className="h-4 w-4" />
-              Portal Akademik D4TI ULBI
-            </span>
-            <h1 className="mt-5 text-3xl font-bold leading-tight tracking-normal text-slate-950 sm:text-4xl lg:text-5xl">
-              Buat akun untuk mulai mengelola proses bimbingan akademik.
-            </h1>
-            <p className="mt-5 text-base leading-8 text-slate-600 sm:text-lg">
-              Melalui akun Kavana, mahasiswa dapat mengajukan proposal, mengikuti proses validasi,
-              mencatat bimbingan, dan memantau progress akademik dalam satu sistem.
-            </p>
-          </div>
+            <div className="mt-8 max-w-lg">
+              <span className="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--ctp-blue)/0.2)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
+                <GraduationCap className="h-4 w-4" />
+                Portal Akademik D4TI ULBI
+              </span>
+              <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--text-strong)]">
+                Buat akun untuk mulai mengelola proses bimbingan akademik.
+              </h1>
+              <p className="mt-4 text-sm leading-relaxed text-[var(--text-body)]">
+                Melalui akun Kavana, mahasiswa dapat mengajukan proposal, mengikuti proses validasi,
+                mencatat bimbingan, dan memantau progress akademik dalam satu sistem.
+              </p>
+            </div>
 
-          <div className="mt-8 hidden gap-4 sm:grid lg:mt-10">
-            {registerBenefits.map(({ title, description, icon: Icon }) => (
-              <div key={title} className="flex items-start gap-4 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm transition hover:-translate-y-0.5 hover:border-blue-200 hover:shadow-md">
-                <span className="mt-0.5 inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-blue-100 bg-blue-50 text-blue-600">
-                  <Icon className="h-5 w-5" />
-                </span>
-                <span>
-                  <span className="block text-sm font-bold text-slate-900">{title}</span>
-                  <span className="mt-1 block text-sm leading-6 text-slate-600">{description}</span>
-                </span>
-              </div>
-            ))}
-          </div>
-        </motion.section>
+            <div className="mt-8 space-y-3">
+              {registerBenefits.map(({ title, description, icon: Icon }) => (
+                <div
+                  key={title}
+                  className="flex items-start gap-3 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] p-3.5"
+                >
+                  <span className="mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md bg-[var(--accent-soft)] text-[var(--accent)]">
+                    <Icon className="h-4 w-4" />
+                  </span>
+                  <div>
+                    <span className="block text-xs font-semibold text-[var(--text-strong)]">{title}</span>
+                    <span className="mt-0.5 block text-xs leading-relaxed text-[var(--text-body)]">{description}</span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </motion.section>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="relative w-full max-w-2xl justify-self-center"
-        >
-          <Card className="gap-0 rounded-3xl border-slate-200 bg-white py-0 text-slate-900 shadow-xl shadow-blue-950/10 backdrop-blur-none dark:border-slate-200 dark:bg-white dark:text-slate-900">
-            <CardHeader className="pb-1 pt-8 text-center">
-              <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl border border-blue-100 bg-blue-50">
-                {step === 'success' ? (
-                  <CheckCircle2 className="h-8 w-8 text-emerald-600" />
-                ) : step === 'otp' ? (
-                  <ShieldCheck className="h-8 w-8 text-blue-600" />
-                ) : (
-                  <GraduationCap className="h-8 w-8 text-blue-600" />
-                )}
-              </div>
-              <CardTitle className="text-3xl font-bold tracking-normal text-slate-950">
-                {step === 'success' ? 'Registrasi Berhasil' : step === 'otp' ? 'Verifikasi Email' : 'Daftar Akun Baru'}
-              </CardTitle>
-              <CardDescription className="mx-auto mt-2 max-w-lg text-sm leading-7 text-slate-600 dark:text-slate-600">
-                {step === 'success'
-                  ? 'Akun Anda sudah siap digunakan.'
-                  : step === 'otp'
-                    ? `Masukkan kode 6 digit yang dikirim ke ${formData.email}`
-                    : 'Lengkapi data berikut untuk mulai menggunakan Kavana sebagai sistem bimbingan akademik.'}
-              </CardDescription>
-            </CardHeader>
+          {/* Right Column: Centered Form Column */}
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.3 }}
+            className="w-full max-w-[500px] mx-auto"
+          >
+            <Link
+              href="/"
+              className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] lg:hidden"
+            >
+              <ArrowLeft className="h-4 w-4" />
+              Kembali ke Beranda
+            </Link>
 
-            <CardContent className="px-5 pb-7 sm:px-8 sm:pb-8">
-              <AnimatePresence mode="wait">
-                {step === 'form' && (
-                  <motion.form
-                    key="form"
-                    {...stepVariants}
-                    transition={{ duration: 0.25 }}
-                    onSubmit={handleFormSubmit(handleSubmit, handleInvalidSubmit)}
-                    noValidate
-                    className="space-y-5"
-                  >
-                    <div className="space-y-2">
-                      <Label htmlFor="nama" className="text-sm font-semibold text-slate-700">Nama Lengkap</Label>
-                      <Input id="nama" placeholder="Masukkan nama lengkap" aria-invalid={Boolean(errors.nama)} {...register('nama')} className={`${inputCls} ${errors.nama ? errCls : ''}`} />
-                      <FieldError msg={errors.nama?.message} />
-                    </div>
+            <Card className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)]">
+              <CardHeader className="pb-2 pt-6 text-center">
+                <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]">
+                  {step === 'success' ? (
+                    <CheckCircle2 className="h-6 w-6 text-[hsl(var(--ctp-green))]" />
+                  ) : step === 'otp' ? (
+                    <ShieldCheck className="h-6 w-6 text-[var(--accent)]" />
+                  ) : (
+                    <GraduationCap className="h-6 w-6 text-[var(--accent)]" />
+                  )}
+                </div>
+                <CardTitle className="text-2xl font-semibold tracking-tight text-[var(--text-strong)]">
+                  {step === 'success' ? 'Registrasi Berhasil' : step === 'otp' ? 'Verifikasi Email' : 'Daftar Akun Baru'}
+                </CardTitle>
+                <CardDescription className="mt-1.5 text-xs text-[var(--text-muted)]">
+                  {step === 'success'
+                    ? 'Akun Anda sudah siap digunakan.'
+                    : step === 'otp'
+                      ? `Masukkan kode 6 digit yang dikirim ke ${formData.email}`
+                      : 'Lengkapi data berikut untuk mulai menggunakan Kavana sebagai sistem bimbingan akademik.'}
+                </CardDescription>
+              </CardHeader>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="npm" className="text-sm font-semibold text-slate-700">NPM</Label>
-                        <Input id="npm" placeholder="1234567890" inputMode="numeric" aria-invalid={Boolean(errors.npm)} {...register('npm')} className={`${inputCls} ${errors.npm ? errCls : ''}`} />
-                        <FieldError msg={errors.npm?.message} />
+              <CardContent className="px-6 pb-6 pt-2">
+                <AnimatePresence mode="wait">
+                  {step === 'form' && (
+                    <motion.form
+                      key="form"
+                      {...stepVariants}
+                      transition={{ duration: 0.2 }}
+                      onSubmit={handleFormSubmit(handleSubmit, handleInvalidSubmit)}
+                      noValidate
+                      className="space-y-4"
+                    >
+                      <Field id="nama" label="Nama Lengkap" error={errors.nama?.message}>
+                        <Input
+                          id="nama"
+                          placeholder="Masukkan nama lengkap"
+                          {...register('nama')}
+                          className={cn(inputCls, errors.nama && errCls)}
+                          autoComplete="name"
+                        />
+                      </Field>
+
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field id="npm" label="NPM" error={errors.npm?.message}>
+                          <Input
+                            id="npm"
+                            placeholder="1234567890"
+                            inputMode="numeric"
+                            {...register('npm')}
+                            className={cn(inputCls, errors.npm && errCls)}
+                          />
+                        </Field>
+
+                        <Field id="angkatan" label="Angkatan" error={errors.angkatan?.message}>
+                          {(a11y) => (
+                            <Select
+                              value={formData.angkatan}
+                              onValueChange={(value) =>
+                                setValue('angkatan', value, { shouldDirty: true, shouldValidate: true })
+                              }
+                            >
+                              <SelectTrigger
+                                id={a11y.id}
+                                aria-describedby={a11y['aria-describedby']}
+                                aria-invalid={a11y['aria-invalid']}
+                                className={cn(
+                                  'h-11 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 text-sm text-[var(--text-strong)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]',
+                                  errors.angkatan && errCls
+                                )}
+                              >
+                                <SelectValue placeholder="Pilih angkatan" />
+                              </SelectTrigger>
+                              <SelectContent className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] text-[var(--text-strong)]">
+                                {angkatanOptions.map((year) => (
+                                  <SelectItem key={year} value={year}>
+                                    {year}
+                                  </SelectItem>
+                                ))}
+                              </SelectContent>
+                            </Select>
+                          )}
+                        </Field>
                       </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="angkatan" className="text-sm font-semibold text-slate-700">Angkatan</Label>
-                        <Select
-                          value={formData.angkatan}
-                          onValueChange={(value) => setValue('angkatan', value, { shouldDirty: true, shouldValidate: true })}
-                        >
-                          <SelectTrigger id="angkatan" aria-invalid={Boolean(errors.angkatan)} className={`h-12 rounded-xl border-slate-300 bg-white text-slate-900 shadow-sm focus-visible:border-blue-500 focus-visible:ring-blue-500/20 dark:border-slate-300 dark:bg-white dark:text-slate-900 ${errors.angkatan ? errCls : ''}`}>
-                            <SelectValue placeholder="Pilih angkatan" />
-                          </SelectTrigger>
-                          <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 dark:border-slate-200 dark:bg-white dark:text-slate-900">
-                            {angkatanOptions.map((year) => (
-                              <SelectItem key={year} value={year}>
-                                {year}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                        <FieldError msg={errors.angkatan?.message} />
-                      </div>
-                    </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="jalur" className="text-sm font-semibold text-slate-700">Jalur Mahasiswa</Label>
-                      <Select
-                        value={formData.jalur}
-                        onValueChange={(value) => setValue('jalur', value, { shouldDirty: true, shouldValidate: true })}
+                      <Field
+                        id="jalur"
+                        label="Jalur Mahasiswa"
+                        hint="Mahasiswa reguler mengikuti semester akademik. Mahasiswa RPL dapat memilih track sesuai ketentuan program studi."
                       >
-                        <SelectTrigger id="jalur" className="h-12 rounded-xl border-slate-300 bg-white text-slate-900 shadow-sm focus-visible:border-blue-500 focus-visible:ring-blue-500/20 dark:border-slate-300 dark:bg-white dark:text-slate-900">
-                          <SelectValue placeholder="Pilih jalur" />
-                        </SelectTrigger>
-                        <SelectContent className="rounded-xl border-slate-200 bg-white text-slate-900 dark:border-slate-200 dark:bg-white dark:text-slate-900">
-                          <SelectItem value="regular">Regular</SelectItem>
-                          <SelectItem value="rpl">RPL</SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <p className="text-xs leading-6 text-slate-500">
-                        Mahasiswa reguler mengikuti semester akademik. Mahasiswa RPL dapat memilih track sesuai ketentuan program studi.
-                      </p>
-                    </div>
+                        {(a11y) => (
+                          <Select
+                            value={formData.jalur}
+                            onValueChange={(value) =>
+                              setValue('jalur', value, { shouldDirty: true, shouldValidate: true })
+                            }
+                          >
+                            <SelectTrigger
+                              id={a11y.id}
+                              aria-describedby={a11y['aria-describedby']}
+                              aria-invalid={a11y['aria-invalid']}
+                              className="h-11 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 text-sm text-[var(--text-strong)] focus:border-[var(--accent)] focus:ring-1 focus:ring-[var(--accent)]"
+                            >
+                              <SelectValue placeholder="Pilih jalur" />
+                            </SelectTrigger>
+                            <SelectContent className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] text-[var(--text-strong)]">
+                              <SelectItem value="regular">Regular</SelectItem>
+                              <SelectItem value="rpl">RPL</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </Field>
 
-                    <div className="grid gap-3 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="email" className="text-sm font-semibold text-slate-700">Email</Label>
-                        <Input id="email" type="email" placeholder="contoh@email.com" aria-invalid={Boolean(errors.email)} {...register('email')} className={`${inputCls} ${errors.email ? errCls : ''}`} />
-                        <FieldError msg={errors.email?.message} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="whatsapp" className="text-sm font-semibold text-slate-700">Nomor WhatsApp</Label>
-                        <Input id="whatsapp" placeholder="08123456789" inputMode="tel" aria-invalid={Boolean(errors.whatsapp)} {...register('whatsapp')} className={`${inputCls} ${errors.whatsapp ? errCls : ''}`} />
-                        <FieldError msg={errors.whatsapp?.message} />
-                      </div>
-                    </div>
+                      <div className="grid gap-4 sm:grid-cols-2">
+                        <Field id="email" label="Email" error={errors.email?.message}>
+                          <Input
+                            id="email"
+                            type="email"
+                            placeholder="contoh@email.com"
+                            {...register('email')}
+                            className={cn(inputCls, errors.email && errCls)}
+                            autoComplete="email"
+                          />
+                        </Field>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="password" className="text-sm font-semibold text-slate-700">Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="password"
-                          type={showPassword ? 'text' : 'password'}
-                          placeholder="Minimal 8 karakter"
-                          aria-invalid={Boolean(errors.password)}
-                          {...register('password')}
-                          className={`${inputCls} pr-11 ${errors.password ? errCls : ''}`}
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                          aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                          onClick={() => setShowPassword((prev) => !prev)}
+                        <Field id="whatsapp" label="Nomor WhatsApp" error={errors.whatsapp?.message}>
+                          <Input
+                            id="whatsapp"
+                            placeholder="08123456789"
+                            inputMode="tel"
+                            {...register('whatsapp')}
+                            className={cn(inputCls, errors.whatsapp && errCls)}
+                            autoComplete="tel"
+                          />
+                        </Field>
+                      </div>
+
+                      <Field id="password" label="Password" error={errors.password?.message}>
+                        {(a11y) => (
+                          <div>
+                            <div className="relative">
+                              <Input
+                                {...a11y}
+                                type={showPassword ? 'text' : 'password'}
+                                placeholder="Minimal 8 karakter"
+                                {...register('password')}
+                                className={cn(inputCls, 'pr-10', errors.password && errCls)}
+                                autoComplete="new-password"
+                              />
+                              <button
+                                type="button"
+                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
+                                aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                                onClick={() => setShowPassword((prev) => !prev)}
+                              >
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                            {formData.password && (
+                              <div className="mt-2 flex flex-wrap gap-3">
+                                <PasswordReq met={passwordCheck.length} text="8+ karakter" />
+                                <PasswordReq met={passwordCheck.uppercase} text="Huruf besar" />
+                                <PasswordReq met={passwordCheck.number} text="Angka" />
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </Field>
+
+                      <Field id="confirmPassword" label="Konfirmasi Password" error={errors.confirmPassword?.message}>
+                        {(a11y) => (
+                          <div className="relative">
+                            <Input
+                              {...a11y}
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              placeholder="Ulangi password"
+                              {...register('confirmPassword')}
+                              className={cn(inputCls, 'pr-10', errors.confirmPassword && errCls)}
+                              autoComplete="new-password"
+                            />
+                            <button
+                              type="button"
+                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
+                              aria-label={showConfirmPassword ? 'Sembunyikan konfirmasi' : 'Tampilkan konfirmasi'}
+                              onClick={() => setShowConfirmPassword((prev) => !prev)}
+                            >
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
+                          </div>
+                        )}
+                      </Field>
+
+                      <div className="space-y-1">
+                        <div
+                          className={cn(
+                            'flex items-start gap-3 rounded-lg border bg-[var(--surface-sunken)] p-3.5',
+                            errors.terms ? 'border-[hsl(var(--ctp-red))]' : 'border-[var(--line)]'
+                          )}
                         >
-                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      {formData.password ? (
-                        <div className="flex flex-wrap gap-3">
-                          <PasswordReq met={passwordCheck.length} text="8+ karakter" />
-                          <PasswordReq met={passwordCheck.uppercase} text="Huruf besar" />
-                          <PasswordReq met={passwordCheck.number} text="Angka" />
+                          <Checkbox
+                            id="terms"
+                            checked={formData.terms}
+                            onCheckedChange={(checked) =>
+                              setValue('terms', checked === true, { shouldDirty: true, shouldValidate: true })
+                            }
+                            className="mt-0.5 border-[var(--line)] data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)]"
+                          />
+                          <label htmlFor="terms" className="text-xs leading-relaxed text-[var(--text-body)]">
+                            Saya menyetujui{' '}
+                            <Link
+                              href="/syarat-layanan"
+                              className="font-medium text-[var(--accent)] hover:underline"
+                            >
+                              syarat dan ketentuan
+                            </Link>{' '}
+                            serta{' '}
+                            <Link
+                              href="/kebijakan-privasi"
+                              className="font-medium text-[var(--accent)] hover:underline"
+                            >
+                              kebijakan privasi
+                            </Link>{' '}
+                            platform.
+                          </label>
                         </div>
-                      ) : null}
-                      <FieldError msg={errors.password?.message} />
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label htmlFor="confirmPassword" className="text-sm font-semibold text-slate-700">Konfirmasi Password</Label>
-                      <div className="relative">
-                        <Input
-                          id="confirmPassword"
-                          type={showConfirmPassword ? 'text' : 'password'}
-                          placeholder="Ulangi password"
-                          aria-invalid={Boolean(errors.confirmPassword)}
-                          {...register('confirmPassword')}
-                          className={`${inputCls} pr-11 ${errors.confirmPassword ? errCls : ''}`}
-                        />
-                        <button
-                          type="button"
-                          className="absolute right-2 top-1/2 inline-flex h-9 w-9 -translate-y-1/2 items-center justify-center rounded-lg text-slate-500 transition-colors hover:bg-blue-50 hover:text-blue-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-500"
-                          aria-label={showConfirmPassword ? 'Sembunyikan konfirmasi password' : 'Tampilkan konfirmasi password'}
-                          onClick={() => setShowConfirmPassword((prev) => !prev)}
-                        >
-                          {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                        </button>
-                      </div>
-                      <FieldError msg={errors.confirmPassword?.message} />
-                    </div>
-
-                    <div className="space-y-1">
-                      <div className={`flex items-start gap-3 rounded-xl border bg-slate-50 p-4 ${errors.terms ? 'border-red-300' : 'border-slate-200'}`}>
-                        <Checkbox
-                          id="terms"
-                          checked={formData.terms}
-                          onCheckedChange={(checked) => setValue('terms', checked === true, { shouldDirty: true, shouldValidate: true })}
-                          className="mt-1 border-slate-400 data-[state=checked]:border-blue-600 data-[state=checked]:bg-blue-600"
-                        />
-                        <label htmlFor="terms" className="text-sm leading-7 text-slate-600">
-                          Saya menyetujui{' '}
-                          <Link href="/syarat-layanan" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
-                            syarat dan ketentuan
-                          </Link>{' '}
-                          serta{' '}
-                          <Link href="/kebijakan-privasi" className="font-semibold text-blue-600 hover:text-blue-700 hover:underline">
-                            kebijakan privasi
-                          </Link>{' '}
-                          platform.
-                        </label>
-                      </div>
-                      <FieldError msg={errors.terms?.message} />
-                    </div>
-
-                    <Button type="submit" className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white shadow-sm hover:bg-blue-700 hover:shadow-md" size="lg" disabled={loading}>
-                      {loading ? (
-                        <span className="flex items-center gap-2">
-                          <LoaderCircle className="h-4 w-4 animate-spin" />
-                          Mengirim OTP...
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-2">
-                          <UserPlus className="h-4 w-4" />
-                          Daftar Akun
-                        </span>
-                      )}
-                    </Button>
-                  </motion.form>
-                )}
-
-                {step === 'otp' && (
-                  <motion.form key="otp" {...stepVariants} transition={{ duration: 0.25 }} onSubmit={handleVerifyOTP}>
-                    <div className="space-y-6">
-                      {countdown > 0 ? (
-                        <p className="text-center text-sm font-semibold text-amber-700">
-                          Berlaku: {formatTime(countdown)}
-                        </p>
-                      ) : null}
-
-                      <OTPInput value={otp} onChange={setOtp} disabled={loading} />
-
-                      <div className="text-center">
-                        <button
-                          type="button"
-                          onClick={handleResend}
-                          disabled={loading || countdown > 240}
-                          className="inline-flex min-h-11 items-center gap-2 rounded-xl px-3 text-sm font-semibold text-slate-600 transition-colors hover:bg-blue-50 hover:text-blue-700 disabled:cursor-not-allowed disabled:opacity-40"
-                        >
-                          <RotateCcw className="h-3.5 w-3.5" />
-                          Kirim ulang kode
-                        </button>
+                        {errors.terms?.message && (
+                          <p role="alert" className="text-xs font-medium text-[hsl(var(--ctp-red))]">
+                            {errors.terms?.message}
+                          </p>
+                        )}
                       </div>
 
-                      <Button type="submit" disabled={loading || otp.length < 6} className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white shadow-sm hover:bg-blue-700">
+                      <Button
+                        type="submit"
+                        className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                        disabled={loading}
+                      >
                         {loading ? (
                           <span className="flex items-center gap-2">
                             <LoaderCircle className="h-4 w-4 animate-spin" />
-                            Memverifikasi...
+                            Mengirim OTP...
                           </span>
                         ) : (
                           <span className="flex items-center gap-2">
-                            <ShieldCheck className="h-4 w-4" />
-                            Verifikasi dan Daftar
+                            <UserPlus className="h-4 w-4" />
+                            Daftar Akun
                           </span>
                         )}
                       </Button>
+                    </motion.form>
+                  )}
 
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setStep('form');
-                          setOtp('');
-                        }}
-                        className="flex min-h-11 w-full items-center justify-center gap-2 rounded-xl text-sm font-semibold text-slate-600 transition-colors hover:bg-slate-50 hover:text-slate-900"
-                      >
-                        <ArrowLeft className="h-4 w-4" />
-                        Kembali ke form
-                      </button>
-                    </div>
-                  </motion.form>
-                )}
+                  {step === 'otp' && (
+                    <motion.form key="otp" {...stepVariants} transition={{ duration: 0.2 }} onSubmit={handleVerifyOTP}>
+                      <div className="space-y-5">
+                        {countdown > 0 && (
+                          <p className="text-center text-xs font-medium text-[hsl(var(--ctp-peach))]">
+                            Berlaku: {formatTime(countdown)}
+                          </p>
+                        )}
 
-                {step === 'success' && (
-                  <motion.div key="success" {...stepVariants} transition={{ duration: 0.25 }}>
-                    <div className="space-y-6 text-center">
-                      <div className="flex justify-center">
-                        <div className="flex h-20 w-20 items-center justify-center rounded-full border border-emerald-200 bg-emerald-50">
-                          <CheckCircle2 className="h-10 w-10 text-emerald-600" />
+                        <OTPInput value={otp} onChange={setOtp} disabled={loading} />
+
+                        <div className="text-center">
+                          <button
+                            type="button"
+                            onClick={handleResend}
+                            disabled={loading || countdown > 240}
+                            className="inline-flex items-center gap-1.5 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors disabled:cursor-not-allowed disabled:opacity-40"
+                          >
+                            <RotateCcw className="h-3.5 w-3.5" />
+                            Kirim ulang kode
+                          </button>
                         </div>
+
+                        <Button
+                          type="submit"
+                          disabled={loading || otp.length < 6}
+                          className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                        >
+                          {loading ? (
+                            <span className="flex items-center gap-2">
+                              <LoaderCircle className="h-4 w-4 animate-spin" />
+                              Memverifikasi...
+                            </span>
+                          ) : (
+                            <span className="flex items-center gap-2">
+                              <ShieldCheck className="h-4 w-4" />
+                              Verifikasi dan Daftar
+                            </span>
+                          )}
+                        </Button>
+
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setStep('form');
+                            setOtp('');
+                          }}
+                          className="flex h-10 w-full items-center justify-center gap-2 rounded-lg text-xs font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                        >
+                          <ArrowLeft className="h-4 w-4" />
+                          Kembali ke form
+                        </button>
                       </div>
-                      <p className="text-base leading-8 text-slate-600">
-                        Akun mahasiswa berhasil dibuat. Silakan login untuk mulai mengelola bimbingan.
-                      </p>
-                      <Button onClick={() => router.push('/login')} className="h-12 w-full rounded-xl bg-blue-600 text-base font-semibold text-white hover:bg-blue-700">
-                        Lanjut ke Login
-                      </Button>
+                    </motion.form>
+                  )}
+
+                  {step === 'success' && (
+                    <motion.div key="success" {...stepVariants} transition={{ duration: 0.2 }}>
+                      <div className="space-y-5 text-center">
+                        <div className="flex justify-center">
+                          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-[hsl(var(--ctp-green)/0.12)] border border-[hsl(var(--ctp-green)/0.25)]">
+                            <CheckCircle2 className="h-8 w-8 text-[hsl(var(--ctp-green))]" />
+                          </div>
+                        </div>
+                        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+                          Akun mahasiswa berhasil dibuat. Silakan login untuk mulai mengelola bimbingan.
+                        </p>
+                        <Button
+                          onClick={() => router.push('/login')}
+                          className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                        >
+                          Lanjut ke Login
+                        </Button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+
+                {step === 'form' && (
+                  <>
+                    <div className="my-5 flex items-center gap-3">
+                      <div className="h-px flex-1 bg-[var(--line)]" />
+                      <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                        sudah punya akun
+                      </span>
+                      <div className="h-px flex-1 bg-[var(--line)]" />
                     </div>
-                  </motion.div>
+
+                    <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] p-3 text-center text-xs leading-relaxed text-[var(--text-body)]">
+                      Sudah pernah membuat akun?{' '}
+                      <Link
+                        href="/login"
+                        className="font-medium text-[var(--accent)] hover:underline transition-colors"
+                      >
+                        Masuk ke akun Anda
+                      </Link>
+                      .
+                    </div>
+                  </>
                 )}
-              </AnimatePresence>
-
-              {step === 'form' ? (
-                <>
-                  <div className="my-6 flex items-center gap-3">
-                    <div className="h-px flex-1 bg-slate-200" />
-                    <span className="text-xs font-semibold uppercase tracking-normal text-slate-500">sudah punya akun</span>
-                    <div className="h-px flex-1 bg-slate-200" />
-                  </div>
-
-                  <div className="rounded-xl border border-slate-200 bg-slate-50 p-4 text-center text-sm leading-7 text-slate-600">
-                    Sudah pernah membuat akun?{' '}
-                    <Link href="/login" className="font-semibold text-blue-600 transition-colors hover:text-blue-700 hover:underline">
-                      Masuk ke akun Anda
-                    </Link>
-                    .
-                  </div>
-                </>
-              ) : null}
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
+        </div>
       </div>
-    </div>
     </MotionConfig>
   );
 }

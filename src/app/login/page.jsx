@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useState, useRef, useCallback, useEffect } from 'react';
-import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles } from 'lucide-react';
+import { GraduationCap, Eye, EyeOff, ArrowLeft, LogIn, ShieldCheck, Sparkles, KeyRound } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -11,13 +11,14 @@ import { z } from 'zod';
 import { toast } from '@/lib/alert';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Field } from '@/components/ui/field';
 import { authAPI } from '@/lib/api';
 import { trackAuthEvent, trackAuthPageView } from '@/lib/auth-tracker';
 import { useAuthStore } from '@/store/auth-store';
 import { validateEmail, validateNPM } from '@/lib/validators';
 import { ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 import Script from 'next/script';
 
 const TURNSTILE_SITE_KEY = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY || '';
@@ -206,11 +207,11 @@ export default function LoginPage() {
   };
 
   const inputCls =
-    'h-12 rounded-xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] text-[hsl(var(--ctp-text))] placeholder:text-[hsl(var(--ctp-overlay1))] focus-visible:ring-[hsl(var(--ctp-blue)/0.2)] focus-visible:border-[hsl(var(--ctp-blue)/0.35)]';
-  const errCls = 'border-[hsl(var(--ctp-red)/0.55)] focus-visible:ring-[hsl(var(--ctp-red)/0.2)]';
+    'h-11 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 text-sm text-[var(--text-strong)] placeholder:text-[var(--text-muted)] focus-visible:border-[var(--accent)] focus-visible:ring-1 focus-visible:ring-[var(--accent)]';
+  const errCls = 'border-[hsl(var(--ctp-red))] focus-visible:ring-[hsl(var(--ctp-red))]';
 
   return (
-    <div className="relative min-h-screen overflow-hidden bg-gradient-to-br from-sky-50 via-white to-blue-50 px-4 py-8 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-[var(--surface-page)] px-4 py-8 sm:px-6 lg:px-8 flex items-center justify-center">
       {/* Load Cloudflare Turnstile script */}
       {TURNSTILE_SITE_KEY && (
         <Script
@@ -233,70 +234,86 @@ export default function LoginPage() {
         />
       )}
 
-      <div className="relative mx-auto grid min-h-[calc(100vh-4rem)] w-full max-w-6xl items-center gap-8 lg:grid-cols-[0.95fr_1.05fr]">
+      <div className="mx-auto grid w-full max-w-5xl items-center gap-12 lg:grid-cols-[1.1fr_400px]">
+        {/* Left Column: Institutional Panel (Visible on lg) */}
         <motion.section
-          initial={{ opacity: 0, x: -24 }}
+          initial={{ opacity: 0, x: -16 }}
           animate={{ opacity: 1, x: 0 }}
-          transition={{ duration: 0.5 }}
-          className="soft-panel hidden rounded-2xl p-8 lg:block"
+          transition={{ duration: 0.3 }}
+          className="hidden rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-8 lg:block"
         >
-          <Link href="/" className="inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))]">
+          <Link
+            href="/"
+            className="inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+          >
             <ArrowLeft className="h-4 w-4" />
             Kembali ke Beranda
           </Link>
 
-          <div className="mt-10 max-w-lg">
-            <span className="inline-flex items-center gap-2 rounded-full border border-[hsl(var(--ctp-blue)/0.2)] bg-[hsl(var(--ctp-blue)/0.08)] px-4 py-2 text-xs font-bold uppercase tracking-[0.16em] text-[hsl(var(--ctp-blue))]">
+          <div className="mt-8 max-w-lg">
+            <span className="inline-flex items-center gap-2 rounded-md border border-[hsl(var(--ctp-blue)/0.2)] bg-[var(--accent-soft)] px-3 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
               <Sparkles className="h-3.5 w-3.5" />
-              Portal Akademik yang Lebih Tertata
+              Portal Akademik D4TI ULBI
             </span>
-            <h1 className="mt-5 text-4xl font-black leading-tight tracking-tight text-[hsl(var(--ctp-text))]">
+            <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--text-strong)]">
               Masuk ke ruang kerja bimbingan tanpa tampilan yang melelahkan.
             </h1>
-            <p className="mt-5 text-base leading-8 text-[hsl(var(--ctp-subtext1))]">
+            <p className="mt-4 text-sm leading-relaxed text-[var(--text-body)]">
               Fokus utama Kavanahub adalah membantu pengguna melihat apa yang penting lebih cepat:
               progres, dokumen, dan tindak lanjut yang masih menunggu.
             </p>
           </div>
 
-          <div className="mt-8 space-y-4">
+          <div className="mt-8 space-y-3">
             {highlights.map((item) => (
-              <div key={item} className="flex items-start gap-3 rounded-xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-surface0))] p-4">
-                <span className="mt-0.5 inline-flex h-9 w-9 items-center justify-center rounded-xl bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))]">
+              <div
+                key={item}
+                className="flex items-start gap-3 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] p-3.5"
+              >
+                <span className="mt-0.5 inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))]">
                   <ShieldCheck className="h-4 w-4" />
                 </span>
-                <p className="text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">{item}</p>
+                <p className="text-xs leading-relaxed text-[var(--text-body)]">{item}</p>
               </div>
             ))}
           </div>
         </motion.section>
 
+        {/* Right Column: Centered Form Column (max-w-[400px]) */}
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, ease: 'easeOut' }}
-          className="relative w-full max-w-xl justify-self-center"
+          transition={{ duration: 0.3 }}
+          className="w-full max-w-[400px] mx-auto"
         >
-          <Link href="/" className="mb-5 inline-flex items-center gap-2 text-sm font-semibold text-[hsl(var(--ctp-subtext1))] transition-colors hover:text-[hsl(var(--ctp-blue))] lg:hidden">
+          <Link
+            href="/"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] lg:hidden"
+          >
             <ArrowLeft className="h-4 w-4" />
             Kembali ke Beranda
           </Link>
 
-          <Card className="rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))]">
-            <CardHeader className="pb-1 pt-8 text-center">
-              <div className="mx-auto mb-5 inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-[hsl(var(--ctp-blue)/0.1)] text-[hsl(var(--ctp-blue))]">
-                <GraduationCap className="h-8 w-8" />
+          <Card className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)]">
+            <CardHeader className="pb-2 pt-6 text-center">
+              <div className="mx-auto mb-4 inline-flex h-12 w-12 items-center justify-center rounded-lg bg-[var(--accent-soft)] text-[var(--accent)]">
+                <GraduationCap className="h-6 w-6" />
               </div>
-              <CardTitle className="text-3xl font-black tracking-tight text-[hsl(var(--ctp-text))]">Masuk ke Kavana</CardTitle>
-              <CardDescription className="mt-2 text-sm leading-7 text-[hsl(var(--ctp-subtext0))]">
+              <CardTitle className="text-2xl font-semibold tracking-tight text-[var(--text-strong)]">
+                Masuk ke Kavana
+              </CardTitle>
+              <CardDescription className="mt-1.5 text-xs text-[var(--text-muted)]">
                 Gunakan email atau NPM untuk mengakses dashboard Anda.
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="px-6 pb-8 sm:px-8">
-              <form onSubmit={handleFormSubmit(handleSubmit)} className="space-y-5" noValidate>
-                <div className="space-y-2">
-                  <Label htmlFor="identifier" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Email atau NPM</Label>
+            <CardContent className="px-6 pb-6 pt-2">
+              <form onSubmit={handleFormSubmit(handleSubmit)} className="space-y-4" noValidate>
+                <Field
+                  id="identifier"
+                  label="Email atau NPM"
+                  error={formErrors.identifier?.message || errors.identifier}
+                >
                   <Input
                     id="identifier"
                     data-testid="login-email"
@@ -308,65 +325,82 @@ export default function LoginPage() {
                         setErrors((prev) => ({ ...prev, identifier: '' }));
                       },
                     })}
-                    className={`${inputCls} ${formErrors.identifier || errors.identifier ? errCls : ''}`}
+                    className={cn(inputCls, (formErrors.identifier || errors.identifier) && errCls)}
                     autoComplete="username"
-                    aria-invalid={Boolean(formErrors.identifier || errors.identifier)}
                   />
-                  {formErrors.identifier?.message || errors.identifier ? (
-                    <p className="text-xs text-[hsl(var(--ctp-red))]">{formErrors.identifier?.message || errors.identifier}</p>
-                  ) : null}
-                </div>
+                </Field>
 
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Password</Label>
-                    <Link href="/forgot-password" className="text-xs font-semibold text-[hsl(var(--ctp-blue))] transition-colors hover:text-[hsl(var(--ctp-teal))]">
+                <div className="relative">
+                  <Field
+                    id="password"
+                    label="Password"
+                    error={formErrors.password?.message || errors.password}
+                  >
+                    {(a11y) => (
+                      <div className="relative">
+                        <Input
+                          {...a11y}
+                          data-testid="login-password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="Masukkan password"
+                          {...register('password', {
+                            onChange: () => {
+                              clearErrors('password');
+                              setErrors((prev) => ({ ...prev, password: '' }));
+                            },
+                          })}
+                          className={cn(
+                            inputCls,
+                            'pr-10',
+                            (formErrors.password || errors.password) && errCls
+                          )}
+                          autoComplete="current-password"
+                        />
+                        <button
+                          type="button"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
+                          aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
+                          onClick={() => setShowPassword((prev) => !prev)}
+                        >
+                          {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                        </button>
+                      </div>
+                    )}
+                  </Field>
+                  <div className="absolute right-0 top-0">
+                    <Link
+                      href="/forgot-password"
+                      className="text-xs font-medium text-[var(--accent)] hover:underline transition-colors"
+                    >
                       Lupa password?
                     </Link>
                   </div>
-                  <div className="relative">
-                    <Input
-                      id="password"
-                      data-testid="login-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="Masukkan password"
-                      {...register('password', {
-                        onChange: () => {
-                          clearErrors('password');
-                          setErrors((prev) => ({ ...prev, password: '' }));
-                        },
-                      })}
-                      className={`${inputCls} pr-11 ${formErrors.password || errors.password ? errCls : ''}`}
-                      autoComplete="current-password"
-                      aria-invalid={Boolean(formErrors.password || errors.password)}
-                    />
-                    <button
-                      type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors hover:text-[hsl(var(--ctp-subtext1))]"
-                      aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
-                      onClick={() => setShowPassword((prev) => !prev)}
-                    >
-                      {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                    </button>
-                  </div>
-                  {formErrors.password?.message || errors.password ? (
-                    <p className="text-xs text-[hsl(var(--ctp-red))]">{formErrors.password?.message || errors.password}</p>
-                  ) : null}
+                </div>
+
+                {/* Developer Device Section (always visible on desktop and mobile) */}
+                <div
+                  data-testid="developer-device-section"
+                  className="flex items-center justify-between gap-3 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-body)]"
+                >
+                  <span className="inline-flex items-center gap-2 font-medium">
+                    <KeyRound className="h-4 w-4 text-[var(--accent)]" />
+                    Device developer
+                  </span>
+                  <span className="text-right text-[var(--text-muted)]">Device lock aktif</span>
                 </div>
 
                 {/* Cloudflare Turnstile Widget */}
-                <div className="space-y-2">
-                  <Label className="flex items-center gap-2 text-sm font-medium text-[hsl(var(--ctp-subtext1))]">
-                    <ShieldCheck className="h-4 w-4 text-[hsl(var(--ctp-blue))]" />
+                <div className="space-y-1.5">
+                  <label className="flex items-center gap-2 text-sm font-medium text-[var(--text-strong)]">
+                    <ShieldCheck className="h-4 w-4 text-[var(--accent)]" />
                     Verifikasi Keamanan
-                  </Label>
+                  </label>
 
                   <div
-                    className={`rounded-xl border bg-[hsl(var(--ctp-surface0))] px-4 py-3 ${
-                      errors.turnstile
-                        ? 'border-[hsl(var(--ctp-red)/0.55)]'
-                        : 'border-[hsl(var(--ctp-surface1))]'
-                    }`}
+                    className={cn(
+                      'rounded-lg border bg-[var(--surface-sunken)] px-3 py-2.5',
+                      errors.turnstile ? 'border-[hsl(var(--ctp-red))]' : 'border-[var(--line)]'
+                    )}
                   >
                     {TURNSTILE_SITE_KEY ? (
                       <>
@@ -375,38 +409,39 @@ export default function LoginPage() {
                           id="turnstile-widget"
                           className="flex min-h-[74px] items-center justify-center"
                         />
-                        {!turnstileScriptLoaded ? (
+                        {!turnstileScriptLoaded && (
                           <p className="text-center text-xs text-[var(--text-muted)]">
                             Memuat captcha Cloudflare...
                           </p>
-                        ) : null}
-                        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
+                        )}
+                        <p className="mt-1.5 text-center text-[10px] uppercase tracking-wider text-[var(--text-muted)]">
                           Dilindungi oleh Cloudflare Turnstile
                         </p>
                       </>
                     ) : (
-                      <div className="flex items-center justify-center gap-2 py-3 text-xs text-[var(--text-muted)]">
-                        <ShieldCheck className="h-3.5 w-3.5" />
+                      <div
+                        data-testid="turnstile-fallback"
+                        aria-live="polite"
+                        className="flex items-center justify-center gap-2 py-2 text-center text-xs text-[var(--text-muted)]"
+                      >
+                        <ShieldCheck className="h-3.5 w-3.5 text-[var(--text-muted)] shrink-0" />
                         <span>
-                          Captcha nonaktif — atur{' '}
-                          <code className="rounded bg-[hsl(var(--ctp-surface1)/0.6)] px-1 py-0.5 text-[hsl(var(--ctp-text))]">
-                            NEXT_PUBLIC_TURNSTILE_SITE_KEY
-                          </code>{' '}
-                          di <code className="rounded bg-[hsl(var(--ctp-surface1)/0.6)] px-1 py-0.5 text-[hsl(var(--ctp-text))]">.env.local</code>
+                          Verifikasi keamanan belum tersedia. Muat ulang halaman atau hubungi admin.
                         </span>
                       </div>
                     )}
                   </div>
-                  {errors.turnstile ? (
-                    <p className="text-xs text-center text-[hsl(var(--ctp-red))]">{errors.turnstile}</p>
-                  ) : null}
+                  {errors.turnstile && (
+                    <p role="alert" className="text-center text-xs font-medium text-[hsl(var(--ctp-red))]">
+                      {errors.turnstile}
+                    </p>
+                  )}
                 </div>
 
                 <Button
                   type="submit"
                   data-testid="login-submit"
-                  className="h-12 w-full text-base"
-                  size="lg"
+                  className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                   disabled={loading || (TURNSTILE_SITE_KEY && !turnstileToken)}
                 >
                   {loading ? (
@@ -423,18 +458,23 @@ export default function LoginPage() {
                 </Button>
               </form>
 
-              <div className="my-6 flex items-center gap-3">
-                <div className="h-px flex-1 bg-[hsl(var(--ctp-surface1))]" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--text-muted)]">akun baru</span>
-                <div className="h-px flex-1 bg-[hsl(var(--ctp-surface1))]" />
+              <div className="my-5 flex items-center gap-3">
+                <div className="h-px flex-1 bg-[var(--line)]" />
+                <span className="text-[11px] font-medium uppercase tracking-wider text-[var(--text-muted)]">
+                  akun baru
+                </span>
+                <div className="h-px flex-1 bg-[var(--line)]" />
               </div>
 
-              <div className="rounded-xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-surface0))] p-4 text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
+              <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] p-3 text-center text-xs leading-relaxed text-[var(--text-body)]">
                 Belum punya akun?{' '}
-                <Link href="/register" className="font-semibold text-[hsl(var(--ctp-blue))] transition-colors hover:text-[hsl(var(--ctp-teal))]">
+                <Link
+                  href="/register"
+                  className="font-medium text-[var(--accent)] hover:underline transition-colors"
+                >
                   Daftar sekarang
-                </Link>
-                {' '}untuk mulai mengelola proses bimbingan Anda.
+                </Link>{' '}
+                untuk mulai mengelola proses bimbingan Anda.
               </div>
             </CardContent>
           </Card>

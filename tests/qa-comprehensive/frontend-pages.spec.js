@@ -50,7 +50,7 @@ test.describe('Fase 7 — Landing & Public Pages', () => {
 
   test('Login page has Turnstile security section', async ({ page }) => {
     await page.goto('/login');
-    await expect(page.getByText(/verifikasi keamanan/i)).toBeVisible();
+    await expect(page.getByText(/verifikasi keamanan/i).first()).toBeVisible();
   });
 
   test('Register page renders all fields', async ({ page }) => {

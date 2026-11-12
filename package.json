@@ -11,7 +11,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "guard": "node scripts/ui-guard.mjs && node scripts/slop-check.mjs --max-hits=38",
+    "guard": "node scripts/ui-guard.mjs && node scripts/slop-check.mjs --max-hits=31",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",
