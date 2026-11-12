@@ -241,7 +241,7 @@ export default function DosenRevisiApprovePage() {
                   <SelectTrigger
                     id={a11y.id}
                     aria-describedby={a11y['aria-describedby']}
-                    className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                    className="w-full bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
                   >
                     <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>

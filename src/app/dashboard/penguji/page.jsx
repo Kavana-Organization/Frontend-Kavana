@@ -129,29 +129,29 @@ export default function PengujiDashboardPage() {
       </PageHeader>
 
       {/* Bordered Metric Strip (no icon tiles, tabular-nums) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x border border-[var(--line)] rounded-xl bg-[var(--surface-raised)]">
-        <div className="p-4 sm:p-5">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Total sidang</p>
           <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
             {stats.total}
           </p>
           <p className="mt-1 text-xs text-[var(--text-muted)]">Sidang yang melibatkan Anda</p>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Perlu hasil</p>
           <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
             {stats.pending}
           </p>
           <p className="mt-1 text-xs text-[var(--text-muted)]">Menunggu keputusan penguji</p>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Revisi</p>
           <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-blue))] font-mono tabular-nums">
             {stats.revisi}
           </p>
           <p className="mt-1 text-xs text-[var(--text-muted)]">Mahasiswa perlu revisi</p>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Selesai</p>
           <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
             {stats.completed}

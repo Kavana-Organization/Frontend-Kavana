@@ -219,18 +219,20 @@ export default function DosenDashboard() {
         title={`Dashboard Dosen · ${TITLE_MAP.dashboard || 'Ringkasan Kegiatan'}`}
         subtitle="Tinjau antrean persetujuan bimbingan dan laporan dari yang paling lama menunggu, lalu pantau mahasiswa bimbingan."
       >
-        <Button asChild variant="outline" size="sm">
-          <Link href={`/dashboard/${roleNamespace}/bimbingan-approve`}>
-            <MessageSquare className="h-4 w-4" />
-            <span>Approve Bimbingan</span>
-          </Link>
-        </Button>
-        <Button asChild size="sm">
-          <Link href={`/dashboard/${roleNamespace}/laporan-approve`}>
-            <FileText className="h-4 w-4" />
-            <span>Approve Laporan</span>
-          </Link>
-        </Button>
+        <div className="flex w-full flex-wrap items-center gap-2 sm:w-auto">
+          <Button asChild variant="outline" size="sm">
+            <Link href={`/dashboard/${roleNamespace}/bimbingan-approve`}>
+              <MessageSquare className="h-4 w-4" />
+              <span>Approve Bimbingan</span>
+            </Link>
+          </Button>
+          <Button asChild size="sm">
+            <Link href={`/dashboard/${roleNamespace}/laporan-approve`}>
+              <FileText className="h-4 w-4" />
+              <span>Approve Laporan</span>
+            </Link>
+          </Button>
+        </div>
       </PageHeader>
 
       {/* Queue-first ranked list */}
@@ -317,27 +319,27 @@ export default function DosenDashboard() {
       {/* Bordered Metric Strip (no icon tiles, no fabricated deltas) */}
       <div
         data-testid="dosen-metric-strip"
-        className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x border border-[var(--line)] rounded-xl bg-[var(--surface-raised)]"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden"
       >
-        <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Bimbingan Menunggu</p>
           <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
             {pendingBimbingan}
           </p>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Laporan Menunggu</p>
           <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-blue))] font-mono tabular-nums">
             {pendingLaporan}
           </p>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Mahasiswa Bimbingan</p>
           <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
             {totalMhs}
           </p>
         </div>
-        <div className="p-4 sm:p-5">
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Sesi Minggu Ini</p>
           <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
             {mingguIni}

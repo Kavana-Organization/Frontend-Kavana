@@ -563,7 +563,8 @@ test.describe('Task 13 — Dosen & Penguji Pages Redesign', () => {
     await setupMockRole(page, 'dosen');
     for (const route of dosenRoutes) {
       await page.goto(route, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(250);
+      await expect(page.locator('h1[data-testid="dashboard-title"]')).toBeVisible();
+      await expect(page.locator('[data-slot="loading-state"]')).toHaveCount(0);
       await checkNoHorizontalOverflow(page);
     }
 
@@ -576,7 +577,8 @@ test.describe('Task 13 — Dosen & Penguji Pages Redesign', () => {
     await setupMockRole(page, 'penguji');
     for (const route of pengujiRoutes) {
       await page.goto(route, { waitUntil: 'domcontentloaded' });
-      await page.waitForTimeout(250);
+      await expect(page.locator('h1[data-testid="dashboard-title"]')).toBeVisible();
+      await expect(page.locator('[data-slot="loading-state"]')).toHaveCount(0);
       await checkNoHorizontalOverflow(page);
     }
   });

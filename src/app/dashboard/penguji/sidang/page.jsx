@@ -240,14 +240,14 @@ export default function PengujiSidangPage() {
       />
 
       {/* Compact Metric Strip */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x border border-[var(--line)] rounded-xl bg-[var(--surface-raised)]">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
         {[
           ['Total sidang', stats.total, 'Semua sidang penguji'],
           ['Perlu hasil', stats.pending, 'Menunggu keputusan'],
           ['Revisi', stats.revisi, 'Ditetapkan perlu revisi'],
           ['Selesai', stats.completed, 'Hasil sudah disimpan'],
         ].map(([title, value, caption]) => (
-          <div className="p-4 sm:p-5" key={title}>
+          <div className="bg-[var(--surface-raised)] p-4 sm:p-5" key={title}>
             <p className="text-xs font-medium text-[var(--text-muted)]">{title}</p>
             <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">{value}</p>
             <p className="mt-1 text-xs text-[var(--text-muted)]">{caption}</p>
@@ -317,7 +317,7 @@ export default function PengujiSidangPage() {
                             </span>
                           </div>
                         </div>
-                        <div className="flex shrink-0 flex-row sm:flex-col items-center sm:items-end justify-between gap-2">
+                        <div className="flex w-full sm:w-auto sm:shrink-0 flex-wrap flex-row sm:flex-col items-center sm:items-end justify-between gap-2">
                           <StatusBadge status={getStatusKey(item.status)} label={statusLabel(item.status)} />
                           {isCompleted ? (
                             <StatusBadge status={item.hasil_sidang} label={hasilLabel(item.hasil_sidang)} />
@@ -476,7 +476,7 @@ export default function PengujiSidangPage() {
                           <SelectTrigger
                             id={a11y.id}
                             aria-describedby={a11y['aria-describedby']}
-                            className={inputCls}
+                            className={cn(inputCls, 'w-full')}
                           >
                             <SelectValue placeholder="Pilih hasil" />
                           </SelectTrigger>
