@@ -127,7 +127,7 @@ export default function MonitoringRevisiPage() {
                   onClick={() => setTab(t.id)}
                 >
                   <span>{t.label}</span>
-                  <span className="font-mono text-xs tabular-nums opacity-80">({count})</span>
+                  <span className="font-mono text-xs tabular-nums opacity-95">({count})</span>
                 </Button>
               );
             })}

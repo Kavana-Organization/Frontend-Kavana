@@ -16,13 +16,13 @@ import {
 
 const TONE_STYLES = {
   success:
-    'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))] dark:border-[hsl(var(--ctp-green)/0.3)] dark:bg-[hsl(var(--ctp-green)/0.15)] dark:text-[hsl(var(--ctp-green))]',
+    'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.12)] text-emerald-800 dark:border-[hsl(var(--ctp-green)/0.3)] dark:bg-[hsl(var(--ctp-green)/0.15)] dark:text-emerald-200',
   warning:
-    'border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] text-[hsl(var(--ctp-peach))] dark:border-[hsl(var(--ctp-peach)/0.3)] dark:bg-[hsl(var(--ctp-peach)/0.15)] dark:text-[hsl(var(--ctp-peach))]',
+    'border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] text-amber-900 dark:border-[hsl(var(--ctp-peach)/0.3)] dark:bg-[hsl(var(--ctp-peach)/0.15)] dark:text-amber-200',
   danger:
-    'border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.12)] text-[hsl(var(--ctp-red))] dark:border-[hsl(var(--ctp-red)/0.3)] dark:bg-[hsl(var(--ctp-red)/0.15)] dark:text-[hsl(var(--ctp-red))]',
+    'border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.12)] text-red-800 dark:border-[hsl(var(--ctp-red)/0.3)] dark:bg-[hsl(var(--ctp-red)/0.15)] dark:text-red-200',
   info:
-    'border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))] dark:border-[hsl(var(--ctp-blue)/0.3)] dark:bg-[hsl(var(--ctp-blue)/0.15)] dark:text-[hsl(var(--ctp-blue))]',
+    'border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-blue-800 dark:border-[hsl(var(--ctp-blue)/0.3)] dark:bg-[hsl(var(--ctp-blue)/0.15)] dark:text-blue-200',
   neutral:
     'border-[var(--line)] bg-[var(--surface-sunken)] text-[var(--text-muted)]',
 };

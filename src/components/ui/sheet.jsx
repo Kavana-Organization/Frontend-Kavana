@@ -45,18 +45,46 @@ function SheetOverlay({
   );
 }
 
+function SheetFocusCapture({ targetRef }) {
+  React.useState(() => {
+    const active = typeof document !== "undefined" ? document.activeElement : null;
+    if (typeof HTMLElement !== "undefined" && active instanceof HTMLElement && active !== document.body) {
+      targetRef.current = active;
+    }
+    return null;
+  });
+  return null;
+}
+
 function SheetContent({
   className,
   children,
   side = "right",
   showCloseButton = true,
+  onCloseAutoFocus,
   ...props
 }) {
+  const returnFocusRef = React.useRef(null);
+
   return (
     <SheetPortal>
+      <SheetFocusCapture targetRef={returnFocusRef} />
       <SheetOverlay />
       <SheetPrimitive.Content
         data-slot="sheet-content"
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          const el = returnFocusRef.current;
+          if (!event.defaultPrevented && el && el.isConnected) {
+            event.preventDefault();
+            el.focus({ preventScroll: true });
+            requestAnimationFrame(() => {
+              if (el.isConnected && document.activeElement !== el) {
+                el.focus({ preventScroll: true });
+              }
+            });
+          }
+        }}
         className={cn(
           "bg-[var(--surface-raised)] text-[var(--text-strong)] data-[state=open]:animate-in data-[state=closed]:animate-out fixed z-50 flex flex-col gap-4 shadow-overlay transition ease-in-out data-[state=closed]:duration-150 data-[state=open]:duration-150",
           side === "right" &&
@@ -73,7 +101,7 @@ function SheetContent({
         {children}
         {showCloseButton && (
           <SheetPrimitive.Close
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none">
+            className="ring-offset-background focus:ring-ring data-[state=open]:bg-secondary absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [@media(pointer:coarse)]:top-1.5 [@media(pointer:coarse)]:right-1.5 [@media(pointer:coarse)]:grid [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:place-items-center">
             <XIcon className="size-4" />
             <span className="sr-only">Close</span>
           </SheetPrimitive.Close>

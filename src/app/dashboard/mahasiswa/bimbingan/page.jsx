@@ -253,7 +253,7 @@ export default function BimbinganPage() {
                 {approvedCount}/{MAX_SESSIONS} Selesai
               </span>
             </div>
-            <Progress value={progress} className="mt-2.5 h-2" />
+            <Progress value={progress} aria-label="Progres sesi bimbingan" className="mt-2.5 h-2" />
             <div className="flex gap-1 mt-2">
               {Array.from({ length: MAX_SESSIONS }, (_, i) => (
                 <div

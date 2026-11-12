@@ -324,7 +324,7 @@ export default function KelolaUsersPage() {
                 className="gap-2"
               >
                 <span>{roleTitle}</span>
-                <span className="font-mono text-xs tabular-nums opacity-80">{count}</span>
+                <span className="font-mono text-xs tabular-nums opacity-95">{count}</span>
               </Button>
             );
           })}

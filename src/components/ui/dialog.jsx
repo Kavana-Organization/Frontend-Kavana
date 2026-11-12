@@ -46,17 +46,45 @@ function DialogOverlay({
   );
 }
 
+function DialogFocusCapture({ targetRef }) {
+  React.useState(() => {
+    const active = typeof document !== "undefined" ? document.activeElement : null;
+    if (typeof HTMLElement !== "undefined" && active instanceof HTMLElement && active !== document.body) {
+      targetRef.current = active;
+    }
+    return null;
+  });
+  return null;
+}
+
 function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onCloseAutoFocus,
   ...props
 }) {
+  const returnFocusRef = React.useRef(null);
+
   return (
     <DialogPortal data-slot="dialog-portal">
+      <DialogFocusCapture targetRef={returnFocusRef} />
       <DialogOverlay />
       <DialogPrimitive.Content
         data-slot="dialog-content"
+        onCloseAutoFocus={(event) => {
+          onCloseAutoFocus?.(event);
+          const el = returnFocusRef.current;
+          if (!event.defaultPrevented && el && el.isConnected) {
+            event.preventDefault();
+            el.focus({ preventScroll: true });
+            requestAnimationFrame(() => {
+              if (el.isConnected && document.activeElement !== el) {
+                el.focus({ preventScroll: true });
+              }
+            });
+          }
+        }}
         className={cn(
           "bg-[var(--surface-raised)] text-[var(--text-strong)] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 fixed top-[50%] left-[50%] z-50 grid w-full max-w-[calc(100%-2rem)] translate-x-[-50%] translate-y-[-50%] gap-4 rounded-xl border border-[var(--line)] p-6 shadow-overlay duration-150 outline-none sm:max-w-lg",
           className
@@ -66,7 +94,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
+            className="ring-offset-background focus:ring-ring data-[state=open]:bg-accent data-[state=open]:text-muted-foreground absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:ring-offset-2 focus:outline-hidden disabled:pointer-events-none [@media(pointer:coarse)]:top-1.5 [@media(pointer:coarse)]:right-1.5 [@media(pointer:coarse)]:grid [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11 [@media(pointer:coarse)]:place-items-center [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4">
             <XIcon />
             <span className="sr-only">Close</span>
           </DialogPrimitive.Close>

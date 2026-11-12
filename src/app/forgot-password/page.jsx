@@ -256,7 +256,7 @@ export default function ForgotPasswordPage() {
         {/* Back to login */}
         <Link
           href="/login"
-          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+          className="mb-6 inline-flex items-center gap-1.5 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] [@media(pointer:coarse)]:min-h-11"
         >
           <ArrowLeft className="h-4 w-4" />
           Kembali ke Login
@@ -307,7 +307,7 @@ export default function ForgotPasswordPage() {
                     <Button
                       type="submit"
                       disabled={loading || !email.trim()}
-                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                     >
                       {loading ? (
                         <span className="flex items-center gap-2">
@@ -358,7 +358,7 @@ export default function ForgotPasswordPage() {
                     <Button
                       type="submit"
                       disabled={loading || otp.length < 6}
-                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                     >
                       {loading ? (
                         <span className="flex items-center gap-2">
@@ -400,13 +400,13 @@ export default function ForgotPasswordPage() {
                             value={newPassword}
                             onChange={(e) => setNewPassword(e.target.value)}
                             placeholder="••••••••"
-                            className={cn(inputCls, 'pr-10')}
+                            className={cn(inputCls, 'pr-11')}
                             autoFocus
                           />
                           <button
                             type="button"
                             onClick={() => setShowPw(!showPw)}
-                            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
+                            className="absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-8 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
                             aria-label={showPw ? 'Sembunyikan password' : 'Tampilkan password'}
                           >
                             {showPw ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
@@ -445,7 +445,7 @@ export default function ForgotPasswordPage() {
                     <Button
                       type="submit"
                       disabled={loading || !newPassword || newPassword !== confirmPassword}
-                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                     >
                       {loading ? (
                         <span className="flex items-center gap-2">
@@ -473,7 +473,7 @@ export default function ForgotPasswordPage() {
                     </div>
                     <Button
                       onClick={() => router.push('/login')}
-                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                      className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                     >
                       Lanjut ke Login
                     </Button>

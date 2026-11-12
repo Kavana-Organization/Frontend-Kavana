@@ -497,10 +497,10 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                   <DropdownMenuTrigger asChild>
                     <Button
                       variant="ghost"
-                      aria-label="Menu pengguna"
                       className="ctp-focus h-11 gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] pl-2 pr-3 hover:bg-[var(--surface-sunken)]"
                     >
-                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-blue)/0.12)] text-xs font-bold text-[hsl(var(--ctp-blue))]">
+                      <span className="sr-only">Menu pengguna: </span>
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-blue)/0.12)] text-xs font-bold text-blue-800 dark:text-blue-200">
                         {initials}
                       </span>
                       <span className="hidden text-sm font-medium text-[var(--text-strong)] sm:inline">{displayName.split(' ')[0]}</span>

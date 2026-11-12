@@ -318,7 +318,7 @@ export default function BimbinganApprovePage() {
                         <button
                           type="button"
                           onClick={() => setDetailRow(b)}
-                          className="text-left hover:underline focus-visible:outline-none focus-visible:underline min-w-0"
+                          className="text-left hover:underline focus-visible:outline-none focus-visible:underline min-w-0 py-1 [@media(pointer:coarse)]:min-h-11"
                         >
                           <div className="text-sm font-semibold text-[var(--text-strong)] break-words">
                             {b.display_name || '-'}

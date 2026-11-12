@@ -31,7 +31,8 @@ export default function LandingPage() {
         {/* Header */}
         <header className="sticky top-0 z-50 border-b border-[var(--line)] bg-[var(--surface-raised)]">
           <div className="mx-auto flex h-16 max-w-7xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-            <Link href="/" className="flex items-center gap-3" aria-label="Kavana, kembali ke beranda">
+            <Link href="/" className="flex items-center gap-3 [@media(pointer:coarse)]:min-h-11">
+              <span className="sr-only">Kavana — kembali ke beranda: </span>
               <span className="grid h-10 w-10 shrink-0 place-items-center rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)]">
                 <Image
                   src="/D4TI.png"
@@ -70,7 +71,7 @@ export default function LandingPage() {
                   {LANDING_CONTENT.hero.secondaryCta.label}
                 </Link>
               </Button>
-              <Button asChild size="sm" className="hidden sm:inline-flex bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90">
+              <Button asChild size="sm" className="hidden sm:inline-flex bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)]/90">
                 <Link href={LANDING_CONTENT.hero.primaryCta.href}>
                   {LANDING_CONTENT.hero.primaryCta.label}
                 </Link>
@@ -107,7 +108,7 @@ export default function LandingPage() {
                   <Button asChild variant="outline" size="sm" className="w-full border-[var(--line)]">
                     <Link href="/login" onClick={() => setMobileMenuOpen(false)}>Masuk</Link>
                   </Button>
-                  <Button asChild size="sm" className="w-full bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90">
+                  <Button asChild size="sm" className="w-full bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)]/90">
                     <Link href="/register" onClick={() => setMobileMenuOpen(false)}>Daftar</Link>
                   </Button>
                 </div>
@@ -141,7 +142,7 @@ export default function LandingPage() {
                   </p>
 
                   <div className="mt-8 flex flex-wrap items-center gap-3">
-                    <Button asChild size="lg" className="bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90">
+                    <Button asChild size="lg" className="bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[var(--accent)]/90">
                       <Link href={LANDING_CONTENT.hero.primaryCta.href}>
                         {LANDING_CONTENT.hero.primaryCta.label}
                         <ArrowRight className="h-4 w-4" />
@@ -263,7 +264,7 @@ export default function LandingPage() {
                       <TabsTrigger
                         key={tab.id}
                         value={tab.id}
-                        className="px-4 py-2 text-sm font-semibold data-[state=active]:bg-[var(--accent)] data-[state=active]:text-white"
+                        className="px-4 py-2 text-sm font-semibold data-[state=active]:bg-[var(--accent)] data-[state=active]:text-[var(--accent-foreground)]"
                       >
                         {tab.label}
                       </TabsTrigger>
@@ -302,7 +303,7 @@ export default function LandingPage() {
                             <ul className="space-y-2.5">
                               {tab.capabilities.map((cap) => (
                                 <li key={cap} className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--text-body)]">
-                                  <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-white">
+                                  <span className="mt-0.5 grid h-4 w-4 shrink-0 place-items-center rounded-full bg-[var(--accent)] text-[var(--accent-foreground)]">
                                     <Check className="h-3 w-3" />
                                   </span>
                                   <span>{cap}</span>
@@ -408,12 +409,12 @@ export default function LandingPage() {
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-strong)]">
                 Navigasi
               </p>
-              <nav className="mt-3 flex flex-col gap-2" aria-label="Navigasi footer">
+              <nav className="mt-3 flex flex-col gap-2 [@media(pointer:coarse)]:gap-0" aria-label="Navigasi footer">
                 {LANDING_CONTENT.nav.map((item) => (
                   <a
                     key={item.label}
                     href={item.href}
-                    className="text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                    className="inline-flex items-center text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] [@media(pointer:coarse)]:min-h-11"
                   >
                     {item.label}
                   </a>
@@ -426,12 +427,12 @@ export default function LandingPage() {
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-strong)]">
                 Akses Portal
               </p>
-              <nav className="mt-3 flex flex-col gap-2" aria-label="Portal pengguna">
+              <nav className="mt-3 flex flex-col gap-2 [@media(pointer:coarse)]:gap-0" aria-label="Portal pengguna">
                 {LANDING_CONTENT.footer.platformLinks.map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                    className="inline-flex items-center text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] [@media(pointer:coarse)]:min-h-11"
                   >
                     {item.label}
                   </Link>
@@ -444,12 +445,12 @@ export default function LandingPage() {
               <p className="text-xs font-bold uppercase tracking-wider text-[var(--text-strong)]">
                 Informasi & Luaran
               </p>
-              <nav className="mt-3 flex flex-col gap-2" aria-label="Halaman publik dan luaran proyek">
+              <nav className="mt-3 flex flex-col gap-2 [@media(pointer:coarse)]:gap-0" aria-label="Halaman publik dan luaran proyek">
                 {LANDING_CONTENT.footer.resourceLinks.map((item) => (
                   <Link
                     key={item.label}
                     href={item.href}
-                    className="text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)]"
+                    className="inline-flex items-center text-xs text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] [@media(pointer:coarse)]:min-h-11"
                   >
                     {item.label}
                   </Link>

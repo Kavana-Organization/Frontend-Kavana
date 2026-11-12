@@ -384,9 +384,9 @@ export default function RegisterPage() {
                 <GraduationCap className="h-4 w-4" />
                 Portal Akademik D4TI ULBI
               </span>
-              <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--text-strong)]">
+              <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--text-strong)]">
                 Buat akun untuk mulai mengelola proses bimbingan akademik.
-              </h1>
+              </p>
               <p className="mt-4 text-sm leading-relaxed text-[var(--text-body)]">
                 Melalui akun Kavana, mahasiswa dapat mengajukan proposal, mengikuti proses validasi,
                 mencatat bimbingan, dan memantau progress akademik dalam satu sistem.
@@ -420,7 +420,7 @@ export default function RegisterPage() {
           >
             <Link
               href="/"
-              className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] lg:hidden"
+              className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] lg:hidden [@media(pointer:coarse)]:min-h-11"
             >
               <ArrowLeft className="h-4 w-4" />
               Kembali ke Beranda
@@ -438,7 +438,7 @@ export default function RegisterPage() {
                   )}
                 </div>
                 <CardTitle className="text-2xl font-semibold tracking-tight text-[var(--text-strong)]">
-                  {step === 'success' ? 'Registrasi Berhasil' : step === 'otp' ? 'Verifikasi Email' : 'Daftar Akun Baru'}
+                  <h1>{step === 'success' ? 'Registrasi Berhasil' : step === 'otp' ? 'Verifikasi Email' : 'Daftar Akun Baru'}</h1>
                 </CardTitle>
                 <CardDescription className="mt-1.5 text-xs text-[var(--text-muted)]">
                   {step === 'success'
@@ -573,12 +573,12 @@ export default function RegisterPage() {
                                 type={showPassword ? 'text' : 'password'}
                                 placeholder="Minimal 8 karakter"
                                 {...register('password')}
-                                className={cn(inputCls, 'pr-10', errors.password && errCls)}
+                                className={cn(inputCls, 'pr-11', errors.password && errCls)}
                                 autoComplete="new-password"
                               />
                               <button
                                 type="button"
-                                className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
+                                className="absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-8 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
                                 aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                                 onClick={() => setShowPassword((prev) => !prev)}
                               >
@@ -604,12 +604,12 @@ export default function RegisterPage() {
                               type={showConfirmPassword ? 'text' : 'password'}
                               placeholder="Ulangi password"
                               {...register('confirmPassword')}
-                              className={cn(inputCls, 'pr-10', errors.confirmPassword && errCls)}
+                              className={cn(inputCls, 'pr-11', errors.confirmPassword && errCls)}
                               autoComplete="new-password"
                             />
                             <button
                               type="button"
-                              className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
+                              className="absolute right-1 top-1/2 -translate-y-1/2 flex h-8 w-8 [@media(pointer:coarse)]:h-11 [@media(pointer:coarse)]:w-11 items-center justify-center rounded-md text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
                               aria-label={showConfirmPassword ? 'Sembunyikan konfirmasi' : 'Tampilkan konfirmasi'}
                               onClick={() => setShowConfirmPassword((prev) => !prev)}
                             >
@@ -634,7 +634,7 @@ export default function RegisterPage() {
                             }
                             className="mt-0.5 border-[var(--line)] data-[state=checked]:border-[var(--accent)] data-[state=checked]:bg-[var(--accent)]"
                           />
-                          <label htmlFor="terms" className="text-xs leading-relaxed text-[var(--text-body)]">
+                          <label htmlFor="terms" className="inline-block min-h-11 py-1 text-xs leading-relaxed text-[var(--text-body)]">
                             Saya menyetujui{' '}
                             <Link
                               href="/syarat-layanan"
@@ -661,7 +661,7 @@ export default function RegisterPage() {
 
                       <Button
                         type="submit"
-                        className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                        className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                         disabled={loading}
                       >
                         {loading ? (
@@ -705,7 +705,7 @@ export default function RegisterPage() {
                         <Button
                           type="submit"
                           disabled={loading || otp.length < 6}
-                          className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                          className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                         >
                           {loading ? (
                             <span className="flex items-center gap-2">
@@ -748,7 +748,7 @@ export default function RegisterPage() {
                         </p>
                         <Button
                           onClick={() => router.push('/login')}
-                          className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                          className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                         >
                           Lanjut ke Login
                         </Button>
@@ -771,7 +771,7 @@ export default function RegisterPage() {
                       Sudah pernah membuat akun?{' '}
                       <Link
                         href="/login"
-                        className="font-medium text-[var(--accent)] hover:underline transition-colors"
+                        className="inline-flex items-center font-medium text-[var(--accent)] hover:underline transition-colors [@media(pointer:coarse)]:min-h-11"
                       >
                         Masuk ke akun Anda
                       </Link>

@@ -148,3 +148,33 @@ Per QA comprehensive baseline (`QA_REPORT.md` / `kavana-ui-redesign-plan.md` §1
 
 Acceptance criterion across all redesign tasks: **No new failures against this baseline**.
 
+---
+
+## Task 17 — Accessibility Closure Audit (2026-11-12)
+
+Automated accessibility verification added in [`tests/ui/accessibility.spec.js`](../tests/ui/accessibility.spec.js) using `@axe-core/playwright`, Pixel 5 coarse-pointer target checks, and keyboard-only interaction walkthroughs.
+
+### Step 1 — `@axe-core/playwright` Audit Results (0 Serious / 0 Critical Gate)
+
+- **Coverage:** 58 unique routes across 12 public/auth routes (`/`, `/panduan-pengguna`, `/faq-sistem`, `/kebijakan-privasi`, `/syarat-layanan`, `/luaran-proyek-1..3`, `/verify/bimbingan/mock-token`, `/login`, `/register`, `/forgot-password`), 7 authenticated roles (`mahasiswa` 10 routes, `dosen` 5, `penguji` 3, `koordinator` 8, `kaprodi` 4, `admin` 5, `developer` 8), and 3 shared dashboard routes (`/dashboard/{profile,settings,support}`), audited in both `light` and `dark` themes (`116` total route-theme scans on `e2e-desktop`).
+- **Baseline Issues Found & Fixed:**
+  - `color-contrast` (light & dark): Adjusted `--ctp-subtext0`, light semantic hues (`--ctp-green`, `--ctp-peach`, `--ctp-teal`, `--ctp-mauve`, `--ctp-red`, `--ctp-blue`), and dark `--destructive` / `--ctp-red` / `--ctp-blue` in `src/app/globals.css`; updated `TONE_STYLES` in `src/components/shared/status-badge.jsx`, `ROLE_BADGE_STYLE` in `src/components/layout/sidebar.jsx`, user avatar badge in `src/components/layout/dashboard-layout.jsx`, pipeline badges and locked-stage opacity in `src/app/dashboard/mahasiswa/page.jsx`, active filter count opacity in `revisi-monitoring` and `kelola-users`, and dark CTA text (`text-[var(--accent-foreground)]`) in `src/app/page.jsx`, `src/app/login/page.jsx`, `src/app/register/page.jsx`, and `src/app/forgot-password/page.jsx`.
+  - `label-content-name-mismatch`: Replaced overriding `aria-label` attributes with `.sr-only` context inside visible-text triggers in `src/app/page.jsx` (brand link) and `src/components/layout/dashboard-layout.jsx` (user menu button).
+  - `button-name` & `aria-progressbar-name`: Added `aria-label="Filter dokumen"` on `SelectTrigger` in `src/app/dashboard/mahasiswa/page.jsx` and `aria-label="Progres sesi bimbingan"` on `Progress` in `src/app/dashboard/mahasiswa/bimbingan/page.jsx`.
+  - Mobile heading hierarchy: Moved visible `<h1>` to form card titles in `src/app/login/page.jsx` and `src/app/register/page.jsx` so `<1024px` viewports retain a visible primary heading.
+- **Final Axe Gate Result:** **0 serious, 0 critical** violations across all 58 routes in both `light` and `dark` modes.
+
+### Step 2 — 44 px Coarse Pointer Target Audit (`e2e-mobile`, Pixel 5 `393x851`, `hasTouch: true`)
+
+- **Coverage:** 13 representative public, auth, verification, and dashboard role routes (`/`, `/login`, `/register`, `/forgot-password`, `/dashboard/mahasiswa`, `/dashboard/mahasiswa/bimbingan`, `/dashboard/dosen/bimbingan-approve`, `/dashboard/penguji/sidang`, `/dashboard/koordinator/jadwal-sidang`, `/dashboard/kaprodi/kelola-koordinator`, `/dashboard/admin/kelola-users`, `/dashboard/developer/devices`, `/dashboard/support`).
+- **Fixes Applied:** Added `[@media(pointer:coarse)]:min-h-11` / `[@media(pointer:coarse)]:min-w-11` hit targets on `TabsTrigger` (`src/components/ui/tabs.jsx`), `DialogPrimitive.Close` (`src/components/ui/dialog.jsx`), `SheetPrimitive.Close` (`src/components/ui/sheet.jsx`), brand & footer links (`src/app/page.jsx`), auth back/helper links & password visibility toggles (`src/app/login/page.jsx`, `src/app/register/page.jsx`, `src/app/forgot-password/page.jsx`), terms label (`src/app/register/page.jsx`), and table row detail button (`src/app/dashboard/dosen/bimbingan-approve/page.jsx`). Exempts inline prose `<a style="display:inline">` links inside running `<p>/<li>/<label>` text and checkboxes whose associated `<label>` exceeds `44px`.
+- **Final Result:** **0 coarse-pointer target violations** across all 13 audited routes on Pixel 5.
+
+### Step 3 — Automated Keyboard-Only Walkthrough (`e2e-desktop`)
+
+1. **`/login` traversal:** `login-email` -> `Tab` -> `login-password` -> `Tab` -> password visibility toggle (`Enter` switches `type="password"` to `"text"`) -> `Tab` -> `login-submit`. **Passed.**
+2. **Sidebar navigation & rail flyout:** `ArrowDown` / `ArrowUp` / `Home` / `End` item movement, `Space` group expand/collapse (`aria-expanded`), rail collapse toggle + `Enter` opening `Popover` flyout + `Escape` closing and restoring focus to rail trigger. **Passed.**
+3. **Controlled `Dialog` focus trap & `Escape` restoration (`/dashboard/koordinator/kelola-periode`):** Focused `Buat Periode`, opened modal via `Enter`, verified 10 `Tab` presses stay trapped inside `[role="dialog"]`, pressed `Escape`, verified dialog closes and focus returns to `Buat Periode` via `DialogFocusCapture` + `onCloseAutoFocus` in `src/components/ui/dialog.jsx`. **Passed.**
+4. **Table row action & `Sheet` detail drawer (`/dashboard/dosen/bimbingan-approve`):** Focused row action `Lihat detail bimbingan`, opened right `Sheet` via `Enter`, verified `Tab` focus moves inside drawer, pressed `Escape`, verified sheet closes and focus returns to row action button via `SheetFocusCapture` + `onCloseAutoFocus` in `src/components/ui/sheet.jsx`. **Passed.**
+
+

@@ -527,7 +527,7 @@ export default function MahasiswaDashboard() {
                   'flex flex-col justify-between rounded-lg border p-2.5 min-w-0 transition-colors',
                   isDone && 'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.06)]',
                   isActive && 'border-[hsl(var(--ctp-blue)/0.4)] bg-[hsl(var(--ctp-blue)/0.08)]',
-                  isLocked && 'border-[var(--line)] bg-[var(--surface-sunken)]/50 opacity-70'
+                  isLocked && 'border-[var(--line)] bg-[var(--surface-sunken)]/50'
                 )}
               >
                 <div className="flex items-center justify-between gap-1 mb-1.5">
@@ -537,8 +537,8 @@ export default function MahasiswaDashboard() {
                   <span
                     className={cn(
                       'inline-flex items-center px-1.5 py-0.5 rounded text-[10px] font-medium capitalize',
-                      isDone && 'bg-[hsl(var(--ctp-green)/0.15)] text-[hsl(var(--ctp-green))]',
-                      isActive && 'bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))]',
+                      isDone && 'bg-[hsl(var(--ctp-green)/0.15)] text-emerald-800 dark:text-emerald-200',
+                      isActive && 'bg-[hsl(var(--ctp-blue)/0.15)] text-blue-800 dark:text-blue-200',
                       isLocked && 'bg-[var(--surface-sunken)] text-[var(--text-muted)]'
                     )}
                   >
@@ -720,7 +720,7 @@ export default function MahasiswaDashboard() {
               <CardDescription className="text-[var(--text-muted)]">Status proposal dan laporan.</CardDescription>
             </div>
             <Select value={documentFilter} onValueChange={setDocumentFilter}>
-              <SelectTrigger className="h-9 w-[110px] bg-[var(--surface-sunken)] border-[var(--line)] text-xs">
+              <SelectTrigger aria-label="Filter dokumen" className="h-9 w-[110px] bg-[var(--surface-sunken)] border-[var(--line)] text-xs">
                 <SelectValue placeholder="Filter" />
               </SelectTrigger>
               <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">

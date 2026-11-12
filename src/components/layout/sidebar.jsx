@@ -16,13 +16,13 @@ import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/s
 import { SidebarGroup } from '@/components/layout/sidebar-group';
 
 const ROLE_BADGE_STYLE = {
-  mahasiswa: 'border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]',
-  dosen: 'border-[hsl(var(--ctp-green)/0.25)] bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))]',
-  koordinator: 'border-[hsl(var(--ctp-teal)/0.25)] bg-[hsl(var(--ctp-teal)/0.12)] text-[hsl(var(--ctp-teal))]',
-  kaprodi: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-[hsl(var(--ctp-mauve))]',
-  penguji: 'border-[hsl(var(--ctp-peach)/0.25)] bg-[hsl(var(--ctp-peach)/0.12)] text-[hsl(var(--ctp-peach))]',
-  admin: 'border-[hsl(var(--ctp-red)/0.25)] bg-[hsl(var(--ctp-red)/0.12)] text-[hsl(var(--ctp-red))]',
-  developer: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-[hsl(var(--ctp-mauve))]',
+  mahasiswa: 'border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-blue)/0.12)] text-blue-800 dark:text-blue-200',
+  dosen: 'border-[hsl(var(--ctp-green)/0.25)] bg-[hsl(var(--ctp-green)/0.12)] text-emerald-800 dark:text-emerald-200',
+  koordinator: 'border-[hsl(var(--ctp-teal)/0.25)] bg-[hsl(var(--ctp-teal)/0.12)] text-sky-800 dark:text-sky-200',
+  kaprodi: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-violet-800 dark:text-violet-200',
+  penguji: 'border-[hsl(var(--ctp-peach)/0.25)] bg-[hsl(var(--ctp-peach)/0.12)] text-amber-900 dark:text-amber-200',
+  admin: 'border-[hsl(var(--ctp-red)/0.25)] bg-[hsl(var(--ctp-red)/0.12)] text-red-800 dark:text-red-200',
+  developer: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-violet-800 dark:text-violet-200',
 };
 
 function parseRoles(rawRoles) {

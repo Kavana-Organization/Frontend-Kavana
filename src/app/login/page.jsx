@@ -255,9 +255,9 @@ export default function LoginPage() {
               <Sparkles className="h-3.5 w-3.5" />
               Portal Akademik D4TI ULBI
             </span>
-            <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--text-strong)]">
+            <p className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-[var(--text-strong)]">
               Masuk ke ruang kerja bimbingan tanpa tampilan yang melelahkan.
-            </h1>
+            </p>
             <p className="mt-4 text-sm leading-relaxed text-[var(--text-body)]">
               Fokus utama Kavanahub adalah membantu pengguna melihat apa yang penting lebih cepat:
               progres, dokumen, dan tindak lanjut yang masih menunggu.
@@ -288,7 +288,7 @@ export default function LoginPage() {
         >
           <Link
             href="/"
-            className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] lg:hidden"
+            className="mb-5 inline-flex items-center gap-2 text-sm font-medium text-[var(--text-muted)] transition-colors hover:text-[var(--text-strong)] lg:hidden [@media(pointer:coarse)]:min-h-11"
           >
             <ArrowLeft className="h-4 w-4" />
             Kembali ke Beranda
@@ -300,7 +300,7 @@ export default function LoginPage() {
                 <GraduationCap className="h-6 w-6" />
               </div>
               <CardTitle className="text-2xl font-semibold tracking-tight text-[var(--text-strong)]">
-                Masuk ke Kavana
+                <h1>Masuk ke Kavana</h1>
               </CardTitle>
               <CardDescription className="mt-1.5 text-xs text-[var(--text-muted)]">
                 Gunakan email atau NPM untuk mengakses dashboard Anda.
@@ -358,7 +358,7 @@ export default function LoginPage() {
                         />
                         <button
                           type="button"
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors"
+                          className="absolute right-2.5 top-1/2 -translate-y-1/2 grid place-items-center text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors [@media(pointer:coarse)]:right-0.5 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                           aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                           onClick={() => setShowPassword((prev) => !prev)}
                         >
@@ -367,10 +367,10 @@ export default function LoginPage() {
                       </div>
                     )}
                   </Field>
-                  <div className="absolute right-0 top-0">
+                  <div className="absolute right-0 top-0 [@media(pointer:coarse)]:-top-2.5">
                     <Link
                       href="/forgot-password"
-                      className="text-xs font-medium text-[var(--accent)] hover:underline transition-colors"
+                      className="inline-flex items-center text-xs font-medium text-[var(--accent)] hover:underline transition-colors [@media(pointer:coarse)]:min-h-11"
                     >
                       Lupa password?
                     </Link>
@@ -441,7 +441,7 @@ export default function LoginPage() {
                 <Button
                   type="submit"
                   data-testid="login-submit"
-                  className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-white hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
+                  className="h-11 w-full text-sm font-medium rounded-lg bg-[var(--accent)] text-[var(--accent-foreground)] hover:bg-[hsl(var(--ctp-blue)/0.9)] transition-colors"
                   disabled={loading || (TURNSTILE_SITE_KEY && !turnstileToken)}
                 >
                   {loading ? (
@@ -470,7 +470,7 @@ export default function LoginPage() {
                 Belum punya akun?{' '}
                 <Link
                   href="/register"
-                  className="font-medium text-[var(--accent)] hover:underline transition-colors"
+                  className="inline-flex items-center font-medium text-[var(--accent)] hover:underline transition-colors [@media(pointer:coarse)]:min-h-11"
                 >
                   Daftar sekarang
                 </Link>{' '}
