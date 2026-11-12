@@ -27,46 +27,38 @@ const Toaster = ({
       toastOptions={{
         classNames: {
           toast:
-            "group toast group-[.toaster]:border group-[.toaster]:border-[hsl(var(--ctp-surface1))] group-[.toaster]:rounded-2xl group-[.toaster]:px-4 group-[.toaster]:py-4 group-[.toaster]:shadow-lg group-[.toaster]:bg-[hsl(var(--ctp-base))] dark:group-[.toaster]:bg-[hsl(var(--ctp-mantle))] overflow-hidden min-h-[78px]",
+            "group toast group-[.toaster]:border group-[.toaster]:border-[var(--line)] group-[.toaster]:rounded-xl group-[.toaster]:px-4 group-[.toaster]:py-4 group-[.toaster]:shadow-overlay group-[.toaster]:bg-[var(--surface-raised)] overflow-hidden min-h-[78px]",
           content: "gap-1.5",
-          title: "text-[14px] font-semibold tracking-[-0.01em] text-[hsl(var(--ctp-text))]",
-          description: "text-[13px] leading-5 text-[hsl(var(--ctp-subtext0))]",
-          icon: "mt-0.5 rounded-xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-surface0))] p-2 shadow-sm",
+          title: "text-sm font-semibold tracking-normal text-[var(--text-strong)]",
+          description: "text-xs leading-5 text-[var(--text-muted)]",
+          icon: "mt-0.5 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] p-2 shadow-none",
           closeButton:
-            "border-0 bg-transparent text-[hsl(var(--ctp-subtext0))] opacity-100 transition-colors hover:bg-[hsl(var(--ctp-surface0))] hover:text-[hsl(var(--ctp-text))]",
+            "border-0 bg-transparent text-[var(--text-muted)] opacity-100 transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]",
           success:
-            "group-[.toast]:border-[hsl(var(--ctp-green)/0.35)]",
+            "group-[.toast]:border-l-4 group-[.toast]:border-l-[hsl(var(--ctp-green))]",
           error:
-            "group-[.toast]:border-[hsl(var(--ctp-red)/0.35)]",
+            "group-[.toast]:border-l-4 group-[.toast]:border-l-[hsl(var(--ctp-red))]",
           warning:
-            "group-[.toast]:border-[hsl(var(--ctp-yellow)/0.4)]",
+            "group-[.toast]:border-l-4 group-[.toast]:border-l-[hsl(var(--ctp-peach))]",
           info:
-            "group-[.toast]:border-[hsl(var(--ctp-blue)/0.35)]",
+            "group-[.toast]:border-l-4 group-[.toast]:border-l-[hsl(var(--ctp-blue))]",
           loading:
-            "group-[.toast]:border-[hsl(var(--ctp-sapphire)/0.35)]",
+            "group-[.toast]:border-l-4 group-[.toast]:border-l-[hsl(var(--ctp-blue))]",
         },
       }}
       icons={{
-        success: <CircleCheckIcon className="size-4" />,
-        info: <InfoIcon className="size-4" />,
-        warning: <TriangleAlertIcon className="size-4" />,
-        error: <OctagonXIcon className="size-4" />,
-        loading: <Loader2Icon className="size-4 animate-spin" />,
+        success: <CircleCheckIcon className="size-4 text-[hsl(var(--ctp-green))]" />,
+        info: <InfoIcon className="size-4 text-[hsl(var(--ctp-blue))]" />,
+        warning: <TriangleAlertIcon className="size-4 text-[hsl(var(--ctp-peach))]" />,
+        error: <OctagonXIcon className="size-4 text-[hsl(var(--ctp-red))]" />,
+        loading: <Loader2Icon className="size-4 animate-spin text-[hsl(var(--ctp-blue))]" />,
       }}
       style={
         {
-          "--normal-bg": "hsl(var(--ctp-base))",
-          "--normal-text": "hsl(var(--ctp-text))",
-          "--normal-border": "hsl(var(--ctp-surface1))",
-          "--success-bg": "hsl(var(--ctp-base))",
-          "--success-border": "hsl(var(--ctp-green) / 0.35)",
-          "--error-bg": "hsl(var(--ctp-base))",
-          "--error-border": "hsl(var(--ctp-red) / 0.35)",
-          "--warning-bg": "hsl(var(--ctp-base))",
-          "--warning-border": "hsl(var(--ctp-yellow) / 0.4)",
-          "--info-bg": "hsl(var(--ctp-base))",
-          "--info-border": "hsl(var(--ctp-blue) / 0.35)",
-          "--border-radius": "calc(var(--radius))"
+          "--normal-bg": "var(--surface-raised)",
+          "--normal-text": "var(--text-strong)",
+          "--normal-border": "var(--line)",
+          "--border-radius": "12px",
         }
       }
       {...props} />
