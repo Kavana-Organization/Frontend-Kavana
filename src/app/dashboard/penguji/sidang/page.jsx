@@ -1,15 +1,22 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { CalendarClock, CheckCircle2, Clock3, GraduationCap, MapPin, UserRound } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  ExternalLink,
+  FileText,
+  GraduationCap,
+  MapPin,
+  UserRound,
+} from 'lucide-react';
 import { toast } from '@/lib/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { Field } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -17,9 +24,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
-import { DashboardDialog } from '@/components/shared/dashboard-dialog';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { pengujiAPI } from '@/lib/api';
+import { TITLE_MAP } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 const HASIL_OPTIONS = [
   { value: 'lulus', label: 'Lulus (Tanpa Revisi)' },
@@ -76,23 +88,50 @@ function statusLabel(status) {
   return status || 'Terjadwal';
 }
 
-function statusClass(status) {
+function getStatusKey(status) {
   const raw = String(status || '').toLowerCase();
-  if (raw === 'completed') {
-    return 'bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-green))] border-[hsl(var(--ctp-green)/0.35)]';
-  }
-  if (raw === 'ongoing') {
-    return 'bg-[hsl(var(--ctp-peach)/0.20)] text-[hsl(var(--ctp-peach))] border-[hsl(var(--ctp-peach)/0.35)]';
-  }
-  return 'bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border-[hsl(var(--ctp-blue)/0.35)]';
+  if (raw === 'completed') return 'approved';
+  if (raw === 'ongoing') return 'pending';
+  return 'terjadwal';
 }
 
 function hasilLabel(value) {
   return HASIL_OPTIONS.find((option) => option.value === value)?.label || value || '-';
 }
 
+function extractDocumentLinks(item) {
+  if (!item) return [];
+  const links = [];
+  const proposalUrl = item.file_proposal || item.proposal_url;
+  const laporanUrl = item.file_laporan || item.file_url || item.laporan_url;
+  if (proposalUrl) {
+    links.push({ label: 'Dokumen Proposal', url: proposalUrl });
+  }
+  if (laporanUrl) {
+    links.push({ label: 'Naskah Laporan Sidang', url: laporanUrl });
+  }
+  if (item.file_luaran && typeof item.file_luaran === 'string') {
+    try {
+      const parsed = JSON.parse(item.file_luaran);
+      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+        Object.entries(parsed).forEach(([label, url]) => {
+          if (String(url || '').trim()) {
+            links.push({ label, url: String(url).trim() });
+          }
+        });
+      } else {
+        links.push({ label: 'Luaran Proyek', url: item.file_luaran });
+      }
+    } catch {
+      links.push({ label: 'Luaran Proyek', url: item.file_luaran });
+    }
+  }
+  return links;
+}
+
 export default function PengujiSidangPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState(null);
@@ -100,6 +139,12 @@ export default function PengujiSidangPage() {
   const [hasilTarget, setHasilTarget] = useState(null);
   const [hasilForm, setHasilForm] = useState({ hasil_sidang: 'lulus', catatan_sidang: '' });
   const [submitting, setSubmitting] = useState(false);
+
+  const pageTitle = useMemo(() => {
+    const segments = String(pathname || '').split('/').filter(Boolean);
+    const segment = segments[segments.length - 1];
+    return TITLE_MAP[segment] || TITLE_MAP.sidang || 'Sidang Penguji';
+  }, [pathname]);
 
   useEffect(() => {
     if (role && role !== 'penguji') {
@@ -109,7 +154,15 @@ export default function PengujiSidangPage() {
     loadData();
   }, [role, router]);
 
-  const loadData = async () => {
+  const selectSidang = (item) => {
+    setHasilTarget(item || null);
+    setHasilForm({
+      hasil_sidang: item?.hasil_sidang || 'lulus',
+      catatan_sidang: item?.catatan_sidang || '',
+    });
+  };
+
+  const loadData = async (preferredId = null) => {
     try {
       const [profileRes, sidangRes] = await Promise.all([
         pengujiAPI.getProfile(),
@@ -119,8 +172,19 @@ export default function PengujiSidangPage() {
       const rows = sidangRes.ok
         ? (Array.isArray(sidangRes.data) ? sidangRes.data : sidangRes.data?.data || [])
         : [];
+      const mine = rows.filter((item) => isMySidang(item, nextProfile));
       setProfile(nextProfile);
-      setSidang(rows.filter((item) => isMySidang(item, nextProfile)));
+      setSidang(mine);
+
+      if (mine.length > 0) {
+        const matched =
+          (preferredId && mine.find((item) => item.id === preferredId)) ||
+          mine.find((item) => String(item?.status || '').toLowerCase() !== 'completed') ||
+          mine[0];
+        selectSidang(matched);
+      } else {
+        selectSidang(null);
+      }
     } catch (error) {
       console.error(error);
       toast.error('Gagal memuat data sidang penguji');
@@ -137,27 +201,19 @@ export default function PengujiSidangPage() {
     return { total, pending, revisi, completed };
   }, [sidang]);
 
-  const openHasil = (item) => {
-    setHasilTarget(item);
-    setHasilForm({
-      hasil_sidang: item?.hasil_sidang || 'lulus',
-      catatan_sidang: item?.catatan_sidang || '',
-    });
-  };
-
   const handleSubmitHasil = async (event) => {
     event.preventDefault();
     if (!hasilTarget) return;
     setSubmitting(true);
+    const targetId = hasilTarget.id;
     try {
-      const result = await pengujiAPI.setHasilSidang(hasilTarget.id, {
+      const result = await pengujiAPI.setHasilSidang(targetId, {
         hasil_sidang: hasilForm.hasil_sidang,
         catatan_sidang: hasilForm.catatan_sidang.trim() || undefined,
       });
       if (result.ok) {
         toast.success(result.data?.message || 'Hasil sidang berhasil disimpan');
-        setHasilTarget(null);
-        loadData();
+        await loadData(targetId);
       } else {
         toast.error(result.error || 'Gagal menyimpan hasil sidang');
       }
@@ -169,177 +225,308 @@ export default function PengujiSidangPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="dashboard" label="Memuat data sidang penguji" />;
   }
 
-  const inputCls =
-    'bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]';
+  const inputCls = 'bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]';
+  const activeDocuments = extractDocumentLinks(hasilTarget);
+  const isTargetCompleted = String(hasilTarget?.status || '').toLowerCase() === 'completed';
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+    <div className="space-y-6">
+      <PageHeader
+        title={pageTitle}
+        subtitle="Periksa jadwal dan dokumen mahasiswa pada panel kiri, lalu tetapkan hasil sidang pada panel kanan."
+      />
+
+      {/* Compact Metric Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x border border-[var(--line)] rounded-xl bg-[var(--surface-raised)]">
         {[
           ['Total sidang', stats.total, 'Semua sidang penguji'],
           ['Perlu hasil', stats.pending, 'Menunggu keputusan'],
           ['Revisi', stats.revisi, 'Ditetapkan perlu revisi'],
           ['Selesai', stats.completed, 'Hasil sudah disimpan'],
         ].map(([title, value, caption]) => (
-          <Card variant="muted" key={title}>
-            <CardHeader className="pb-2">
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">{title}</p>
-              <CardTitle className="text-2xl text-[hsl(var(--ctp-text))]">{value}</CardTitle>
-            </CardHeader>
-            <CardContent className="text-sm text-[hsl(var(--ctp-subtext0))]">{caption}</CardContent>
-          </Card>
+          <div className="p-4 sm:p-5" key={title}>
+            <p className="text-xs font-medium text-[var(--text-muted)]">{title}</p>
+            <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">{value}</p>
+            <p className="mt-1 text-xs text-[var(--text-muted)]">{caption}</p>
+          </div>
         ))}
       </div>
 
-      <Card variant="muted">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <GraduationCap className="h-4 w-4" /> Sidang Penguji
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {sidang.length === 0 ? (
-            <div className="text-center py-12">
-              <CalendarClock className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada jadwal sidang untuk penguji ini.</p>
-            </div>
-          ) : (
-            <div className="space-y-2">
-              {sidang.map((item) => {
-                const isCompleted = String(item?.status || '').toLowerCase() === 'completed';
-                return (
-                  <div key={item.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
-                          {item.display_nama || item.mahasiswa_nama || '-'}
-                        </p>
-                        <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                          {item.display_npm || item.npm || '-'} - {item.judul_proyek || '-'}
-                        </p>
-                        {Array.isArray(item?.anggota_nama) && item.anggota_nama.length > 1 ? (
-                          <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext1))]">
-                            Anggota: {item.anggota_nama.join(', ')}
+      {sidang.length === 0 ? (
+        <EmptyState
+          icon={CalendarClock}
+          title="Belum ada jadwal sidang untuk penguji ini"
+          description="Jadwal sidang yang ditugaskan oleh koordinator program studi akan tampil di sini."
+        />
+      ) : (
+        <div
+          data-testid="penguji-sidang-layout"
+          className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start"
+        >
+          {/* Left Pane: Schedule & Documents */}
+          <div data-testid="sidang-left-pane" className="space-y-4 min-w-0">
+            <Card variant="muted">
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+                  <GraduationCap className="h-4 w-4 shrink-0" />
+                  <span>Daftar Jadwal Sidang</span>
+                </CardTitle>
+                <CardDescription className="text-[var(--text-muted)]">
+                  Pilih sesi sidang untuk melihat detail jadwal, berkas, dan mengisi penilaian.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-2.5">
+                {sidang.map((item) => {
+                  const isCompleted = String(item?.status || '').toLowerCase() === 'completed';
+                  const isSelected = hasilTarget?.id === item.id;
+                  return (
+                    <div
+                      key={item.id}
+                      className={cn(
+                        'rounded-xl border p-3.5 transition-colors',
+                        isSelected
+                          ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+                          : 'border-[var(--line)] bg-[var(--surface-raised)]'
+                      )}
+                    >
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                        <div className="min-w-0 flex-1 space-y-1">
+                          <p className="text-sm font-semibold text-[var(--text-strong)] break-words">
+                            {item.display_nama || item.mahasiswa_nama || '-'}
                           </p>
-                        ) : null}
-                        <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-[hsl(var(--ctp-subtext1))]">
-                          <span className="inline-flex items-center gap-1">
-                            <CalendarClock className="h-3.5 w-3.5" />
-                            {formatTanggal(item.tanggal)}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <Clock3 className="h-3.5 w-3.5" />
-                            {formatWaktu(item.waktu)}
-                          </span>
-                          <span className="inline-flex items-center gap-1">
-                            <MapPin className="h-3.5 w-3.5" />
-                            {item.ruangan || '-'}
-                          </span>
+                          <p className="text-xs text-[var(--text-muted)] break-words">
+                            <span className="font-mono tabular-nums">{item.display_npm || item.npm || '-'}</span>
+                            {' · '}
+                            {item.judul_proyek || '-'}
+                          </p>
+                          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 pt-1 text-xs text-[var(--text-body)] font-mono tabular-nums">
+                            <span className="inline-flex items-center gap-1">
+                              <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                              {formatTanggal(item.tanggal)}
+                            </span>
+                            <span className="inline-flex items-center gap-1">
+                              <Clock3 className="h-3.5 w-3.5 shrink-0" />
+                              {formatWaktu(item.waktu)}
+                            </span>
+                            <span className="inline-flex items-center gap-1 font-sans">
+                              <MapPin className="h-3.5 w-3.5 shrink-0" />
+                              {item.ruangan || '-'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="mt-2 flex flex-wrap items-center gap-2">
-                          <Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
-                            Pembimbing: {item.dosen_nama || '-'}
-                          </Badge>
-                          <Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
-                            Penguji: {item.penguji_nama || profile?.nama || '-'}
-                          </Badge>
+                        <div className="flex shrink-0 flex-row sm:flex-col items-center sm:items-end justify-between gap-2">
+                          <StatusBadge status={getStatusKey(item.status)} label={statusLabel(item.status)} />
+                          {isCompleted ? (
+                            <StatusBadge status={item.hasil_sidang} label={hasilLabel(item.hasil_sidang)} />
+                          ) : (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant={isSelected ? 'default' : 'outline'}
+                              onClick={() => selectSidang(item)}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <span>Tentukan Hasil</span>
+                            </Button>
+                          )}
+                          {isCompleted && !isSelected ? (
+                            <Button
+                              type="button"
+                              size="xs"
+                              variant="outline"
+                              onClick={() => selectSidang(item)}
+                            >
+                              Lihat Detail
+                            </Button>
+                          ) : null}
                         </div>
-                      </div>
-                      <div className="flex shrink-0 flex-col items-end gap-2">
-                        <Badge className={`rounded-xl border ${statusClass(item.status)}`}>{statusLabel(item.status)}</Badge>
-                        {isCompleted ? (
-                          <Badge className="rounded-xl border bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))] border-[hsl(var(--ctp-blue)/0.35)]">
-                            {hasilLabel(item.hasil_sidang)}
-                          </Badge>
-                        ) : (
-                          <Button
-                            type="button"
-                            onClick={() => openHasil(item)}
-                            className="h-auto rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] px-3 py-1 text-xs text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
-                          >
-                            <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Tentukan Hasil
-                          </Button>
-                        )}
                       </div>
                     </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </CardContent>
-      </Card>
+                  );
+                })}
+              </CardContent>
+            </Card>
 
-      <DashboardDialog
-        open={!!hasilTarget}
-        onOpenChange={(open) => { if (!open) setHasilTarget(null); }}
-        title="Tentukan Hasil Sidang"
-      >
-        {hasilTarget ? (
-          <form onSubmit={handleSubmitHasil} className="space-y-3">
-            <div>
-              <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))]">Tentukan Hasil Sidang</h3>
-              <p className="text-sm text-[hsl(var(--ctp-subtext1))]">
-                {hasilTarget.display_nama || hasilTarget.mahasiswa_nama || '-'} - {formatTanggal(hasilTarget.tanggal)} {formatWaktu(hasilTarget.waktu)}
-              </p>
-            </div>
-            <div>
-              <Label className="text-[hsl(var(--ctp-subtext1))]">Hasil Sidang</Label>
-              <Select value={hasilForm.hasil_sidang} onValueChange={(value) => setHasilForm({ ...hasilForm, hasil_sidang: value })}>
-                <SelectTrigger className={inputCls}>
-                  <SelectValue placeholder="Pilih hasil" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
-                  {HASIL_OPTIONS.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {option.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-[hsl(var(--ctp-subtext1))]">Catatan Sidang</Label>
-              <Textarea
-                rows={4}
-                value={hasilForm.catatan_sidang}
-                onChange={(event) => setHasilForm({ ...hasilForm, catatan_sidang: event.target.value })}
-                placeholder="Isi catatan keputusan, poin revisi, atau alasan tidak lulus"
-                className={inputCls}
-              />
-            </div>
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))]">
-              {hasilForm.hasil_sidang === 'lulus_revisi'
-                ? 'Jika dipilih lulus dengan revisi, mahasiswa akan masuk ke alur revisi sidang.'
-                : 'Keputusan ini akan menyimpan hasil sidang mahasiswa.'}
-            </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                onClick={() => setHasilTarget(null)}
-                className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
-              >
-                Batal
-              </Button>
-              <Button
-                type="submit"
-                disabled={submitting}
-                className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
-              >
-                <UserRound className="h-4 w-4 mr-1" />
-                {submitting ? 'Menyimpan...' : 'Simpan Hasil'}
-              </Button>
-            </div>
-          </form>
-        ) : null}
-      </DashboardDialog>
-    </motion.div>
+            {hasilTarget ? (
+              <Card variant="muted" data-testid="sidang-documents-card">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+                    <FileText className="h-4 w-4 shrink-0" />
+                    <span>Jadwal & Dokumen Sidang</span>
+                  </CardTitle>
+                  <CardDescription className="text-[var(--text-muted)] break-words">
+                    {hasilTarget.display_nama || hasilTarget.mahasiswa_nama || '-'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 text-sm">
+                  <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5">
+                    <div className="min-w-0">
+                      <dt className="text-xs text-[var(--text-muted)]">Tanggal & Waktu</dt>
+                      <dd className="mt-0.5 font-mono text-xs font-medium tabular-nums text-[var(--text-strong)]">
+                        {formatTanggal(hasilTarget.tanggal)} · {formatWaktu(hasilTarget.waktu)}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-[var(--text-muted)]">Ruangan</dt>
+                      <dd className="mt-0.5 font-medium text-[var(--text-strong)] break-words">
+                        {hasilTarget.ruangan || '-'}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-[var(--text-muted)]">Pembimbing</dt>
+                      <dd className="mt-0.5 font-medium text-[var(--text-strong)] break-words">
+                        {hasilTarget.dosen_nama || '-'}
+                      </dd>
+                    </div>
+                    <div className="min-w-0">
+                      <dt className="text-xs text-[var(--text-muted)]">Penguji</dt>
+                      <dd className="mt-0.5 font-medium text-[var(--text-strong)] break-words">
+                        {hasilTarget.penguji_nama || profile?.nama || '-'}
+                      </dd>
+                    </div>
+                  </dl>
+
+                  {Array.isArray(hasilTarget?.anggota_nama) && hasilTarget.anggota_nama.length > 1 ? (
+                    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3">
+                      <p className="text-xs text-[var(--text-muted)]">Anggota Kelompok</p>
+                      <p className="mt-0.5 text-sm text-[var(--text-strong)] break-words">
+                        {hasilTarget.anggota_nama.join(', ')}
+                      </p>
+                    </div>
+                  ) : null}
+
+                  <div className="space-y-2">
+                    <p className="text-xs font-medium text-[var(--text-muted)]">Tautan Berkas Mahasiswa</p>
+                    {activeDocuments.length > 0 ? (
+                      <div className="flex flex-wrap gap-2">
+                        {activeDocuments.map((doc) => (
+                          <Button key={`${doc.label}-${doc.url}`} asChild size="sm" variant="outline">
+                            <a href={doc.url} target="_blank" rel="noreferrer">
+                              <ExternalLink className="h-3.5 w-3.5" />
+                              <span>{doc.label}</span>
+                            </a>
+                          </Button>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="rounded-xl border border-dashed border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2.5 text-xs text-[var(--text-muted)]">
+                        Tautan berkas tidak disertakan pada data jadwal sidang ini.
+                      </p>
+                    )}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+          </div>
+
+          {/* Right Pane: Evaluation Form */}
+          <div data-testid="sidang-right-pane" className="min-w-0">
+            <Card variant="muted">
+              <CardHeader>
+                <div className="flex flex-wrap items-center justify-between gap-2">
+                  <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+                    <UserRound className="h-4 w-4 shrink-0" />
+                    <span>Form Penilaian Sidang</span>
+                  </CardTitle>
+                  {hasilTarget ? (
+                    <StatusBadge status={getStatusKey(hasilTarget.status)} label={statusLabel(hasilTarget.status)} />
+                  ) : null}
+                </div>
+                {hasilTarget ? (
+                  <CardDescription className="text-[var(--text-muted)] break-words">
+                    {hasilTarget.display_nama || hasilTarget.mahasiswa_nama || '-'} ({hasilTarget.display_npm || hasilTarget.npm || '-'}) · {hasilTarget.judul_proyek || '-'}
+                  </CardDescription>
+                ) : null}
+              </CardHeader>
+              <CardContent>
+                {!hasilTarget ? (
+                  <EmptyState
+                    icon={GraduationCap}
+                    title="Pilih sesi sidang"
+                    description="Pilih salah satu jadwal sidang di panel kiri untuk memulai penilaian."
+                  />
+                ) : isTargetCompleted ? (
+                  <div className="space-y-4">
+                    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 space-y-2">
+                      <p className="text-xs font-medium text-[var(--text-muted)]">Keputusan Sidang Tersimpan</p>
+                      <StatusBadge
+                        status={hasilTarget.hasil_sidang}
+                        label={hasilLabel(hasilTarget.hasil_sidang)}
+                      />
+                    </div>
+                    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 space-y-1.5">
+                      <p className="text-xs font-medium text-[var(--text-muted)]">Catatan Sidang</p>
+                      <p className="text-sm text-[var(--text-body)] whitespace-pre-line break-words">
+                        {hasilTarget.catatan_sidang || 'Tidak ada catatan tambahan.'}
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmitHasil} className="space-y-4">
+                    <Field label="Hasil Sidang" required>
+                      {(a11y) => (
+                        <Select
+                          name="hasil_sidang"
+                          value={hasilForm.hasil_sidang}
+                          onValueChange={(value) => setHasilForm({ ...hasilForm, hasil_sidang: value })}
+                        >
+                          <SelectTrigger
+                            id={a11y.id}
+                            aria-describedby={a11y['aria-describedby']}
+                            className={inputCls}
+                          >
+                            <SelectValue placeholder="Pilih hasil" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
+                            {HASIL_OPTIONS.map((option) => (
+                              <SelectItem key={option.value} value={option.value}>
+                                {option.label}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
+                    </Field>
+
+                    <Field
+                      label="Catatan Sidang"
+                      hint="Tuliskan catatan keputusan, poin revisi, atau alasan ketidaklulusan."
+                    >
+                      {(a11y) => (
+                        <Textarea
+                          {...a11y}
+                          name="catatan_sidang"
+                          rows={5}
+                          value={hasilForm.catatan_sidang}
+                          onChange={(event) => setHasilForm({ ...hasilForm, catatan_sidang: event.target.value })}
+                          placeholder="Isi catatan keputusan, poin revisi, atau alasan tidak lulus"
+                          className={inputCls}
+                        />
+                      )}
+                    </Field>
+
+                    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-muted)]">
+                      {hasilForm.hasil_sidang === 'lulus_revisi'
+                        ? 'Jika dipilih lulus dengan revisi, mahasiswa akan masuk ke alur revisi sidang.'
+                        : 'Keputusan ini akan menyimpan hasil sidang mahasiswa.'}
+                    </div>
+
+                    <div className="flex justify-end pt-2 border-t border-[var(--line)]">
+                      <Button type="submit" disabled={submitting}>
+                        <UserRound className="h-4 w-4" />
+                        <span>{submitting ? 'Menyimpan...' : 'Simpan Hasil'}</span>
+                      </Button>
+                    </div>
+                  </form>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+      )}
+    </div>
   );
 }

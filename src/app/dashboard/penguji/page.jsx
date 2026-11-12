@@ -3,13 +3,24 @@
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowUpRight, CheckCircle2, Clock3, FileText, GraduationCap, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { ArrowRight, CalendarClock, GraduationCap, Users } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { pengujiAPI } from '@/lib/api';
+import { TITLE_MAP } from '@/lib/constants';
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
@@ -40,21 +51,14 @@ function isMySidang(item, profile) {
   return true;
 }
 
-function StatCard({ title, value, caption, icon: Icon }) {
-  return (
-    <Card variant="muted">
-      <CardHeader className="pb-2">
-        <CardDescription className="text-[hsl(var(--ctp-subtext0))]">{title}</CardDescription>
-        <CardTitle className="text-[hsl(var(--ctp-text))] text-2xl tracking-tight">{value}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex items-center justify-between">
-        <span className="text-sm text-[hsl(var(--ctp-subtext0))]">{caption}</span>
-        <span className="grid h-8 w-8 place-items-center rounded-xl border border-[hsl(var(--ctp-overlay0)/0.5)] bg-[hsl(var(--ctp-surface1)/0.6)]">
-          {Icon && <Icon className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />}
-        </span>
-      </CardContent>
-    </Card>
-  );
+function getSidangBadgeProps(item) {
+  if (item?.hasil_sidang) {
+    return { status: item.hasil_sidang };
+  }
+  const raw = normalizeText(item?.status);
+  if (raw === 'completed') return { status: 'approved', label: 'Selesai' };
+  if (raw === 'ongoing') return { status: 'pending', label: 'Berlangsung' };
+  return { status: 'terjadwal', label: 'Terjadwal' };
 }
 
 export default function PengujiDashboardPage() {
@@ -62,7 +66,7 @@ export default function PengujiDashboardPage() {
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [sidang, setSidang] = useState([]);
-  const [profile, setProfile] = useState(null);
+  const [, setProfile] = useState(null);
 
   useEffect(() => {
     if (role && role !== 'penguji') {
@@ -97,68 +101,125 @@ export default function PengujiDashboardPage() {
     return { total, pending, revisi, completed };
   }, [sidang]);
 
+  const orderedSidang = useMemo(() => {
+    return [...sidang].sort((a, b) => {
+      const aDone = normalizeText(a?.status) === 'completed' ? 1 : 0;
+      const bDone = normalizeText(b?.status) === 'completed' ? 1 : 0;
+      if (aDone !== bDone) return aDone - bDone;
+      return String(a?.tanggal || '').localeCompare(String(b?.tanggal || ''));
+    });
+  }, [sidang]);
+
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="dashboard" label="Memuat dashboard penguji" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total sidang" value={String(stats.total)} caption="Sidang yang melibatkan Anda" icon={GraduationCap} />
-        <StatCard title="Perlu hasil" value={String(stats.pending)} caption="Menunggu keputusan penguji" icon={Clock3} />
-        <StatCard title="Revisi" value={String(stats.revisi)} caption="Mahasiswa perlu revisi" icon={FileText} />
-        <StatCard title="Selesai" value={String(stats.completed)} caption="Hasil sudah ditentukan" icon={CheckCircle2} />
+    <div className="space-y-6">
+      <PageHeader
+        title={`Dashboard Penguji · ${TITLE_MAP.dashboard || 'Ringkasan Kegiatan'}`}
+        subtitle="Pantau jadwal sidang yang ditugaskan dan tetapkan keputusan hasil sidang."
+      >
+        <Button asChild size="sm">
+          <Link href="/dashboard/penguji/sidang">
+            <GraduationCap className="h-4 w-4" />
+            <span>Buka Sidang</span>
+          </Link>
+        </Button>
+      </PageHeader>
+
+      {/* Bordered Metric Strip (no icon tiles, tabular-nums) */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x border border-[var(--line)] rounded-xl bg-[var(--surface-raised)]">
+        <div className="p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total sidang</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {stats.total}
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Sidang yang melibatkan Anda</p>
+        </div>
+        <div className="p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Perlu hasil</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
+            {stats.pending}
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Menunggu keputusan penguji</p>
+        </div>
+        <div className="p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Revisi</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-blue))] font-mono tabular-nums">
+            {stats.revisi}
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Mahasiswa perlu revisi</p>
+        </div>
+        <div className="p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Selesai</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+            {stats.completed}
+          </p>
+          <p className="mt-1 text-xs text-[var(--text-muted)]">Hasil sudah ditentukan</p>
+        </div>
       </div>
 
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-              <GraduationCap className="h-4 w-4" /> Sidang Penguji
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+              <CalendarClock className="h-4 w-4 shrink-0" />
+              <span>Sidang Penguji</span>
             </CardTitle>
-            <CardDescription className="text-[hsl(var(--ctp-subtext0))]">
+            <CardDescription className="text-[var(--text-muted)]">
               Tentukan hasil sidang: lulus, lulus dengan revisi, atau tidak lulus.
             </CardDescription>
           </div>
-          <Link href="/dashboard/penguji/sidang">
-            <Button className="rounded-2xl bg-[hsl(var(--ctp-blue)/0.18)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-blue)/0.35)]">
-              <ArrowUpRight className="h-4 w-4 mr-1" /> Buka Sidang
-            </Button>
-          </Link>
+          <Button asChild variant="outline" size="sm" className="w-full sm:w-auto shrink-0">
+            <Link href="/dashboard/penguji/sidang">
+              <span>Kelola Penilaian</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
         </CardHeader>
         <CardContent>
-          {sidang.length === 0 ? (
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-8 text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada sidang untuk akun penguji ini.</p>
-            </div>
+          {orderedSidang.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Belum ada sidang untuk akun penguji ini"
+              description="Jadwal sidang yang melibatkan Anda sebagai penguji akan tampil di sini."
+            />
           ) : (
-            <div className="space-y-2">
-              {sidang.slice(0, 5).map((item) => (
-                <div key={item.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="min-w-0">
-                      <p className="truncate text-sm font-semibold text-[hsl(var(--ctp-text))]">
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mahasiswa / Kelompok</TableHead>
+                  <TableHead className="w-[120px]">NPM</TableHead>
+                  <TableHead>Judul Proyek</TableHead>
+                  <TableHead className="w-[150px]">Status</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {orderedSidang.slice(0, 6).map((item) => {
+                  const badgeProps = getSidangBadgeProps(item);
+                  return (
+                    <TableRow key={item.id}>
+                      <TableCell data-label="Mahasiswa" className="whitespace-normal break-words font-medium text-[var(--text-strong)]">
                         {item.display_nama || item.mahasiswa_nama || '-'}
-                      </p>
-                      <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                        {item.display_npm || item.npm || '-'} - {item.judul_proyek || '-'}
-                      </p>
-                    </div>
-                    <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))]">
-                      {item.hasil_sidang || item.status || 'scheduled'}
-                    </Badge>
-                  </div>
-                </div>
-              ))}
-            </div>
+                      </TableCell>
+                      <TableCell data-label="NPM" className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                        {item.display_npm || item.npm || '-'}
+                      </TableCell>
+                      <TableCell data-label="Judul Proyek" className="whitespace-normal break-words text-sm text-[var(--text-body)] max-w-md">
+                        {item.judul_proyek || '-'}
+                      </TableCell>
+                      <TableCell data-label="Status">
+                        <StatusBadge {...badgeProps} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }

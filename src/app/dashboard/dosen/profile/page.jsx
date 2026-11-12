@@ -1,21 +1,25 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
-import { User, ShieldCheck, AlertTriangle } from 'lucide-react';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname } from 'next/navigation';
+import { AlertTriangle, ShieldCheck, User } from 'lucide-react';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/field';
+import { PageHeader } from '@/components/layout/page-header';
+import { LoadingState } from '@/components/shared/loading-state';
 import { useAuthStore } from '@/store/auth-store';
 import { authAPI, dosenAPI } from '@/lib/api';
+import { TITLE_MAP } from '@/lib/constants';
 
 function getInitials(n) {
   return (n || '?').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2);
 }
 
 export default function DosenProfilePage() {
+  const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [profile, setProfile] = useState({});
@@ -23,7 +27,15 @@ export default function DosenProfilePage() {
   const [form, setForm] = useState({ nama: '', email: '', kode_dosen: '', nik: '' });
   const [saving, setSaving] = useState(false);
 
-  useEffect(() => { loadProfile(); }, []);
+  const pageTitle = useMemo(() => {
+    const segments = String(pathname || '').split('/').filter(Boolean);
+    const segment = segments[segments.length - 1];
+    return TITLE_MAP[segment] || TITLE_MAP.profile || 'Profil Saya';
+  }, [pathname]);
+
+  useEffect(() => {
+    loadProfile();
+  }, []);
 
   const loadProfile = async () => {
     setLoading(true);
@@ -75,28 +87,31 @@ export default function DosenProfilePage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="form" label="Memuat profil dosen" />;
   }
 
-  const inputCls = 'bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]';
+  const inputCls = 'bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]';
   const signatureReady = !!profile.signature_ready;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 max-w-2xl">
+    <div className="space-y-6 max-w-2xl">
+      <PageHeader
+        title={pageTitle}
+        subtitle="Kelola identitas akun dan informasi tanda tangan digital Anda."
+      />
+
       {/* Identitas singkat */}
       <Card variant="muted">
         <CardContent className="flex items-center gap-4 pt-6">
-          <div className="h-20 w-20 rounded-full bg-[hsl(var(--ctp-lavender)/0.25)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-2xl font-bold">
+          <div className="h-16 w-16 shrink-0 rounded-full border border-[var(--line)] bg-[var(--surface-sunken)] text-[var(--text-strong)] flex items-center justify-center text-xl font-semibold">
             {getInitials(profile.nama)}
           </div>
-          <div>
-            <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">{profile.nama || '-'}</h2>
-            <p className="text-sm text-[hsl(var(--ctp-subtext0))]">{profile.email || '-'}</p>
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))] capitalize mt-1">
+          <div className="min-w-0">
+            <h2 className="text-lg font-semibold text-[var(--text-strong)] break-words">
+              {profile.nama || '-'}
+            </h2>
+            <p className="text-sm text-[var(--text-muted)] break-all">{profile.email || '-'}</p>
+            <p className="text-xs text-[var(--text-muted)] capitalize mt-1 font-mono tabular-nums">
               {role || '-'} {profile.nidn ? `· NIDN ${profile.nidn}` : ''}
             </p>
           </div>
@@ -105,22 +120,22 @@ export default function DosenProfilePage() {
 
       {/* Banner kelengkapan tanda tangan */}
       {!signatureReady ? (
-        <div className="rounded-2xl border border-[hsl(var(--ctp-peach)/0.45)] bg-[hsl(var(--ctp-peach)/0.10)] p-4 flex items-start gap-3">
+        <div className="rounded-xl border border-[hsl(var(--ctp-peach)/0.45)] bg-[hsl(var(--ctp-peach)/0.10)] p-4 flex items-start gap-3">
           <AlertTriangle className="h-5 w-5 mt-0.5 text-[hsl(var(--ctp-peach))] shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-[hsl(var(--ctp-peach))]">Lengkapi identitas tanda tangan</p>
-            <p className="text-xs text-[hsl(var(--ctp-subtext1))] mt-1">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[hsl(var(--ctp-peach))]">Lengkapi identitas tanda tangan</p>
+            <p className="text-xs text-[var(--text-body)] mt-1">
               Kode Dosen dan NIK akan disertakan ke tanda tangan QR pada formulir bimbingan yang Anda setujui.
               Tanpa data ini, QR tetap diterbitkan tetapi identitas resmi tidak ditampilkan saat diverifikasi.
             </p>
           </div>
         </div>
       ) : (
-        <div className="rounded-2xl border border-[hsl(var(--ctp-green)/0.45)] bg-[hsl(var(--ctp-green)/0.10)] p-4 flex items-start gap-3">
+        <div className="rounded-xl border border-[hsl(var(--ctp-green)/0.45)] bg-[hsl(var(--ctp-green)/0.10)] p-4 flex items-start gap-3">
           <ShieldCheck className="h-5 w-5 mt-0.5 text-[hsl(var(--ctp-green))] shrink-0" />
-          <div>
-            <p className="text-sm font-bold text-[hsl(var(--ctp-green))]">Tanda tangan digital aktif</p>
-            <p className="text-xs text-[hsl(var(--ctp-subtext1))] mt-1">
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[hsl(var(--ctp-green))]">Tanda tangan digital aktif</p>
+            <p className="text-xs text-[var(--text-body)] mt-1">
               Identitas Anda akan otomatis tertanam pada QR untuk setiap sesi bimbingan yang Anda approve.
             </p>
           </div>
@@ -129,66 +144,92 @@ export default function DosenProfilePage() {
 
       {/* Form */}
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <User className="h-4 w-4" /> Informasi Akun
+        <CardHeader className="flex flex-row items-center justify-between gap-3">
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <User className="h-4 w-4 shrink-0" />
+            <span>Informasi Akun</span>
           </CardTitle>
           <Button
             type="button"
+            variant={editing ? 'default' : 'outline'}
             onClick={() => (editing ? handleSave() : setEditing(true))}
             disabled={saving}
-            className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-lavender)/0.35)]"
           >
             {editing ? (saving ? 'Menyimpan...' : 'Simpan') : 'Edit'}
           </Button>
         </CardHeader>
-        <CardContent className="space-y-3">
-          <div className="space-y-2">
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Nama</Label>
-            <Input
-              value={form.nama}
-              readOnly={!editing}
-              onChange={(e) => setForm({ ...form, nama: e.target.value })}
-              className={inputCls}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Email</Label>
-            <Input value={form.email} readOnly className={inputCls} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[hsl(var(--ctp-subtext1))]">NIDN</Label>
-            <Input value={profile.nidn || '-'} readOnly className={inputCls} />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Kode Dosen</Label>
-            <Input
-              value={form.kode_dosen}
-              readOnly={!editing}
-              onChange={(e) => setForm({ ...form, kode_dosen: e.target.value })}
-              placeholder="Contoh: ULBI-D4TI-001"
-              maxLength={20}
-              className={inputCls}
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-[hsl(var(--ctp-subtext1))]">NIK</Label>
-            <Input
-              value={editing ? form.nik : (profile.nik_masked || '-')}
-              readOnly={!editing}
-              onChange={(e) => setForm({ ...form, nik: e.target.value.replace(/\D/g, '').slice(0, 16) })}
-              placeholder="16 digit"
-              inputMode="numeric"
-              className={inputCls}
-            />
-            {editing ? (
-              <p className="text-[10px] text-[var(--text-muted)]">
-                NIK lengkap hanya disimpan di server. Pada halaman verifikasi publik, hanya versi tersembunyi yang ditampilkan.
-              </p>
-            ) : null}
-          </div>
+        <CardContent className="space-y-4">
+          <Field label="Nama">
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="nama"
+                value={form.nama}
+                readOnly={!editing}
+                onChange={(e) => setForm({ ...form, nama: e.target.value })}
+                className={inputCls}
+              />
+            )}
+          </Field>
+          <Field label="Email">
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="email"
+                value={form.email}
+                readOnly
+                className={inputCls}
+              />
+            )}
+          </Field>
+          <Field label="NIDN">
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="nidn"
+                value={profile.nidn || '-'}
+                readOnly
+                className={`${inputCls} font-mono tabular-nums`}
+              />
+            )}
+          </Field>
+          <Field label="Kode Dosen">
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="kode_dosen"
+                value={form.kode_dosen}
+                readOnly={!editing}
+                onChange={(e) => setForm({ ...form, kode_dosen: e.target.value })}
+                placeholder="Contoh: ULBI-D4TI-001"
+                maxLength={20}
+                className={`${inputCls} font-mono`}
+              />
+            )}
+          </Field>
+          <Field
+            label="NIK"
+            hint={
+              editing
+                ? 'NIK lengkap hanya disimpan di server. Pada halaman verifikasi publik, hanya versi tersembunyi yang ditampilkan.'
+                : undefined
+            }
+          >
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="nik"
+                value={editing ? form.nik : (profile.nik_masked || '-')}
+                readOnly={!editing}
+                onChange={(e) => setForm({ ...form, nik: e.target.value.replace(/\D/g, '').slice(0, 16) })}
+                placeholder="16 digit"
+                inputMode="numeric"
+                className={`${inputCls} font-mono tabular-nums`}
+              />
+            )}
+          </Field>
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }
