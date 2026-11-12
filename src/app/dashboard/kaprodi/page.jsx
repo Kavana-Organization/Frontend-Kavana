@@ -21,7 +21,7 @@ function StatCard({ title, value, delta, dir, sub, icon: Icon }) {
   const Arrow = dir === 'up' ? ArrowUpRight : ArrowDownRight;
   const deltaCls = dir === 'down' ? 'text-[hsl(var(--ctp-green))]' : 'text-[hsl(var(--ctp-peach))]';
   return (
-    <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+    <Card variant="muted">
       <CardHeader className="pb-2">
         <CardDescription className="text-[hsl(var(--ctp-subtext0))]">{title}</CardDescription>
         <CardTitle className="text-[hsl(var(--ctp-text))] text-2xl tracking-tight">{value}</CardTitle>
@@ -104,7 +104,7 @@ export default function KaprodiDashboard() {
 
       {/* Chart + Management */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Card className="xl:col-span-2 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-2">
           <CardHeader>
             <CardTitle className="text-[hsl(var(--ctp-text))]">Distribusi angkatan</CardTitle>
             <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Jumlah mahasiswa per angkatan dari database.</CardDescription>
@@ -125,7 +125,7 @@ export default function KaprodiDashboard() {
         </Card>
 
         {/* Overview */}
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
               <BarChart3 className="h-4 w-4" /> Overview
@@ -145,7 +145,7 @@ export default function KaprodiDashboard() {
               { label: 'Dosen', val: totalDosen, color: 'ctp-teal' },
               { label: 'Koordinator', val: totalKoordinator, color: 'ctp-mauve' },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3 flex items-center justify-between">
+              <div key={item.label} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3 flex items-center justify-between">
                 <span className="text-sm text-[hsl(var(--ctp-subtext0))]">{item.label}</span>
                 <span className={`text-lg font-semibold text-[hsl(var(--${item.color}))]`}>{item.val}</span>
               </div>
@@ -162,7 +162,7 @@ export default function KaprodiDashboard() {
           { title: 'Monitoring', desc: 'Pantau progres semua mahasiswa', href: '/dashboard/kaprodi/monitoring', icon: BarChart3, color: 'ctp-mauve' },
         ].map((action) => (
           <Link key={action.title} href={action.href}>
-            <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring hover:bg-[hsl(var(--ctp-surface0)/0.70)] transition-colors cursor-pointer">
+            <Card variant="muted" className="transition-colors cursor-pointer">
               <CardContent className="flex items-center gap-3 pt-6">
                 <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--${action.color})/0.35)] bg-[hsl(var(--${action.color})/0.12)]`}>
                   <action.icon className={`h-5 w-5 text-[hsl(var(--${action.color}))]`} />
@@ -179,7 +179,7 @@ export default function KaprodiDashboard() {
       </div>
 
       {/* Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.30)] bg-[hsl(var(--ctp-mantle)/0.35)] px-4 py-3">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Kavana — Dashboard Kaprodi</div>
         <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Theme: Catppuccin Mocha</div>
       </div>

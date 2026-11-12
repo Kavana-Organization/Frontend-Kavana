@@ -42,7 +42,7 @@ function isMySidang(item, profile) {
 
 function StatCard({ title, value, caption, icon: Icon }) {
   return (
-    <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+    <Card variant="muted">
       <CardHeader className="pb-2">
         <CardDescription className="text-[hsl(var(--ctp-subtext0))]">{title}</CardDescription>
         <CardTitle className="text-[hsl(var(--ctp-text))] text-2xl tracking-tight">{value}</CardTitle>
@@ -114,7 +114,7 @@ export default function PengujiDashboardPage() {
         <StatCard title="Selesai" value={String(stats.completed)} caption="Hasil sudah ditentukan" icon={CheckCircle2} />
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -132,14 +132,14 @@ export default function PengujiDashboardPage() {
         </CardHeader>
         <CardContent>
           {sidang.length === 0 ? (
-            <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-8 text-center">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-8 text-center">
               <Users className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada sidang untuk akun penguji ini.</p>
             </div>
           ) : (
             <div className="space-y-2">
               {sidang.slice(0, 5).map((item) => (
-                <div key={item.id} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                <div key={item.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <p className="truncate text-sm font-semibold text-[hsl(var(--ctp-text))]">

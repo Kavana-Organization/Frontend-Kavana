@@ -169,7 +169,7 @@ export default function ProposalPage() {
 
   if (!track && enrollments.length === 0) return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardContent className="flex flex-col items-center py-16 text-center">
           <AlertTriangle className="h-12 w-12 text-[hsl(var(--ctp-peach))] mb-4" />
           <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Track Belum Dipilih</h2>
@@ -181,7 +181,7 @@ export default function ProposalPage() {
 
   if (hasProposal) return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardContent className="flex flex-col items-center py-16 text-center">
           <CheckCircle2 className="h-12 w-12 text-[hsl(var(--ctp-green))] mb-4" />
           <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Proposal Sudah Disubmit</h2>
@@ -198,7 +198,7 @@ export default function ProposalPage() {
     const unsubmitted = enrollments.filter((e) => !e.judul_proyek || e.status_proposal === 'rejected');
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
               <Layers className="h-4 w-4" /> Pilih Enrollment
@@ -209,11 +209,7 @@ export default function ProposalPage() {
           </CardHeader>
           <CardContent className="space-y-3">
             {unsubmitted.map((enr) => (
-              <div
-                key={enr.id}
-                onClick={() => handleEnrollmentSelect(enr.id)}
-                className="cursor-pointer rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-4 hover:bg-[hsl(var(--ctp-surface0)/0.5)] transition-all"
-              >
+              <div key={enr.id} onClick={() => handleEnrollmentSelect(enr.id)} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] cursor-pointer p-4 transition-all">
                 <div className="flex items-center gap-3">
                   <span className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
                     {API_TRACK_LABELS[enr.track] || enr.track}
@@ -241,7 +237,7 @@ export default function ProposalPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <Upload className="h-4 w-4" /> Upload Proposal

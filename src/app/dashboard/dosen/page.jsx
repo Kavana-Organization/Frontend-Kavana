@@ -29,7 +29,7 @@ function StatCard({ title, value, delta, dir, sub, icon: Icon }) {
   const Arrow = dir === 'up' ? ArrowUpRight : ArrowDownRight;
   const deltaCls = dir === 'down' ? 'text-[hsl(var(--ctp-green))]' : 'text-[hsl(var(--ctp-peach))]';
   return (
-    <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+    <Card variant="muted">
       <CardHeader className="pb-2">
         <CardDescription className="text-[hsl(var(--ctp-subtext0))]">{title}</CardDescription>
         <CardTitle className="text-[hsl(var(--ctp-text))] text-2xl tracking-tight">{value}</CardTitle>
@@ -100,7 +100,7 @@ export default function DosenDashboard() {
       {/* Action cards + chart */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         {/* Mahasiswa list */}
-        <Card className="xl:col-span-5 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-5">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -109,20 +109,20 @@ export default function DosenDashboard() {
               <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Daftar mahasiswa yang Anda bimbing.</CardDescription>
             </div>
             <Link href="/dashboard/dosen/mahasiswa-bimbingan">
-              <Button variant="secondary" className="ctp-focus h-9 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)]">
+              <Button variant="secondary" size="sm">
                 <ArrowUpRight className="h-4 w-4 mr-2" /> Semua
               </Button>
             </Link>
           </CardHeader>
           <CardContent className="space-y-2">
             {mahasiswaList.length === 0 ? (
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-6 text-center">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-6 text-center">
                 <Users className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
                 <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada mahasiswa bimbingan</p>
               </div>
             ) : (
               mahasiswaList.slice(0, 4).map((m, i) => (
-                <div key={m.id || i} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                <div key={m.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div className="min-w-0">
                       <div className="text-sm font-semibold text-[hsl(var(--ctp-text))] truncate">{m.nama || `Mahasiswa ${i + 1}`}</div>
@@ -139,7 +139,7 @@ export default function DosenDashboard() {
         </Card>
 
         {/* Chart */}
-        <Card className="xl:col-span-7 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-7">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="text-[hsl(var(--ctp-text))]">Aktivitas review (7 hari)</CardTitle>
@@ -170,7 +170,7 @@ export default function DosenDashboard() {
           { title: 'Daftar Mahasiswa', desc: 'Lihat semua mahasiswa bimbingan', href: '/dashboard/dosen/mahasiswa-bimbingan', icon: Users, color: 'ctp-mauve' },
         ].map((action) => (
           <Link key={action.title} href={action.href}>
-            <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring hover:bg-[hsl(var(--ctp-surface0)/0.70)] transition-colors cursor-pointer">
+            <Card variant="muted" className="transition-colors cursor-pointer">
               <CardContent className="flex items-center gap-3 pt-6">
                 <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--${action.color})/0.35)] bg-[hsl(var(--${action.color})/0.12)]`}>
                   <action.icon className={`h-5 w-5 text-[hsl(var(--${action.color}))]`} />
@@ -187,7 +187,7 @@ export default function DosenDashboard() {
       </div>
 
       {/* Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.30)] bg-[hsl(var(--ctp-mantle)/0.35)] px-4 py-3">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Kavana — Dashboard Dosen Pembimbing</div>
         <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Theme: Catppuccin Mocha</div>
       </div>

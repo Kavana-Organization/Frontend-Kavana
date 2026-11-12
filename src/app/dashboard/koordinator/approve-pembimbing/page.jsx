@@ -95,19 +95,19 @@ export default function ApprovePembimbingPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p>
             <p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{mahasiswa.length}</p>
           </CardContent>
         </Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum Ditugaskan</p>
             <p className="text-2xl font-bold text-[hsl(var(--ctp-peach))]">{needAssign.length}</p>
           </CardContent>
         </Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Sudah Ditugaskan</p>
             <p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{assigned.length}</p>
@@ -115,7 +115,7 @@ export default function ApprovePembimbingPage() {
         </Card>
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <UserCheck className="h-4 w-4" /> Penugasan Pembimbing
@@ -136,7 +136,7 @@ export default function ApprovePembimbingPage() {
                 const anggotaNpm = (m.anggota || []).map((anggota) => anggota.npm).join(' • ');
 
                 return (
-                  <div key={m.id} className="flex items-center justify-between gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                  <div key={m.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center justify-between gap-3 p-3">
                     <div className="flex items-center gap-3">
                       <div className="h-10 w-10 rounded-full bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-sm font-bold">
                         {getInitials(displayName)}
@@ -188,7 +188,7 @@ export default function ApprovePembimbingPage() {
       <DashboardDialog open={!!modal} onOpenChange={(open) => !open && setModal(null)}>
         <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-3">Pilih Dosen Pembimbing</h3>
         {isProyekKelompok(selectedMahasiswa) ? (
-          <div className="mb-3 rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] px-3 py-2 text-sm text-[hsl(var(--ctp-text))]">
+          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] mb-3 px-3 py-2 text-sm text-[hsl(var(--ctp-text))]">
             <p className="font-medium">{selectedMahasiswa?.kelompok_nama || 'Kelompok Proyek'}</p>
             <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext1))]">
               {(selectedMahasiswa?.anggota || []).map((anggota) => `${anggota.nama} (${anggota.npm})`).join(' • ')}

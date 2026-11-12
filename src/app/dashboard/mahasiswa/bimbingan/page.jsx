@@ -186,13 +186,13 @@ export default function BimbinganPage() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-5">
       {/* Info cards */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Track Aktif</p>
             <p className="text-base font-semibold text-[hsl(var(--ctp-text))] mt-1">{trackName || 'Belum dipilih'}</p>
           </CardContent>
         </Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Dosen Pembimbing</p>
             <p className="text-base font-semibold text-[hsl(var(--ctp-text))] mt-1">
@@ -200,7 +200,7 @@ export default function BimbinganPage() {
             </p>
           </CardContent>
         </Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between">
               <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Progress Bimbingan</p>
@@ -217,7 +217,7 @@ export default function BimbinganPage() {
       </div>
 
       {/* Sessions list */}
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <div>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -268,7 +268,7 @@ export default function BimbinganPage() {
               {sessions.map((s, i) => {
                 const st = STATUS_MAP[s.status] || STATUS_MAP.pending;
                 return (
-                  <div key={s.id || i} className="flex items-start gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                  <div key={s.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-3 p-3">
                     <div className={`h-9 w-9 shrink-0 rounded-full bg-[hsl(var(--${st.color})/0.20)] text-[hsl(var(--${st.color}))] flex items-center justify-center text-sm font-bold`}>
                       {i + 1}
                     </div>

@@ -41,12 +41,12 @@ export default function MahasiswaBimbinganPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Mahasiswa</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{list.length}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Proyek</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{list.filter(m => m.track?.includes('proyek')).length}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Internship</p><p className="text-2xl font-bold text-[hsl(var(--ctp-mauve))]">{list.filter(m => m.track?.includes('internship')).length}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Mahasiswa</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{list.length}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Proyek</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{list.filter(m => m.track?.includes('proyek')).length}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Internship</p><p className="text-2xl font-bold text-[hsl(var(--ctp-mauve))]">{list.filter(m => m.track?.includes('internship')).length}</p></CardContent></Card>
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <div><CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><Users className="h-4 w-4" /> Daftar Mahasiswa</CardTitle></div>
           <div className="w-64"><Input placeholder="Cari mahasiswa..." value={search} onChange={e => setSearch(e.target.value)} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" /></div>
@@ -57,7 +57,7 @@ export default function MahasiswaBimbinganPage() {
           ) : (
             <div className="space-y-2">
               {filtered.map((m, i) => (
-                <div key={m.id || i} className="flex items-center gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                <div key={m.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center gap-3 p-3">
                   <div className="h-10 w-10 shrink-0 rounded-full bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-sm font-bold">{getInitials(m.nama)}</div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-semibold text-[hsl(var(--ctp-text))] truncate">{m.nama || '-'}</p>

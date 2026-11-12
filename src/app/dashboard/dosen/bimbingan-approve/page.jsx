@@ -201,19 +201,19 @@ export default function BimbinganApprovePage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p>
             <p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{displayList.length}</p>
           </CardContent>
         </Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Menunggu review</p>
             <p className="text-2xl font-bold text-[hsl(var(--ctp-yellow))]">{displayList.filter((b) => isReviewableStatus(b.status)).length}</p>
           </CardContent>
         </Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6">
             <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Approved</p>
             <p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{displayList.filter((b) => normalizeStatus(b.status) === 'approved').length}</p>
@@ -221,7 +221,7 @@ export default function BimbinganApprovePage() {
         </Card>
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <MessageSquare className="h-4 w-4" /> Daftar Bimbingan
@@ -252,7 +252,7 @@ export default function BimbinganApprovePage() {
                 const status = normalizeStatus(b.status);
                 const st = STATUS_MAP[status] || STATUS_MAP.waiting;
                 return (
-                  <div key={b.display_key} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                  <div key={b.display_key} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap mb-1">
@@ -353,7 +353,7 @@ export default function BimbinganApprovePage() {
               </p>
             </div>
 
-            <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.45)] p-3 space-y-1 text-xs">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3 space-y-1 text-xs">
               <div className="flex justify-between gap-2">
                 <span className="text-[hsl(var(--ctp-subtext0))]">Nama</span>
                 <span className="text-[hsl(var(--ctp-text))]">{qrModal.signature.dosen_nama || '—'}</span>

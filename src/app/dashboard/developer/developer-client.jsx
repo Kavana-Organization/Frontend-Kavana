@@ -113,7 +113,7 @@ function StatusPill({ value, ok }) {
 
 function StatusCard({ title, value, description, icon: Icon, ok }) {
   return (
-    <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+    <Card variant="muted">
       <CardHeader>
         <CardDescription>{title}</CardDescription>
         <CardTitle className="flex items-center gap-3 text-2xl text-[hsl(var(--ctp-text))]">
@@ -639,7 +639,7 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
         </div>
       ) : null}
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">

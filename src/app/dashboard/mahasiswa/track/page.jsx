@@ -168,7 +168,7 @@ export default function TrackPage() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-5">
       {/* Active Enrollments Banner */}
       {activeEnrollments.length > 0 && (
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="py-4">
             <p className="text-sm font-semibold text-[hsl(var(--ctp-text))] mb-2">Enrollment Aktif</p>
             <div className="flex flex-wrap gap-2">
@@ -195,7 +195,7 @@ export default function TrackPage() {
       )}
 
       {unenrolledEligibilities.length === 0 && !periodeActive && activeEnrollments.length === 0 ? (
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <div className="grid h-16 w-16 place-items-center rounded-2xl border border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] mb-4">
               <AlertTriangle className="h-8 w-8 text-[hsl(var(--ctp-peach))]" />
@@ -209,7 +209,7 @@ export default function TrackPage() {
           </CardContent>
         </Card>
       ) : unenrolledEligibilities.length === 0 && activeEnrollments.length > 0 ? (
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="flex flex-col items-center justify-center py-16 text-center">
             <CheckCircle2 className="h-12 w-12 text-[hsl(var(--ctp-green))] mb-4" />
             <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Semua Track Sudah Dipilih</h2>
@@ -226,7 +226,7 @@ export default function TrackPage() {
         </Card>
       ) : (
         <>
-          <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <Card variant="muted">
             <CardContent className="flex flex-col gap-2 py-4 sm:flex-row sm:items-center sm:justify-between">
               <div>
                 <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
@@ -267,9 +267,9 @@ export default function TrackPage() {
               const color = typeConf.color;
 
               return (
-                <Card
+                <Card variant="muted"
                   key={elig.track}
-                  className={`cursor-pointer transition-all bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring hover:bg-[hsl(var(--ctp-surface0)/0.70)] ${isSelected ? `ring-2 ring-[hsl(var(--${color}))]` : ''}`}
+                  className={`cursor-pointer transition-all ${isSelected ? `ring-2 ring-[hsl(var(--${color}))]` : ''}`}
                   onClick={() => setSelectedTrack(elig.track)}
                 >
                   <CardContent className="pt-6">
@@ -317,7 +317,7 @@ export default function TrackPage() {
 
             return (
               <motion.div initial={{ opacity: 0, y: 5 }} animate={{ opacity: 1, y: 0 }}>
-                <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+                <Card variant="muted">
                   <CardHeader>
                     <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
                       Konfirmasi: {API_TRACK_LABELS[selectedTrack] || selectedTrack}

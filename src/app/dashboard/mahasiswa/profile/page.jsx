@@ -45,7 +45,7 @@ export default function ProfilePage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5 max-w-2xl">
       {/* Avatar */}
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardContent className="flex items-center gap-4 pt-6">
           <div className="relative">
             <div className="h-20 w-20 rounded-full bg-[hsl(var(--ctp-lavender)/0.25)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-2xl font-bold">{getInitials(profile.nama)}</div>
@@ -59,7 +59,7 @@ export default function ProfilePage() {
       </Card>
 
       {/* Info */}
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between">
           <div><CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><User className="h-4 w-4" /> Informasi Akun</CardTitle></div>
           <Button onClick={() => editing ? handleSave() : setEditing(true)} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-lavender)/0.35)]">{editing ? 'Simpan' : 'Edit'}</Button>

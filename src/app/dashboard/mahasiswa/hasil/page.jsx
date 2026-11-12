@@ -88,7 +88,7 @@ export default function HasilPage() {
           { title: 'Laporan', ok: ['submitted','approved'].includes(sidang?.laporan_status), sub: sidang?.laporan_status || '-' },
           { title: 'Sidang', ok: sidang?.hasil === 'lulus', sub: sidang?.hasil || '-' },
         ].map((item) => (
-          <Card key={item.title} className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <Card variant="muted" key={item.title}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{item.title}</p>
@@ -102,7 +102,7 @@ export default function HasilPage() {
 
       {/* Dosen info */}
       {profile?.dosen_nama && (
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="flex items-center gap-3 pt-6">
             <div className="h-10 w-10 rounded-full bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))] flex items-center justify-center">
               <User className="h-5 w-5" />

@@ -21,7 +21,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { useAuthStore } from '@/store/auth-store';
 import { ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
 
-const cardCls = 'bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring';
 
 const FAQ_ITEMS = [
   {
@@ -118,7 +117,7 @@ export default function SupportPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
-        <Card className={`${cardCls} lg:col-span-2`}>
+        <Card variant="muted" className="lg:col-span-2">
           <CardHeader>
             <CardTitle className="text-[hsl(var(--ctp-text))] flex items-center gap-2">
               <CircleHelp className="h-4 w-4" />
@@ -144,7 +143,7 @@ export default function SupportPage() {
           </CardContent>
         </Card>
 
-        <Card className={cardCls}>
+        <Card variant="muted">
           <CardHeader>
             <CardTitle className="text-[hsl(var(--ctp-text))] flex items-center gap-2">
               <MessageSquareText className="h-4 w-4" />
@@ -172,7 +171,7 @@ export default function SupportPage() {
               {copied ? 'Email Tersalin' : 'Salin Email Support'}
             </Button>
 
-            <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] px-3 py-2">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2">
               <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Email support</p>
               <p className="text-sm text-[hsl(var(--ctp-text))] mt-0.5 break-all">{supportEmail}</p>
             </div>
@@ -180,7 +179,7 @@ export default function SupportPage() {
         </Card>
       </div>
 
-      <Card className={cardCls}>
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="text-[hsl(var(--ctp-text))] flex items-center gap-2">
             <BookOpen className="h-4 w-4" />

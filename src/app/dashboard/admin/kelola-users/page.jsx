@@ -260,9 +260,9 @@ export default function KelolaUsersPage() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
         {Object.entries(roleCounts).map(([entryRole, count]) => (
-          <Card
+          <Card variant="muted"
             key={entryRole}
-            className={`cursor-pointer bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring ${filterRole === entryRole ? 'ring-2 ring-[hsl(var(--ctp-lavender))]' : ''}`}
+            className={`cursor-pointer ${filterRole === entryRole ? 'ring-2 ring-[hsl(var(--ctp-lavender))]' : ''}`}
             onClick={() => setFilterRole(entryRole)}
           >
             <CardContent className="pt-5 pb-4">
@@ -273,7 +273,7 @@ export default function KelolaUsersPage() {
         ))}
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <Shield className="h-4 w-4" /> Kelola Users
@@ -296,10 +296,7 @@ export default function KelolaUsersPage() {
               {filtered.map((user, index) => {
                 const color = ROLE_COLORS[user.role] || 'ctp-overlay1';
                 return (
-                  <div
-                    key={user.id || index}
-                    className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-4"
-                  >
+                  <div key={user.id || index} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4">
                     <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
                       <div className="flex items-center gap-3 flex-1 min-w-0">
                         <div className={`h-10 w-10 shrink-0 rounded-full bg-[hsl(var(--${color})/0.20)] text-[hsl(var(--${color}))] flex items-center justify-center text-sm font-bold`}>

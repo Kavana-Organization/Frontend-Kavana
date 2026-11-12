@@ -83,7 +83,7 @@ export default function MonitoringRevisiPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <BarChart3 className="h-4 w-4" /> Monitoring Revisi Sidang
@@ -122,7 +122,7 @@ export default function MonitoringRevisiPage() {
                 const st = STATUS_LABEL[row.revisi_status] || STATUS_LABEL.belum_submit;
                 const Icon = st.Icon;
                 return (
-                  <div key={`${row.kelompok_id || row.mahasiswa_id || idx}:${row.sidang_id}`} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                  <div key={`${row.kelompok_id || row.mahasiswa_id || idx}:${row.sidang_id}`} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                     <div className="flex items-start justify-between gap-3 flex-wrap">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-1">

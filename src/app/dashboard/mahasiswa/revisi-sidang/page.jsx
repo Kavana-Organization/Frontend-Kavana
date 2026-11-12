@@ -126,7 +126,7 @@ export default function RevisiSidangPage() {
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       {/* Banner hasil sidang */}
       {!sidang ? (
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="pt-6 text-sm text-[hsl(var(--ctp-subtext0))] flex items-center gap-2">
             <ClipboardCheck className="h-4 w-4" />
             Belum ada catatan sidang. Halaman ini akan aktif setelah Anda menjalani sidang.
@@ -134,12 +134,12 @@ export default function RevisiSidangPage() {
         </Card>
       ) : (
         <Card
+          variant={hasilSidang ? "default" : "muted"}
           className={
             hasilSidang
-              ? `bg-[hsl(var(--${HASIL_LABEL[hasilSidang]?.color})/0.10)] border-[hsl(var(--${HASIL_LABEL[hasilSidang]?.color})/0.40)] ctp-ring`
-              : 'bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring'
-          }
-        >
+              ? `bg-[hsl(var(--${HASIL_LABEL[hasilSidang]?.color})/0.10)] border-[hsl(var(--${HASIL_LABEL[hasilSidang]?.color})/0.40)]`
+              : undefined
+          }>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
               <ClipboardCheck className="h-4 w-4" /> Hasil Sidang Anda
@@ -156,7 +156,7 @@ export default function RevisiSidangPage() {
             <div><span className="text-[hsl(var(--ctp-subtext0))]">Pembimbing:</span> {sidang.dosen_nama || '-'}</div>
             <div><span className="text-[hsl(var(--ctp-subtext0))]">Penguji:</span> {sidang.penguji_nama || '-'}</div>
             {sidang.catatan_sidang ? (
-              <div className="md:col-span-2 rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.45)] p-3">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] md:col-span-2 p-3">
                 <span className="text-[hsl(var(--ctp-subtext0))]">Catatan Sidang:</span>
                 <p className="mt-1 whitespace-pre-line">{sidang.catatan_sidang}</p>
               </div>
@@ -167,7 +167,7 @@ export default function RevisiSidangPage() {
 
       {/* Form upload revisi */}
       {isLulusRevisi ? (
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
               <Upload className="h-4 w-4" /> Submit Revisi
@@ -214,7 +214,7 @@ export default function RevisiSidangPage() {
       ) : null}
 
       {/* Riwayat revisi */}
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <FileText className="h-4 w-4" /> Riwayat Revisi
@@ -229,7 +229,7 @@ export default function RevisiSidangPage() {
                 const st = STATUS_LABEL[r.status] || STATUS_LABEL.pending;
                 const Icon = st.Icon;
                 return (
-                  <div key={r.id} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                  <div key={r.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                     <div className="flex items-start justify-between gap-3">
                       <div className="min-w-0 flex-1">
                         <div className="flex flex-wrap items-center gap-2 mb-1">

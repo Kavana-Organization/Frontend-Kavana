@@ -128,7 +128,7 @@ export default function LaporanPage() {
 
   if (hasLaporan) return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardContent className="flex flex-col items-center py-16 text-center">
           <CheckCircle2 className="h-12 w-12 text-[hsl(var(--ctp-green))] mb-4" />
           <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))]">Berkas Sidang Sudah Disubmit</h2>
@@ -181,7 +181,7 @@ export default function LaporanPage() {
         </Card>
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><FileText className="h-4 w-4" /> Upload Berkas Sidang</CardTitle>
           <CardDescription className="text-[hsl(var(--ctp-subtext0))]">

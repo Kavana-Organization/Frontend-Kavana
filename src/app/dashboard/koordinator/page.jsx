@@ -26,7 +26,7 @@ function StatCard({ title, value, delta, dir, sub, icon: Icon }) {
   const Arrow = dir === 'up' ? ArrowUpRight : ArrowDownRight;
   const deltaCls = dir === 'down' ? 'text-[hsl(var(--ctp-green))]' : 'text-[hsl(var(--ctp-peach))]';
   return (
-    <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+    <Card variant="muted">
       <CardHeader className="pb-2">
         <CardDescription className="text-[hsl(var(--ctp-subtext0))]">{title}</CardDescription>
         <CardTitle className="text-[hsl(var(--ctp-text))] text-2xl tracking-tight">{value}</CardTitle>
@@ -93,7 +93,7 @@ export default function KoordinatorDashboard() {
       {/* Chart + Progress */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
         {/* Stage chart */}
-        <Card className="xl:col-span-2 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-2">
           <CardHeader>
             <CardTitle className="text-[hsl(var(--ctp-text))]">Distribusi tahap mahasiswa</CardTitle>
             <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Sebaran status dari proposal hingga selesai.</CardDescription>
@@ -114,7 +114,7 @@ export default function KoordinatorDashboard() {
         </Card>
 
         {/* Summary / compliance */}
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
               <AlertTriangle className="h-4 w-4" /> Compliance
@@ -131,11 +131,11 @@ export default function KoordinatorDashboard() {
             </div>
 
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                 <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Perlu validasi</div>
                 <div className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-peach))]">{pendingProposals}</div>
               </div>
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                 <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Tervalidasi</div>
                 <div className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-green))]">{totalProposals - pendingProposals}</div>
               </div>
@@ -152,7 +152,7 @@ export default function KoordinatorDashboard() {
           { title: 'Jadwal Sidang', desc: 'Atur jadwal sidang proyek & TA', href: '/dashboard/koordinator/jadwal-sidang', icon: CalendarDays, color: 'ctp-mauve' },
         ].map((action) => (
           <Link key={action.title} href={action.href}>
-            <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring hover:bg-[hsl(var(--ctp-surface0)/0.70)] transition-colors cursor-pointer">
+            <Card variant="muted" className="transition-colors cursor-pointer">
               <CardContent className="flex items-center gap-3 pt-6">
                 <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--${action.color})/0.35)] bg-[hsl(var(--${action.color})/0.12)]`}>
                   <action.icon className={`h-5 w-5 text-[hsl(var(--${action.color}))]`} />
@@ -169,7 +169,7 @@ export default function KoordinatorDashboard() {
       </div>
 
       {/* Footer */}
-      <div className="flex flex-wrap items-center justify-between gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.30)] bg-[hsl(var(--ctp-mantle)/0.35)] px-4 py-3">
+      <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex flex-wrap items-center justify-between gap-3 px-4 py-3">
         <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Kavana — Dashboard Koordinator</div>
         <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Theme: Catppuccin Mocha</div>
       </div>

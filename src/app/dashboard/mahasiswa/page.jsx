@@ -177,7 +177,7 @@ function StatCard({ title, value, delta, dir, sub }) {
   const deltaCls = dir === 'down' ? 'text-[hsl(var(--ctp-green))]' : 'text-[hsl(var(--ctp-peach))]';
 
   return (
-    <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+    <Card variant="muted">
       <CardHeader className="pb-2">
         <CardDescription className="text-[hsl(var(--ctp-subtext0))]">{title}</CardDescription>
         <CardTitle className="text-[hsl(var(--ctp-text))] text-2xl tracking-tight">{value}</CardTitle>
@@ -330,7 +330,7 @@ export default function MahasiswaDashboard() {
       {/* Top workflow row */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-12">
         {/* Today / Upcoming Sessions */}
-        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-3">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -339,20 +339,20 @@ export default function MahasiswaDashboard() {
               <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Sesi yang perlu kamu jalani.</CardDescription>
             </div>
             <Link href="/dashboard/mahasiswa/bimbingan">
-              <Button variant="secondary" className="ctp-focus h-9 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)]">
+              <Button variant="secondary" size="sm">
                 <Plus className="h-4 w-4 mr-2" /> Catat
               </Button>
             </Link>
           </CardHeader>
           <CardContent className="space-y-2">
             {bimbinganList.length === 0 ? (
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-6 text-center">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-6 text-center">
                 <CalendarDays className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
                 <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada sesi bimbingan</p>
               </div>
             ) : (
               bimbinganList.slice(0, 3).map((s, i) => (
-                <div key={s.id || i} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                <div key={s.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="flex items-center gap-2">
@@ -369,7 +369,7 @@ export default function MahasiswaDashboard() {
         </Card>
 
         {/* Jadwal Sidang */}
-        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-3">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -383,7 +383,7 @@ export default function MahasiswaDashboard() {
           </CardHeader>
           <CardContent>
             {sidangData?.tanggal || sidangData?.tanggal_sidang || sidangData?.waktu || sidangData?.ruangan ? (
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-4 space-y-3">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4 space-y-3">
                 <div>
                   <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Tanggal & waktu</p>
                   <p className="mt-1 text-sm font-semibold text-[hsl(var(--ctp-text))]">
@@ -391,14 +391,14 @@ export default function MahasiswaDashboard() {
                   </p>
                 </div>
                 <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
-                  <div className="flex items-start gap-2 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.28)] bg-[hsl(var(--ctp-surface0)/0.28)] p-3">
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-2 p-3">
                     <MapPin className="mt-0.5 h-4 w-4 text-[hsl(var(--ctp-blue))]" />
                     <div>
                       <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Ruangan</p>
                       <p className="text-sm font-medium text-[hsl(var(--ctp-text))]">{sidangRoom || '-'}</p>
                     </div>
                   </div>
-                  <div className="flex items-start gap-2 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.28)] bg-[hsl(var(--ctp-surface0)/0.28)] p-3">
+                  <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-2 p-3">
                     <UserCheck className="mt-0.5 h-4 w-4 text-[hsl(var(--ctp-teal))]" />
                     <div>
                       <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Penguji</p>
@@ -407,13 +407,13 @@ export default function MahasiswaDashboard() {
                   </div>
                 </div>
                 <Link href="/dashboard/mahasiswa/hasil">
-                  <Button variant="secondary" className="ctp-focus h-9 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)]">
+                  <Button variant="secondary" size="sm">
                     <FileText className="h-4 w-4 mr-2" /> Lihat detail
                   </Button>
                 </Link>
               </div>
             ) : (
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-6 text-center">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-6 text-center">
                 <CalendarDays className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
                 <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{sidangStatus.label}</p>
                 <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">{sidangStatus.description}</p>
@@ -423,7 +423,7 @@ export default function MahasiswaDashboard() {
         </Card>
 
         {/* Pending Reviews / Documents */}
-        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-3">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -444,7 +444,7 @@ export default function MahasiswaDashboard() {
           </CardHeader>
           <CardContent className="space-y-2">
             {documentItems.map((d) => (
-              <div key={d.title} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+              <div key={d.title} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                 <div className="flex items-start justify-between gap-3">
                   <div className="min-w-0">
                     <div className="flex items-center gap-2">
@@ -457,7 +457,7 @@ export default function MahasiswaDashboard() {
                 <div className="mt-2 flex items-center justify-between">
                   <span className="text-xs text-[hsl(var(--ctp-subtext0))]">Status: <span className="text-[hsl(var(--ctp-subtext1))] font-medium">{d.status}</span></span>
                   <Link href={d.href}>
-                    <Button variant="secondary" className="ctp-focus h-8 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)] text-[hsl(var(--ctp-text))]">
+                    <Button variant="secondary" size="xs">
                       <MessageSquareText className="h-4 w-4 mr-2" /> Lihat
                     </Button>
                   </Link>
@@ -468,7 +468,7 @@ export default function MahasiswaDashboard() {
         </Card>
 
         {/* Progress Overview */}
-        <Card className="xl:col-span-3 bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted" className="xl:col-span-3">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
@@ -484,7 +484,7 @@ export default function MahasiswaDashboard() {
                   ? 'text-[hsl(var(--ctp-peach))] border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)]'
                   : 'text-[hsl(var(--ctp-green))] border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.12)]';
               return (
-                <div key={p.name} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                <div key={p.name} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                   <div className="flex items-start justify-between gap-3">
                     <div className="min-w-0">
                       <div className="truncate text-sm font-semibold text-[hsl(var(--ctp-text))]">{p.name}</div>
@@ -505,11 +505,11 @@ export default function MahasiswaDashboard() {
 
             {/* Deadline compliance mini-stats */}
             <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                 <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Approved</div>
                 <div className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-green))]">{approvedCount}</div>
               </div>
-              <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                 <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Pending</div>
                 <div className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-peach))]">{pendingCount}</div>
               </div>
@@ -521,7 +521,7 @@ export default function MahasiswaDashboard() {
       {/* Analytics row */}
       <div className="grid grid-cols-1 gap-4">
         {/* Status distribution chart - REAL DATA */}
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
               <CardTitle className="text-[hsl(var(--ctp-text))]">Status bimbingan</CardTitle>
@@ -549,7 +549,7 @@ export default function MahasiswaDashboard() {
             )}
 
             {/* Next session mini-card */}
-            <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
               <div className="flex items-center justify-between">
                 <div>
                   <div className="text-sm font-semibold text-[hsl(var(--ctp-text))]">Aksi cepat</div>
@@ -568,21 +568,21 @@ export default function MahasiswaDashboard() {
 
       {/* Activity Table */}
       {recentActivity.length > 0 && (
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader className="flex flex-row items-center justify-between gap-3">
             <div>
               <CardTitle className="text-[hsl(var(--ctp-text))]">Aktivitas bimbingan terbaru</CardTitle>
               <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Upload, review, jadwal — semua tercatat.</CardDescription>
             </div>
             <Link href="/dashboard/mahasiswa/bimbingan">
-              <Button variant="secondary" className="ctp-focus h-9 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)]">
+              <Button variant="secondary" size="sm">
                 <ArrowUpRight className="h-4 w-4 mr-2 text-[hsl(var(--ctp-subtext1))]" />
                 <span className="text-[hsl(var(--ctp-text))]">Lihat semua</span>
               </Button>
             </Link>
           </CardHeader>
           <CardContent>
-            <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] overflow-hidden">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] overflow-hidden">
               <Table>
                 <TableHeader>
                   <TableRow className="border-[hsl(var(--ctp-overlay0)/0.25)]">

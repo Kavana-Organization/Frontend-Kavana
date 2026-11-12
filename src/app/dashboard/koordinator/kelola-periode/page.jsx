@@ -275,7 +275,7 @@ export default function KelolaPeriodePage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <CalendarDays className="h-4 w-4" /> Kelola Periode

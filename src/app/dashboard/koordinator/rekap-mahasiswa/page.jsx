@@ -350,15 +350,15 @@ export default function RekapMahasiswaPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-6">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{list.length}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Proyek</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{stats.proyek}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Internship</p><p className="text-2xl font-bold text-[hsl(var(--ctp-mauve))]">{stats.internship}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum Pilih</p><p className="text-2xl font-bold text-[hsl(var(--ctp-peach))]">{stats.noTrack}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Wajib Ulang</p><p className="text-2xl font-bold text-[hsl(var(--ctp-red))]">{stats.repeat}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Konversi RPL</p><p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{stats.converted}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{list.length}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Proyek</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{stats.proyek}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Internship</p><p className="text-2xl font-bold text-[hsl(var(--ctp-mauve))]">{stats.internship}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum Pilih</p><p className="text-2xl font-bold text-[hsl(var(--ctp-peach))]">{stats.noTrack}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Wajib Ulang</p><p className="text-2xl font-bold text-[hsl(var(--ctp-red))]">{stats.repeat}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Konversi RPL</p><p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{stats.converted}</p></CardContent></Card>
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><Users className="h-4 w-4" /> Rekap Mahasiswa</CardTitle>
           <Input

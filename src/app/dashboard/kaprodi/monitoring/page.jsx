@@ -54,12 +54,12 @@ export default function MonitoringPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Mahasiswa</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{totalMahasiswa}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Dosen</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{totalDosen}</p></CardContent></Card>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Tingkat Kelulusan</p><p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{kelulusan}%</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Mahasiswa</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{totalMahasiswa}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Dosen</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{totalDosen}</p></CardContent></Card>
+        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Tingkat Kelulusan</p><p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{kelulusan}%</p></CardContent></Card>
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader><CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><BarChart3 className="h-4 w-4" /> Progress Mahasiswa</CardTitle></CardHeader>
         <CardContent className="space-y-4">
           {stages.map(s => (

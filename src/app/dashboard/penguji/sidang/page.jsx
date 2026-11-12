@@ -188,7 +188,7 @@ export default function PengujiSidangPage() {
           ['Revisi', stats.revisi, 'Ditetapkan perlu revisi'],
           ['Selesai', stats.completed, 'Hasil sudah disimpan'],
         ].map(([title, value, caption]) => (
-          <Card key={title} className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <Card variant="muted" key={title}>
             <CardHeader className="pb-2">
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">{title}</p>
               <CardTitle className="text-2xl text-[hsl(var(--ctp-text))]">{value}</CardTitle>
@@ -198,7 +198,7 @@ export default function PengujiSidangPage() {
         ))}
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <GraduationCap className="h-4 w-4" /> Sidang Penguji
@@ -215,10 +215,7 @@ export default function PengujiSidangPage() {
               {sidang.map((item) => {
                 const isCompleted = String(item?.status || '').toLowerCase() === 'completed';
                 return (
-                  <div
-                    key={item.id}
-                    className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3"
-                  >
+                  <div key={item.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                     <div className="flex items-center justify-between gap-3">
                       <div className="min-w-0">
                         <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
@@ -318,7 +315,7 @@ export default function PengujiSidangPage() {
                 className={inputCls}
               />
             </div>
-            <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))]">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))]">
               {hasilForm.hasil_sidang === 'lulus_revisi'
                 ? 'Jika dipilih lulus dengan revisi, mahasiswa akan masuk ke alur revisi sidang.'
                 : 'Keputusan ini akan menyimpan hasil sidang mahasiswa.'}

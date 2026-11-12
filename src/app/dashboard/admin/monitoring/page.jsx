@@ -96,7 +96,7 @@ export default function MonitoringSistemPage() {
           { label: 'Dosen', value: stats.total_dosen || 0, icon: Database, color: 'ctp-green' },
           { label: 'Admin', value: stats.total_admin || 0, icon: Shield, color: 'ctp-red' },
         ].map((item) => (
-          <Card key={item.label} className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <Card variant="muted" key={item.label}>
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{item.label}</p>
@@ -109,7 +109,7 @@ export default function MonitoringSistemPage() {
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
               <Clock className="h-4 w-4" /> Aktivitas Terbaru
@@ -124,7 +124,7 @@ export default function MonitoringSistemPage() {
             ) : (
               <div className="space-y-2">
                 {activities.map((activity, index) => (
-                  <div key={activity.id || index} className="flex items-start gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                  <div key={activity.id || index} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-3 p-3">
                     <div className="h-2 w-2 rounded-full bg-[hsl(var(--ctp-green))] mt-1.5" />
                     <div className="flex-1">
                       <p className="text-sm text-[hsl(var(--ctp-text))]">{activity.message || activity.action || '-'}</p>
@@ -140,7 +140,7 @@ export default function MonitoringSistemPage() {
           </CardContent>
         </Card>
 
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
               <Database className="h-4 w-4" /> Status Sistem
@@ -154,7 +154,7 @@ export default function MonitoringSistemPage() {
               { label: 'Sidang Scheduled', value: stats.sidang_scheduled || 0, color: 'ctp-green' },
               { label: 'User Nonaktif', value: stats.users_inactive || 0, color: 'ctp-red' },
             ].map((item) => (
-              <div key={item.label} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] px-4 py-3 flex items-center justify-between">
+              <div key={item.label} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-3 flex items-center justify-between">
                 <span className="text-sm text-[hsl(var(--ctp-subtext0))]">{item.label}</span>
                 <span className={`text-base font-semibold text-[hsl(var(--${item.color}))]`}>{item.value}</span>
               </div>
@@ -163,7 +163,7 @@ export default function MonitoringSistemPage() {
         </Card>
       </div>
 
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <Shield className="h-4 w-4" /> Audit Logs
@@ -193,7 +193,7 @@ export default function MonitoringSistemPage() {
                   : 'border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.12)] text-[hsl(var(--ctp-red))]';
 
                 return (
-                  <div key={log.id} className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-4">
+                  <div key={log.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4">
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
                       <div className="space-y-2">
                         <div className="flex flex-wrap items-center gap-2">

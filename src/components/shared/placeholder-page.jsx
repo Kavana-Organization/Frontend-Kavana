@@ -13,7 +13,7 @@ export function PlaceholderPage({ title = 'Halaman ini', backHref = '/dashboard/
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.35 }}
     >
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardContent className="flex flex-col items-center justify-center py-16 text-center">
           <div className="grid h-16 w-16 place-items-center rounded-2xl border border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] mb-4">
             <Construction className="h-8 w-8 text-[hsl(var(--ctp-peach))]" />

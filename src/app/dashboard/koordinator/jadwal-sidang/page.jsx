@@ -444,7 +444,7 @@ export default function JadwalSidangPage() {
 
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader className="flex flex-row items-start justify-between gap-3">
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <CalendarClock className="h-4 w-4" /> Jadwal Sidang
@@ -469,10 +469,7 @@ export default function JadwalSidangPage() {
           ) : (
             <div className="space-y-2">
               {groupedJadwal.map((j, i) => (
-                <div
-                  key={`${j.kelompok_id || 'mhs'}:${j.id || i}:${j.tanggal || ''}:${j.waktu || ''}`}
-                  className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3"
-                >
+                <div key={`${j.kelompok_id || 'mhs'}:${j.id || i}:${j.tanggal || ''}:${j.waktu || ''}`} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
                   <div className="flex items-center justify-between gap-3">
                     <div>
                       <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
@@ -628,7 +625,7 @@ export default function JadwalSidangPage() {
           </div>
 
           {!hasRemainingCandidate ? (
-            <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))] inline-flex items-center gap-2">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))] inline-flex items-center gap-2">
               <Users className="h-3.5 w-3.5" />
               {ineligibleOptions.length > 0
                 ? 'Belum ada mahasiswa/kelompok yang layak sidang. Pastikan bimbingan ≥ 8 dan laporan sidang sudah disetujui.'
@@ -696,7 +693,7 @@ export default function JadwalSidangPage() {
                 className={inputCls}
               />
             </div>
-            <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))]">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))]">
               {hasilForm.hasil_sidang === 'lulus_revisi'
                 ? 'Mahasiswa akan menerima email dan menu revisi sidang akan terbuka.'
                 : 'Hasil ini akan langsung men-set sidang ke status completed.'}

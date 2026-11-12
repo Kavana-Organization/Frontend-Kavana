@@ -67,7 +67,6 @@ function useThemeLocal() {
 // ==============================
 const inputCls = "rounded-xl bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))] placeholder:text-[hsl(var(--ctp-overlay1))] focus-visible:ring-[hsl(var(--ctp-lavender)/0.5)]";
 const labelCls = "text-sm font-medium text-[hsl(var(--ctp-subtext1))]";
-const cardCls = "bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring";
 const sectionTitleCls = "text-xs font-semibold uppercase tracking-wider text-[hsl(var(--ctp-subtext0))] mb-3";
 
 // ==============================
@@ -128,7 +127,7 @@ export default function SettingsPage() {
         <p className={sectionTitleCls}>
           <Palette className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />Tampilan
         </p>
-        <Card className={cardCls}>
+        <Card variant="muted">
           <CardContent className="pt-6">
             <div className="mb-2">
               <div className="text-sm font-medium text-[hsl(var(--ctp-text))]">Tema Aplikasi</div>
@@ -165,7 +164,7 @@ export default function SettingsPage() {
         <p className={sectionTitleCls}>
           <ShieldCheck className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />Keamanan
         </p>
-        <Card className={cardCls}>
+        <Card variant="muted">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm text-[hsl(var(--ctp-text))]">
               <Key className="h-4 w-4" /> Ubah Password
@@ -262,7 +261,7 @@ export default function SettingsPage() {
         <p className={sectionTitleCls}>
           <LogOut className="w-3.5 h-3.5 inline mr-1.5 -mt-0.5" />Akun
         </p>
-        <Card className={cardCls}>
+        <Card variant="muted">
           <CardContent className="pt-6">
             <button
               onClick={handleLogout}

@@ -93,7 +93,7 @@ export default function KelompokPage() {
   if (!userTrack) {
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="flex flex-col items-center py-16 text-center">
             <AlertTriangle className="h-12 w-12 text-[hsl(var(--ctp-peach))] mb-4" />
             <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Track Belum Dipilih</h2>
@@ -111,7 +111,7 @@ export default function KelompokPage() {
   if (userTrack.startsWith('internship')) {
     return (
       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+        <Card variant="muted">
           <CardContent className="flex flex-col items-center py-16 text-center">
             <Users className="h-12 w-12 text-[hsl(var(--ctp-blue))] mb-4" />
             <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Track Internship</h2>
@@ -125,7 +125,7 @@ export default function KelompokPage() {
   return (
     <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-5">
       {/* My kelompok */}
-      <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+      <Card variant="muted">
         <CardHeader>
           <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
             <Users className="h-4 w-4" /> Kelompok Saya
@@ -147,7 +147,7 @@ export default function KelompokPage() {
                 <p className="text-sm text-[hsl(var(--ctp-subtext0))] mb-3">Anggota ({members.length}/2)</p>
                 <div className="space-y-2">
                   {members.map((m, i) => (
-                    <div key={m.id || i} className="flex items-center gap-3 rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                    <div key={m.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center gap-3 p-3">
                       <div className="h-9 w-9 rounded-full bg-[hsl(var(--ctp-lavender)/0.25)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-xs font-bold">
                         {getInitials(m.nama)}
                       </div>
@@ -183,7 +183,7 @@ export default function KelompokPage() {
       {!myKelompok && (
         <>
           {/* Create */}
-          <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <Card variant="muted">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
                 <Plus className="h-4 w-4" /> Buat Kelompok Baru
@@ -209,7 +209,7 @@ export default function KelompokPage() {
           </Card>
 
           {/* Available */}
-          <Card className="bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring">
+          <Card variant="muted">
             <CardHeader>
               <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
                 <UserPlus className="h-4 w-4" /> Kelompok Tersedia
@@ -227,7 +227,7 @@ export default function KelompokPage() {
               ) : (
                 <div className="space-y-2">
                   {available.map((k) => (
-                    <div key={k.id} className="flex items-center justify-between rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-3">
+                    <div key={k.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center justify-between p-3">
                       <div className="flex items-center gap-3">
                         <div className="h-10 w-10 rounded-xl bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))] flex items-center justify-center">
                           <Users className="h-5 w-5" />

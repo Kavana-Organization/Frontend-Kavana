@@ -94,7 +94,6 @@ function useThemeLocal() {
 // ==============================
 const inputCls = "rounded-xl bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))] placeholder:text-[hsl(var(--ctp-overlay1))] focus-visible:ring-[hsl(var(--ctp-lavender)/0.5)]";
 const labelCls = "text-sm font-medium text-[hsl(var(--ctp-subtext1))]";
-const cardCls = "bg-[hsl(var(--ctp-surface0)/0.55)] border-[hsl(var(--ctp-overlay0)/0.45)] ctp-ring";
 const sectionTitleCls = "text-xs font-semibold uppercase tracking-wider text-[hsl(var(--ctp-subtext0))] mb-3";
 
 // ==============================
@@ -265,7 +264,7 @@ export default function ProfilePage() {
       className="space-y-6 max-w-3xl mx-auto"
     >
       {/* ===================== PROFILE HEADER ===================== */}
-      <Card className={`${cardCls} overflow-hidden`}>
+      <Card variant="muted" className="overflow-hidden">
         <div className="h-24 bg-gradient-to-r from-[hsl(var(--ctp-lavender)/0.25)] via-[hsl(var(--ctp-blue)/0.18)] to-[hsl(var(--ctp-teal)/0.20)]" />
         <CardContent className="-mt-12 pb-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
@@ -314,11 +313,11 @@ export default function ProfilePage() {
 
             {/* Edit toggle */}
             {!editing ? (
-              <Button onClick={() => setEditing(true)} variant="secondary" className="ctp-focus rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)] text-[hsl(var(--ctp-text))] text-xs">
+              <Button onClick={() => setEditing(true)} variant="secondary" size="xs">
                 <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
               </Button>
             ) : (
-              <Button onClick={cancelEdit} variant="secondary" className="ctp-focus rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface0)/0.35)] hover:bg-[hsl(var(--ctp-surface0)/0.55)] text-[hsl(var(--ctp-text))] text-xs">
+              <Button onClick={cancelEdit} variant="secondary" size="xs">
                 <X className="w-3.5 h-3.5 mr-1.5" /> Batal
               </Button>
             )}
@@ -332,7 +331,7 @@ export default function ProfilePage() {
         <AnimatePresence mode="wait">
           {editing ? (
             <motion.div key="edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Card className={cardCls}>
+              <Card variant="muted">
                 <CardContent className="pt-6">
                   <form onSubmit={handleSave} className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -362,7 +361,7 @@ export default function ProfilePage() {
             </motion.div>
           ) : (
             <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Card className={cardCls}>
+              <Card variant="muted">
                 <CardContent className="pt-6">
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <InfoRow icon={Mail} label="Email" value={p.email} />
@@ -383,7 +382,7 @@ export default function ProfilePage() {
       {/* ===================== SECTION: TAMPILAN ===================== */}
       <div>
         <p className={sectionTitleCls}>Tampilan</p>
-        <Card className={cardCls}>
+        <Card variant="muted">
           <CardContent className="pt-6">
             <div className="flex items-center justify-between mb-2">
               <div>
@@ -419,7 +418,7 @@ export default function ProfilePage() {
       {/* ===================== SECTION: KEAMANAN ===================== */}
       <div>
         <p className={sectionTitleCls}>Keamanan</p>
-        <Card className={cardCls}>
+        <Card variant="muted">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-sm text-[hsl(var(--ctp-text))]">
               <Key className="h-4 w-4" /> Ubah Password
@@ -453,7 +452,7 @@ export default function ProfilePage() {
       {/* ===================== SECTION: AKUN ===================== */}
       <div>
         <p className={sectionTitleCls}>Akun</p>
-        <Card className={cardCls}>
+        <Card variant="muted">
           <CardContent className="pt-6">
             <button
               onClick={handleLogout}
@@ -483,7 +482,7 @@ export default function ProfilePage() {
 // ==============================
 function InfoRow({ icon: Icon, label, value }) {
   return (
-    <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] bg-[hsl(var(--ctp-mantle)/0.30)] px-3.5 py-2.5">
+    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5">
       <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--ctp-subtext0))] mb-0.5">
         <Icon className="w-3 h-3" />{label}
       </div>
