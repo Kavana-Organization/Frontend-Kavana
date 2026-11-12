@@ -270,7 +270,7 @@ export default function ForgotPasswordPage() {
                     <div className="space-y-2">
                       <Label className="text-sm text-[hsl(var(--ctp-subtext1))]">Email</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[hsl(var(--ctp-overlay1))]" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-muted)]" />
                         <Input
                           type="email"
                           value={email}
@@ -369,7 +369,7 @@ export default function ForgotPasswordPage() {
                         <button
                           type="button"
                           onClick={() => setShowPw(!showPw)}
-                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--ctp-overlay1))] hover:text-[hsl(var(--ctp-text))] transition-colors"
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[hsl(var(--ctp-text))] transition-colors"
                         >
                           {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                         </button>

@@ -307,7 +307,7 @@ export default function KelolaPeriodePage() {
           </div>
           {periodes.length === 0 ? (
             <div className="py-12 text-center">
-              <CalendarDays className="mx-auto mb-3 h-10 w-10 text-[hsl(var(--ctp-overlay1))]" />
+              <CalendarDays className="mx-auto mb-3 h-10 w-10 text-[var(--text-muted)]" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada periode</p>
             </div>
           ) : (

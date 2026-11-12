@@ -161,7 +161,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
         {/* Nav Items */}
         <nav className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-3 py-4">
           {!collapsed && (
-            <div className="px-3 pb-2 text-[10px] font-medium uppercase tracking-widest text-[hsl(var(--ctp-overlay1))]">
+            <div className="px-3 pb-2 text-[10px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
               Menu
             </div>
           )}
@@ -175,7 +175,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
                 return (
                   <div key={item.id} data-testid={`sidebar-group-${item.id}`} className="pt-3 pb-1">
                     <div className="h-px bg-[hsl(var(--ctp-surface1))] mx-2 mb-2" />
-                    <div className="px-3 text-[10px] font-medium uppercase tracking-widest text-[hsl(var(--ctp-overlay1))]">
+                    <div className="px-3 text-[10px] font-medium uppercase tracking-widest text-[var(--text-muted)]">
                       {item.label}
                     </div>
                   </div>
@@ -224,7 +224,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
                   {Icon && (
                     <Icon className={cn(
                       "h-[18px] w-[18px] shrink-0",
-                      isActive ? "text-[hsl(var(--ctp-blue))]" : "text-[hsl(var(--ctp-overlay1))] group-hover:text-[hsl(var(--ctp-subtext1))]"
+                      isActive ? "text-[hsl(var(--ctp-blue))]" : "text-[var(--text-muted)] group-hover:text-[hsl(var(--ctp-subtext1))]"
                     )} />
                   )}
                   <span className="flex-1 min-w-0 truncate text-left" title={item.label}>{item.label}</span>
@@ -251,7 +251,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
             {!collapsed && (
               <div className="min-w-0 flex-1">
                 <p className="text-sm font-semibold text-[hsl(var(--ctp-text))] truncate" title={displayName}>{displayName}</p>
-                <p className="text-[10px] text-[hsl(var(--ctp-overlay1))] truncate" title={roleLabel}>{roleLabel}</p>
+                <p className="text-[10px] text-[var(--text-muted)] truncate" title={roleLabel}>{roleLabel}</p>
               </div>
             )}
           </div>
@@ -276,7 +276,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
                   href={item.href}
                   className="ctp-focus flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm text-[hsl(var(--ctp-subtext0))] transition-colors hover:bg-[hsl(var(--ctp-crust))] hover:text-[hsl(var(--ctp-text))]"
                 >
-                  <item.icon className="h-[18px] w-[18px] text-[hsl(var(--ctp-overlay1))]" />
+                  <item.icon className="h-[18px] w-[18px] text-[var(--text-muted)]" />
                   <span>{item.label}</span>
                 </Link>
               )

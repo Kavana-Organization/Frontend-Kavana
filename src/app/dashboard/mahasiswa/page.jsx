@@ -347,7 +347,7 @@ export default function MahasiswaDashboard() {
           <CardContent className="space-y-2">
             {bimbinganList.length === 0 ? (
               <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-6 text-center">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--ctp-overlay1))]" />
+                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
                 <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada sesi bimbingan</p>
               </div>
             ) : (
@@ -414,7 +414,7 @@ export default function MahasiswaDashboard() {
               </div>
             ) : (
               <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-6 text-center">
-                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--ctp-overlay1))]" />
+                <CalendarDays className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
                 <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{sidangStatus.label}</p>
                 <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">{sidangStatus.description}</p>
               </div>
@@ -531,7 +531,7 @@ export default function MahasiswaDashboard() {
           <CardContent className="space-y-3">
             {totalBimbingan === 0 ? (
               <div className="flex flex-col items-center justify-center h-[220px] text-center">
-                <FileText className="w-10 h-10 text-[hsl(var(--ctp-overlay1))] mb-3" />
+                <FileText className="w-10 h-10 text-[var(--text-muted)] mb-3" />
                 <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada data bimbingan</p>
               </div>
             ) : (

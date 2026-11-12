@@ -371,7 +371,7 @@ export default function RekapMahasiswaPage() {
         </CardHeader>
         <CardContent>
           {table.getRowModel().rows.length === 0 ? (
-            <div className="text-center py-12"><Users className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" /><p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada data</p></div>
+            <div className="text-center py-12"><Users className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" /><p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada data</p></div>
           ) : (
             <Table>
               <TableHeader>

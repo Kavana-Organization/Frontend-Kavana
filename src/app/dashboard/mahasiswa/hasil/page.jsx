@@ -92,7 +92,7 @@ export default function HasilPage() {
             <CardContent className="pt-6">
               <div className="flex items-center justify-between">
                 <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{item.title}</p>
-                {item.ok ? <CheckCircle2 className="h-4 w-4 text-[hsl(var(--ctp-green))]" /> : <Clock className="h-4 w-4 text-[hsl(var(--ctp-overlay1))]" />}
+                {item.ok ? <CheckCircle2 className="h-4 w-4 text-[hsl(var(--ctp-green))]" /> : <Clock className="h-4 w-4 text-[var(--text-muted)]" />}
               </div>
               <p className="text-sm font-medium text-[hsl(var(--ctp-text))] mt-1 capitalize">{item.sub}</p>
             </CardContent>

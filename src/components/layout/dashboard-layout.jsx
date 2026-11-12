@@ -530,7 +530,7 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                             {initials}
                           </span>
                           <span className="hidden sm:inline text-sm text-[hsl(var(--ctp-text))] font-medium">{displayName.split(' ')[0]}</span>
-                          <ChevronDown className="h-3.5 w-3.5 text-[hsl(var(--ctp-overlay1))]" />
+                          <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)]" />
                         </Button>
                       </DropdownMenuTrigger>
                       <DropdownMenuContent align="end" className="w-52 rounded-[24px] border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)] p-1 shadow-[0_24px_50px_-34px_hsl(var(--ctp-sapphire)/0.38)] backdrop-blur-xl">

@@ -189,7 +189,7 @@ export default function SettingsPage() {
                     type="button"
                     onClick={() => setShowOldPw(!showOldPw)}
                     aria-label={showOldPw ? 'Sembunyikan password lama' : 'Tampilkan password lama'}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--ctp-overlay1))] hover:text-[hsl(var(--ctp-text))] transition-colors"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[hsl(var(--ctp-text))] transition-colors"
                   >
                     {showOldPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                   </button>
@@ -212,7 +212,7 @@ export default function SettingsPage() {
                       type="button"
                       onClick={() => setShowNewPw(!showNewPw)}
                       aria-label={showNewPw ? 'Sembunyikan password baru' : 'Tampilkan password baru'}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--ctp-overlay1))] hover:text-[hsl(var(--ctp-text))] transition-colors"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] hover:text-[hsl(var(--ctp-text))] transition-colors"
                     >
                       {showNewPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>

@@ -463,7 +463,7 @@ export default function JadwalSidangPage() {
         <CardContent>
           {groupedJadwal.length === 0 ? (
             <div className="text-center py-12">
-              <CalendarClock className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+              <CalendarClock className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada jadwal sidang</p>
             </div>
           ) : (

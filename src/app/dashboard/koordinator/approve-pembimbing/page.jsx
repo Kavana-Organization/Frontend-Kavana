@@ -124,7 +124,7 @@ export default function ApprovePembimbingPage() {
         <CardContent>
           {needAssign.length === 0 ? (
             <div className="text-center py-12">
-              <UserCheck className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+              <UserCheck className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Semua mahasiswa sudah memiliki pembimbing</p>
             </div>
           ) : (

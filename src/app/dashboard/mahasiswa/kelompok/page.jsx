@@ -172,7 +172,7 @@ export default function KelompokPage() {
             </div>
           ) : (
             <div className="text-center py-8">
-              <Users className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+              <Users className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum tergabung dalam kelompok</p>
               <p className="text-xs text-[hsl(var(--ctp-subtext0))] mt-1">Buat baru atau gabung ke kelompok yang tersedia</p>
             </div>
@@ -221,7 +221,7 @@ export default function KelompokPage() {
             <CardContent>
               {available.length === 0 ? (
                 <div className="text-center py-6">
-                  <Search className="h-8 w-8 mx-auto text-[hsl(var(--ctp-overlay1))] mb-2" />
+                  <Search className="h-8 w-8 mx-auto text-[var(--text-muted)] mb-2" />
                   <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada kelompok tersedia</p>
                 </div>
               ) : (

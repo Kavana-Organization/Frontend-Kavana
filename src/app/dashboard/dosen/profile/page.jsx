@@ -182,7 +182,7 @@ export default function DosenProfilePage() {
               className={inputCls}
             />
             {editing ? (
-              <p className="text-[10px] text-[hsl(var(--ctp-overlay1))]">
+              <p className="text-[10px] text-[var(--text-muted)]">
                 NIK lengkap hanya disimpan di server. Pada halaman verifikasi publik, hanya versi tersembunyi yang ditampilkan.
               </p>
             ) : null}

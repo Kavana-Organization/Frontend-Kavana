@@ -104,7 +104,7 @@ export default async function VerifyBimbinganPage({ params }) {
               <DataRow label="Topik" value={data.bimbingan?.topik || '-'} />
             </Card>
 
-            <p className="text-center text-xs text-[hsl(var(--ctp-overlay1))]">
+            <p className="text-center text-xs text-[var(--text-muted)]">
               Verifikasi otomatis oleh Sistem Kavana — {formatDate(new Date().toISOString())}
             </p>
           </div>
@@ -152,7 +152,7 @@ function DataRow({ label, value, hint }) {
       <span className="text-sm font-medium text-[hsl(var(--ctp-text))] text-right">
         {value}
         {hint ? (
-          <span className="block text-[10px] font-normal text-[hsl(var(--ctp-overlay1))] mt-0.5">{hint}</span>
+          <span className="block text-[10px] font-normal text-[var(--text-muted)] mt-0.5">{hint}</span>
         ) : null}
       </span>
     </div>

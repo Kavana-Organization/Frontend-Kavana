@@ -133,7 +133,7 @@ export default function PengujiDashboardPage() {
         <CardContent>
           {sidang.length === 0 ? (
             <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-8 text-center">
-              <Users className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--ctp-overlay1))]" />
+              <Users className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada sidang untuk akun penguji ini.</p>
             </div>
           ) : (

@@ -243,7 +243,7 @@ export default function BimbinganApprovePage() {
         <CardContent>
           {filtered.length === 0 ? (
             <div className="text-center py-12">
-              <MessageSquare className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+              <MessageSquare className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada data</p>
             </div>
           ) : (
@@ -348,7 +348,7 @@ export default function BimbinganApprovePage() {
                   QR tidak tersedia
                 </div>
               )}
-              <p className="text-[10px] uppercase tracking-[0.14em] text-[hsl(var(--ctp-overlay1))]">
+              <p className="text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
                 Token: {String(qrModal.signature.token).slice(0, 8)}…
               </p>
             </div>

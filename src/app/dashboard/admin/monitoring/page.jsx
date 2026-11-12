@@ -118,7 +118,7 @@ export default function MonitoringSistemPage() {
           <CardContent>
             {activities.length === 0 ? (
               <div className="text-center py-12">
-                <Activity className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+                <Activity className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
                 <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada aktivitas</p>
               </div>
             ) : (
@@ -169,7 +169,7 @@ export default function MonitoringSistemPage() {
             <Shield className="h-4 w-4" /> Audit Logs
           </CardTitle>
           <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[hsl(var(--ctp-overlay1))]" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
             <Input
               placeholder="Cari action, target, user..."
               value={search}
@@ -181,7 +181,7 @@ export default function MonitoringSistemPage() {
         <CardContent>
           {filteredAuditLogs.length === 0 ? (
             <div className="text-center py-12">
-              <Shield className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+              <Shield className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada audit log</p>
             </div>
           ) : (

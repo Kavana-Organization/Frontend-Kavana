@@ -288,7 +288,7 @@ export default function KelolaUsersPage() {
         <CardContent>
           {filtered.length === 0 ? (
             <div className="text-center py-12">
-              <Shield className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+              <Shield className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada user</p>
             </div>
           ) : (
@@ -326,15 +326,15 @@ export default function KelolaUsersPage() {
 
                       <div className="grid grid-cols-1 gap-2 text-xs text-[hsl(var(--ctp-subtext0))] sm:grid-cols-3 xl:min-w-[420px]">
                         <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] px-3 py-2">
-                          <div className="text-[hsl(var(--ctp-overlay1))]">Identitas</div>
+                          <div className="text-[var(--text-muted)]">Identitas</div>
                           <div className="mt-1 font-medium text-[hsl(var(--ctp-text))]">{user.npm || user.nidn || '-'}</div>
                         </div>
                         <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] px-3 py-2">
-                          <div className="text-[hsl(var(--ctp-overlay1))]">No. WA</div>
+                          <div className="text-[var(--text-muted)]">No. WA</div>
                           <div className="mt-1 font-medium text-[hsl(var(--ctp-text))]">{user.no_wa || '-'}</div>
                         </div>
                         <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] px-3 py-2">
-                          <div className="text-[hsl(var(--ctp-overlay1))]">Angkatan</div>
+                          <div className="text-[var(--text-muted)]">Angkatan</div>
                           <div className="mt-1 font-medium text-[hsl(var(--ctp-text))]">{user.angkatan || '-'}</div>
                         </div>
                       </div>

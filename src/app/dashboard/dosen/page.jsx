@@ -117,7 +117,7 @@ export default function DosenDashboard() {
           <CardContent className="space-y-2">
             {mahasiswaList.length === 0 ? (
               <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] p-6 text-center">
-                <Users className="w-8 h-8 mx-auto mb-2 text-[hsl(var(--ctp-overlay1))]" />
+                <Users className="w-8 h-8 mx-auto mb-2 text-[var(--text-muted)]" />
                 <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada mahasiswa bimbingan</p>
               </div>
             ) : (

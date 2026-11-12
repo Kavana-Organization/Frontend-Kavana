@@ -342,7 +342,7 @@ export default function LoginPage() {
                     />
                     <button
                       type="button"
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[hsl(var(--ctp-overlay1))] transition-colors hover:text-[hsl(var(--ctp-subtext1))]"
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-muted)] transition-colors hover:text-[hsl(var(--ctp-subtext1))]"
                       aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                       onClick={() => setShowPassword((prev) => !prev)}
                     >
@@ -376,16 +376,16 @@ export default function LoginPage() {
                           className="flex min-h-[74px] items-center justify-center"
                         />
                         {!turnstileScriptLoaded ? (
-                          <p className="text-center text-xs text-[hsl(var(--ctp-overlay1))]">
+                          <p className="text-center text-xs text-[var(--text-muted)]">
                             Memuat captcha Cloudflare...
                           </p>
                         ) : null}
-                        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.14em] text-[hsl(var(--ctp-overlay1))]">
+                        <p className="mt-2 text-center text-[10px] uppercase tracking-[0.14em] text-[var(--text-muted)]">
                           Dilindungi oleh Cloudflare Turnstile
                         </p>
                       </>
                     ) : (
-                      <div className="flex items-center justify-center gap-2 py-3 text-xs text-[hsl(var(--ctp-overlay1))]">
+                      <div className="flex items-center justify-center gap-2 py-3 text-xs text-[var(--text-muted)]">
                         <ShieldCheck className="h-3.5 w-3.5" />
                         <span>
                           Captcha nonaktif — atur{' '}
@@ -425,7 +425,7 @@ export default function LoginPage() {
 
               <div className="my-6 flex items-center gap-3">
                 <div className="h-px flex-1 bg-[hsl(var(--ctp-surface1))]" />
-                <span className="text-xs font-medium uppercase tracking-[0.14em] text-[hsl(var(--ctp-overlay1))]">akun baru</span>
+                <span className="text-xs font-medium uppercase tracking-[0.14em] text-[var(--text-muted)]">akun baru</span>
                 <div className="h-px flex-1 bg-[hsl(var(--ctp-surface1))]" />
               </div>
 

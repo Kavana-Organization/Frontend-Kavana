@@ -136,7 +136,7 @@ export default function ValidasiProposalPage() {
         <CardContent>
           {filtered.length === 0 ? (
             <div className="text-center py-12">
-              <ClipboardCheck className="h-10 w-10 mx-auto text-[hsl(var(--ctp-overlay1))] mb-3" />
+              <ClipboardCheck className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
               <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada proposal</p>
             </div>
           ) : (
