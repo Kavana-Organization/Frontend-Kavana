@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useAuthStore } from '@/store/auth-store';
 import { authAPI } from '@/lib/api';
 import { ROLE_DASHBOARD_ROUTE } from '@/lib/constants';
+import { LoadingState } from '@/components/shared/loading-state';
 
 export function AuthGuard({ children, allowedRoles = [] }) {
   const router = useRouter();
@@ -49,7 +50,7 @@ export function AuthGuard({ children, allowedRoles = [] }) {
 
   // Don't render until auth check is done
   if (!token && typeof window !== 'undefined' && !sessionStorage.getItem('authToken')) {
-    return null;
+    return <LoadingState variant="dashboard" />;
   }
 
   return children;

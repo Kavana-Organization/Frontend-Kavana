@@ -2,7 +2,7 @@
 
 import { useCallback, useMemo, useState, useSyncExternalStore, useEffect } from 'react';
 import { usePathname, useRouter } from 'next/navigation';
-import { Bell, ChevronDown, Moon, Sun, User, Settings, LogOut, CalendarDays, Maximize2, Minimize2 } from 'lucide-react';
+import { Bell, ChevronDown, Moon, Sun, User, Settings, LogOut, Maximize2, Minimize2 } from 'lucide-react';
 import { useAuthStore } from '@/store/auth-store';
 import { DesktopSidebar, MobileSidebar } from '@/components/layout/sidebar';
 import { AuthGuard } from '@/components/auth/auth-guard';
@@ -84,7 +84,6 @@ function useFormattedDate() {
   );
 }
 
-const iconBtnCls = "ctp-focus h-10 w-10 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] transition-colors hover:bg-[hsl(var(--ctp-surface0))]";
 const LIVE_REFRESH_DEBOUNCE = 250;
 const NOTIFICATION_PREFIXES = ['/api/notifications'];
 
@@ -198,8 +197,11 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
   const pageTitle = useMemo(() => {
     const segments = pathname.split('/').filter(Boolean);
     const lastSegment = segments[segments.length - 1];
+    if (!lastSegment || lastSegment === currentRole || lastSegment === 'dashboard') {
+      return TITLE_MAP.dashboard || 'Ringkasan Kegiatan';
+    }
     return TITLE_MAP[lastSegment] || 'Dashboard';
-  }, [pathname]);
+  }, [pathname, currentRole]);
 
   const loadNotificationStats = useCallback(
     async ({ silent = false } = {}) => {
@@ -338,7 +340,7 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
 
   const handleLogout = async () => {
     await logout();
-    window.location.href = '/login';
+    router.push('/login');
   };
 
   const handleNotificationClick = async (item) => {
@@ -371,203 +373,187 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
           {/* Main Content */}
           <main className="min-w-0 flex-1 pb-10">
             {/* Top Navbar */}
-            <header className="sticky top-0 z-20 px-4 pt-4 lg:px-6 lg:pt-5">
-              <div className="soft-panel rounded-[30px] px-4 py-3 sm:px-5">
-                <div className="flex items-center gap-3">
-                  {/* Mobile hamburger */}
-                  <div className="lg:hidden">
-                    <MobileSidebar role={currentRole} notificationStats={notificationStats} />
-                  </div>
-
-                  {/* Page title + date */}
-                  <div className="min-w-0 flex-1">
-                    <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">
-                      {ROLE_LABEL[currentRole] || 'Dashboard'}
-                    </div>
-                    <div data-testid="dashboard-title" className="truncate text-lg font-black tracking-tight text-[hsl(var(--ctp-text))]">{pageTitle}</div>
-                    <div className="hidden text-sm text-[hsl(var(--ctp-subtext0))] md:block">
-                      Fokus pada pekerjaan yang masih menunggu tindak lanjut hari ini.
-                    </div>
-                  </div>
-
-                  {/* Date (desktop) */}
-                  {isHydrated && todayDate && (
-                    <div className="mr-1 hidden items-center gap-2 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.72)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))] xl:flex">
-                      <CalendarDays className="h-3.5 w-3.5 text-[hsl(var(--ctp-blue))]" />
-                      {todayDate}
-                    </div>
-                  )}
-
-                  {/* Action buttons */}
-                  <div className="flex items-center gap-1.5">
-                    {/* Theme toggle */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={iconBtnCls}
-                          onClick={() => setTheme(nextTheme)}
-                          aria-label="Toggle theme"
-                        >
-                          <ThemeIcon className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)] text-[hsl(var(--ctp-text))]">
-                        <p className="text-xs">Tema: {themeLabel}</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    {/* Fullscreen */}
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`${iconBtnCls} hidden md:inline-flex`}
-                          onClick={toggleFullscreen}
-                          aria-label="Toggle fullscreen"
-                        >
-                          {isFull
-                            ? <Minimize2 className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />
-                            : <Maximize2 className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />
-                          }
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent className="rounded-2xl border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)] text-[hsl(var(--ctp-text))]">
-                        <p className="text-xs">{isFull ? 'Exit Fullscreen' : 'Fullscreen'}</p>
-                      </TooltipContent>
-                    </Tooltip>
-
-                    {/* Notifications */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className={`${iconBtnCls} relative`}
-                          aria-label="Notifications"
-                        >
-                          <Bell className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />
-                          {totalNotifications > 0 && (
-                            <span className="absolute -top-1 -right-1 min-w-4 h-4 px-1 rounded-full bg-[hsl(var(--ctp-red))] text-[10px] font-bold text-white leading-4 text-center">
-                              {totalNotifications > 99 ? '99+' : totalNotifications}
-                            </span>
-                          )}
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent
-                        align="end"
-                        className="w-80 rounded-[24px] border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)] p-1 shadow-[0_24px_50px_-34px_hsl(var(--ctp-sapphire)/0.38)] backdrop-blur-xl"
-                      >
-                        <DropdownMenuLabel className="px-3 py-2 flex items-center justify-between">
-                          <span className="text-sm font-semibold text-[hsl(var(--ctp-text))]">Notifikasi</span>
-                          <span className="text-xs text-[hsl(var(--ctp-subtext0))]">{totalNotifications} belum selesai</span>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator className="bg-[hsl(var(--ctp-overlay0)/0.25)]" />
-
-                        {isNotificationLoading ? (
-                          <div className="px-3 py-4 text-sm text-[hsl(var(--ctp-subtext0))]">Memuat notifikasi...</div>
-                        ) : null}
-
-                        {!isNotificationLoading && notificationItems.length === 0 ? (
-                          <div className="px-3 py-4 text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada notifikasi baru.</div>
-                        ) : null}
-
-                        {!isNotificationLoading && notificationItems.map((item) => (
-                          <DropdownMenuItem
-                            key={item.key}
-                            className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface0)/0.50)] cursor-pointer"
-                            onClick={() => handleNotificationClick(item)}
-                          >
-                            <div className="flex w-full items-center justify-between gap-3">
-                              <span className="min-w-0">
-                                <span className="block line-clamp-1">{item.label}</span>
-                                {item.description ? (
-                                  <span className="mt-0.5 block line-clamp-2 text-xs text-[hsl(var(--ctp-subtext0))]">{item.description}</span>
-                                ) : null}
-                              </span>
-                              <span className="inline-flex items-center justify-center min-w-6 h-6 px-1.5 rounded-md bg-[hsl(var(--ctp-red)/0.15)] text-[hsl(var(--ctp-red))] text-xs font-semibold">
-                                {item.count}
-                              </span>
-                            </div>
-                          </DropdownMenuItem>
-                        ))}
-
-                        {notificationError ? (
-                          <>
-                            <DropdownMenuSeparator className="bg-[hsl(var(--ctp-overlay0)/0.25)]" />
-                            <div className="px-3 py-2 text-xs text-[hsl(var(--ctp-red))]">{notificationError}</div>
-                          </>
-                        ) : null}
-
-                        <DropdownMenuSeparator className="bg-[hsl(var(--ctp-overlay0)/0.25)]" />
-                        <DropdownMenuItem
-                          className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-subtext1))] focus:bg-[hsl(var(--ctp-surface0)/0.50)] cursor-pointer"
-                          onClick={() => loadNotificationStats()}
-                        >
-                          Muat ulang notifikasi
-                        </DropdownMenuItem>
-                        {notifications.length > 0 ? (
-                          <DropdownMenuItem
-                            className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-subtext1))] focus:bg-[hsl(var(--ctp-surface0)/0.50)] cursor-pointer"
-                            onClick={handleMarkAllNotificationsRead}
-                          >
-                            Tandai semua dibaca
-                          </DropdownMenuItem>
-                        ) : null}
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-
-                    {/* User dropdown */}
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          className="ctp-focus h-10 gap-2 rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base))] pl-1.5 pr-2 hover:bg-[hsl(var(--ctp-surface0))]"
-                        >
-                          <span className="grid h-6 w-6 shrink-0 place-items-center rounded-lg bg-[hsl(var(--ctp-blue)/0.1)] border border-[hsl(var(--ctp-blue)/0.2)] text-[10px] font-bold text-[hsl(var(--ctp-blue))]">
-                            {initials}
-                          </span>
-                          <span className="hidden sm:inline text-sm text-[hsl(var(--ctp-text))] font-medium">{displayName.split(' ')[0]}</span>
-                          <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)]" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end" className="w-52 rounded-[24px] border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.96)] p-1 shadow-[0_24px_50px_-34px_hsl(var(--ctp-sapphire)/0.38)] backdrop-blur-xl">
-                        <DropdownMenuLabel className="px-3 py-2">
-                          <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{displayName}</p>
-                          <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{ROLE_LABEL[currentRole] || 'User'}</p>
-                        </DropdownMenuLabel>
-                        <DropdownMenuSeparator className="bg-[hsl(var(--ctp-overlay0)/0.25)]" />
-                        <DropdownMenuItem
-                          className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface0)/0.50)] cursor-pointer gap-2"
-                          onClick={() => router.push('/dashboard/profile')}
-                        >
-                          <User className="h-4 w-4 text-[hsl(var(--ctp-subtext0))]" /> Profil Saya
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                          className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface0)/0.50)] cursor-pointer gap-2"
-                          onClick={() => router.push('/dashboard/settings')}
-                        >
-                          <Settings className="h-4 w-4 text-[hsl(var(--ctp-subtext0))]" /> Pengaturan
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator className="bg-[hsl(var(--ctp-overlay0)/0.25)]" />
-                        <DropdownMenuItem
-                          className="rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-red))] focus:bg-[hsl(var(--ctp-red)/0.12)] cursor-pointer gap-2"
-                          onClick={handleLogout}
-                        >
-                          <LogOut className="h-4 w-4" /> Keluar
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
+            <header className="sticky top-0 z-20 flex h-14 w-full items-center justify-between border-b border-[var(--line)] bg-[var(--surface-raised)] px-4 lg:px-6">
+              {/* Left: Mobile Sheet Trigger + Breadcrumb */}
+              <div className="flex min-w-0 items-center gap-3">
+                <div className="lg:hidden">
+                  <MobileSidebar role={currentRole} notificationStats={notificationStats} />
                 </div>
+                <nav aria-label="Breadcrumb" className="flex min-w-0 items-center gap-2 text-sm">
+                  <span className="text-[var(--text-muted)]">{ROLE_LABEL[currentRole] || 'Dashboard'}</span>
+                  <span aria-hidden="true" className="text-[var(--text-muted)]">/</span>
+                  <span data-testid="dashboard-title" className="truncate font-medium text-[var(--text-strong)]">{pageTitle}</span>
+                </nav>
+              </div>
+
+              {/* Right: Date (plain muted text at xl), Notifications bell (44px target), Theme toggle, User menu */}
+              <div className="flex items-center gap-2">
+                {isHydrated && todayDate && (
+                  <span className="mr-1 hidden text-xs text-[var(--text-muted)] tabular-nums xl:block">
+                    {todayDate}
+                  </span>
+                )}
+
+                {/* Notifications */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ctp-focus relative h-11 w-11 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] hover:bg-[var(--surface-sunken)]"
+                      aria-label="Notifications"
+                    >
+                      <Bell className="h-4 w-4 text-[var(--text-muted)]" />
+                      {totalNotifications > 0 && (
+                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[hsl(var(--ctp-red))] px-1 text-[10px] font-bold text-white leading-none">
+                          {totalNotifications > 99 ? '99+' : totalNotifications}
+                        </span>
+                      )}
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="end"
+                    className="w-80 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-1 shadow-overlay"
+                  >
+                    <DropdownMenuLabel className="flex items-center justify-between px-3 py-2">
+                      <span className="text-sm font-semibold text-[var(--text-strong)]">Notifikasi</span>
+                      <span className="text-xs text-[var(--text-muted)]">{totalNotifications} belum selesai</span>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-[var(--line)]" />
+
+                    {isNotificationLoading ? (
+                      <div role="status" aria-live="polite" className="px-3 py-4 text-sm text-[var(--text-muted)]">Memuat notifikasi...</div>
+                    ) : null}
+
+                    {!isNotificationLoading && notificationItems.length === 0 ? (
+                      <div className="px-3 py-4 text-sm text-[var(--text-muted)]">Tidak ada notifikasi baru.</div>
+                    ) : null}
+
+                    {!isNotificationLoading && notificationItems.map((item) => (
+                      <DropdownMenuItem
+                        key={item.key}
+                        className="cursor-pointer rounded-lg px-3 py-2 text-sm text-[var(--text-strong)] focus:bg-[hsl(var(--ctp-surface0)/0.50)]"
+                        onClick={() => handleNotificationClick(item)}
+                      >
+                        <div className="flex w-full items-center justify-between gap-3">
+                          <span className="min-w-0">
+                            <span className="block line-clamp-1">{item.label}</span>
+                            {item.description ? (
+                              <span className="mt-0.5 block line-clamp-2 text-xs text-[var(--text-muted)]">{item.description}</span>
+                            ) : null}
+                          </span>
+                          <span className="inline-flex h-6 min-w-6 items-center justify-center rounded-md bg-[hsl(var(--ctp-red)/0.15)] px-1.5 text-xs font-semibold text-[hsl(var(--ctp-red))]">
+                            {item.count}
+                          </span>
+                        </div>
+                      </DropdownMenuItem>
+                    ))}
+
+                    {notificationError ? (
+                      <>
+                        <DropdownMenuSeparator className="bg-[var(--line)]" />
+                        <div role="alert" aria-live="polite" className="px-3 py-2 text-xs text-[hsl(var(--ctp-red))]">{notificationError}</div>
+                      </>
+                    ) : null}
+
+                    <DropdownMenuSeparator className="bg-[var(--line)]" />
+                    <DropdownMenuItem
+                      className="cursor-pointer rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] focus:bg-[hsl(var(--ctp-surface0)/0.50)]"
+                      onClick={() => loadNotificationStats()}
+                    >
+                      Muat ulang notifikasi
+                    </DropdownMenuItem>
+                    {notifications.length > 0 ? (
+                      <DropdownMenuItem
+                        className="cursor-pointer rounded-lg px-3 py-2 text-sm text-[var(--text-muted)] focus:bg-[hsl(var(--ctp-surface0)/0.50)]"
+                        onClick={handleMarkAllNotificationsRead}
+                      >
+                        Tandai semua dibaca
+                      </DropdownMenuItem>
+                    ) : null}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Theme toggle */}
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="ctp-focus h-11 w-11 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] hover:bg-[var(--surface-sunken)]"
+                      onClick={() => setTheme(nextTheme)}
+                      aria-label="Toggle theme"
+                    >
+                      <ThemeIcon className="h-4 w-4 text-[var(--text-muted)]" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] text-[var(--text-strong)] shadow-overlay">
+                    <p className="text-xs">Tema: {themeLabel}</p>
+                  </TooltipContent>
+                </Tooltip>
+
+                {/* User dropdown */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      aria-label="Menu pengguna"
+                      className="ctp-focus h-11 gap-2 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] pl-2 pr-3 hover:bg-[var(--surface-sunken)]"
+                    >
+                      <span className="grid h-7 w-7 shrink-0 place-items-center rounded-lg border border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-blue)/0.12)] text-xs font-bold text-[hsl(var(--ctp-blue))]">
+                        {initials}
+                      </span>
+                      <span className="hidden text-sm font-medium text-[var(--text-strong)] sm:inline">{displayName.split(' ')[0]}</span>
+                      <ChevronDown className="h-3.5 w-3.5 text-[var(--text-muted)]" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-56 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-1 shadow-overlay">
+                    <DropdownMenuLabel className="px-3 py-2">
+                      <p className="text-sm font-semibold text-[var(--text-strong)]">{displayName}</p>
+                      <p className="text-xs text-[var(--text-muted)]">{ROLE_LABEL[currentRole] || 'User'}</p>
+                    </DropdownMenuLabel>
+                    <DropdownMenuSeparator className="bg-[var(--line)]" />
+                    <DropdownMenuItem
+                      className="cursor-pointer gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-strong)] focus:bg-[hsl(var(--ctp-surface0)/0.50)]"
+                      onClick={() => router.push('/dashboard/profile')}
+                    >
+                      <User className="h-4 w-4 text-[var(--text-muted)]" /> Profil Saya
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-strong)] focus:bg-[hsl(var(--ctp-surface0)/0.50)]"
+                      onClick={() => router.push('/dashboard/settings')}
+                    >
+                      <Settings className="h-4 w-4 text-[var(--text-muted)]" /> Pengaturan
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="cursor-pointer gap-2 rounded-lg px-3 py-2 text-sm text-[var(--text-strong)] focus:bg-[hsl(var(--ctp-surface0)/0.50)]"
+                      onClick={toggleFullscreen}
+                    >
+                      {isFull ? (
+                        <>
+                          <Minimize2 className="h-4 w-4 text-[var(--text-muted)]" /> Keluar Layar Penuh
+                        </>
+                      ) : (
+                        <>
+                          <Maximize2 className="h-4 w-4 text-[var(--text-muted)]" /> Layar Penuh
+                        </>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator className="bg-[var(--line)]" />
+                    <DropdownMenuItem
+                      className="cursor-pointer gap-2 rounded-lg px-3 py-2 text-sm text-[hsl(var(--ctp-red))] focus:bg-[hsl(var(--ctp-red)/0.12)]"
+                      onClick={handleLogout}
+                    >
+                      <LogOut className="h-4 w-4" /> Keluar
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
               </div>
             </header>
 
             {/* Page Content */}
-            <div className="px-4 pt-5 lg:px-6">
-              <div key={`${pathname}:${refreshVersion}`}>
+            <div className="mx-auto max-w-[1280px] px-4 py-6 lg:px-6">
+              <div key={`${pathname}:${refreshVersion}`} className="space-y-6">
                 {children}
               </div>
             </div>
