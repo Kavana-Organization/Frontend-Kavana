@@ -298,7 +298,7 @@ export default function BimbinganPage() {
         <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-4">
           {editIdx >= 0 ? `Edit Bimbingan ke-${editIdx + 1}` : `Tambah Bimbingan ke-${nextSessionNumber}`}
         </h3>
-        <div className="space-y-3">
+        <div data-testid="bimbingan-form" className="space-y-3">
           <div>
             <Label className="text-[hsl(var(--ctp-subtext1))]">Tanggal</Label>
             <Input type="date" min={bimbinganStartDate || undefined} max={bimbinganEndDate || undefined} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />

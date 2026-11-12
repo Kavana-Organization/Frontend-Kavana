@@ -299,6 +299,7 @@ export default function LoginPage() {
                   <Label htmlFor="identifier" className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">Email atau NPM</Label>
                   <Input
                     id="identifier"
+                    data-testid="login-email"
                     type="text"
                     placeholder="contoh@email.com atau 1234567890"
                     {...register('identifier', {
@@ -326,6 +327,7 @@ export default function LoginPage() {
                   <div className="relative">
                     <Input
                       id="password"
+                      data-testid="login-password"
                       type={showPassword ? 'text' : 'password'}
                       placeholder="Masukkan password"
                       {...register('password', {
@@ -402,6 +404,7 @@ export default function LoginPage() {
 
                 <Button
                   type="submit"
+                  data-testid="login-submit"
                   className="h-12 w-full text-base"
                   size="lg"
                   disabled={loading || (TURNSTILE_SITE_KEY && !turnstileToken)}

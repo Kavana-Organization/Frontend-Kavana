@@ -535,7 +535,7 @@ export default function JadwalSidangPage() {
 
       <DashboardDialog open={showModal} onOpenChange={setShowModal} title="Jadwalkan Sidang">
         <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-4">Jadwalkan Sidang</h3>
-        <form onSubmit={handleSchedule} className="space-y-3">
+        <form data-testid="jadwal-sidang-form" onSubmit={handleSchedule} className="space-y-3">
           <div>
             <Label className="text-[hsl(var(--ctp-subtext1))]">Mahasiswa / Kelompok</Label>
             <Select

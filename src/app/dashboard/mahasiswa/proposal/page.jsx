@@ -256,7 +256,7 @@ export default function ProposalPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form data-testid="proposal-form" onSubmit={handleSubmit} className="space-y-4">
             {anggotaProposal.map((anggota, index) => (
               <div key={`${anggota.npm || anggota.nama || 'anggota'}-${index}`} className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div className="space-y-2">

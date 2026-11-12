@@ -7,7 +7,7 @@ export function PageHeader({ title, subtitle, children, className }) {
         <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">
           Ringkasan Halaman
         </p>
-        <h1 className="text-2xl font-black leading-tight tracking-tight text-[hsl(var(--ctp-text))] sm:text-3xl">
+        <h1 data-testid="dashboard-title" className="text-2xl font-black leading-tight tracking-tight text-[hsl(var(--ctp-text))] sm:text-3xl">
           {title}
         </h1>
         {subtitle && (

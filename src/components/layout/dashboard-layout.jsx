@@ -384,7 +384,7 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                     <div className="text-[11px] font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">
                       {ROLE_LABEL[currentRole] || 'Dashboard'}
                     </div>
-                    <div className="truncate text-lg font-black tracking-tight text-[hsl(var(--ctp-text))]">{pageTitle}</div>
+                    <div data-testid="dashboard-title" className="truncate text-lg font-black tracking-tight text-[hsl(var(--ctp-text))]">{pageTitle}</div>
                     <div className="hidden text-sm text-[hsl(var(--ctp-subtext0))] md:block">
                       Fokus pada pekerjaan yang masih menunggu tindak lanjut hari ini.
                     </div>

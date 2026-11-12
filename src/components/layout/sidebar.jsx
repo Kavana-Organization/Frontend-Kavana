@@ -170,10 +170,10 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
               // Separator
               if (item.id.startsWith('separator')) {
                 if (collapsed) {
-                  return <div key={item.id} className="w-6 h-px bg-[hsl(var(--ctp-surface1))] my-2" />;
+                  return <div key={item.id} data-testid={`sidebar-group-${item.id}`} className="w-6 h-px bg-[hsl(var(--ctp-surface1))] my-2" />;
                 }
                 return (
-                  <div key={item.id} className="pt-3 pb-1">
+                  <div key={item.id} data-testid={`sidebar-group-${item.id}`} className="pt-3 pb-1">
                     <div className="h-px bg-[hsl(var(--ctp-surface1))] mx-2 mb-2" />
                     <div className="px-3 text-[10px] font-medium uppercase tracking-widest text-[hsl(var(--ctp-overlay1))]">
                       {item.label}
@@ -192,6 +192,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
                   <Link
                     key={item.id}
                     href={href}
+                    data-testid={`sidebar-link-${item.id}`}
                     onClick={() => onItemClick?.()}
                     title={item.label}
                     className={cn(
@@ -211,6 +212,7 @@ function SidebarContent({ role, collapsed, onToggle, onItemClick }) {
                 <Link
                   key={item.id}
                   href={href}
+                  data-testid={`sidebar-link-${item.id}`}
                   onClick={() => onItemClick?.()}
                   className={cn(
                     'ctp-focus group flex w-full items-center gap-3 rounded-2xl px-3 py-2.5 text-sm transition-colors',

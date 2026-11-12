@@ -3,6 +3,7 @@ require('dotenv').config();
 
 const FRONTEND_URL = process.env.FRONTEND_URL || 'https://kavana.my.id';
 const isCI = Boolean(process.env.CI);
+const isLocal = FRONTEND_URL.includes('localhost') || FRONTEND_URL.includes('127.0.0.1');
 
 module.exports = defineConfig({
   testDir: './tests',
@@ -29,7 +30,22 @@ module.exports = defineConfig({
     trace: 'on-first-retry',
   },
 
+  webServer: isLocal
+    ? {
+        command: 'npm run dev',
+        url: FRONTEND_URL,
+        reuseExistingServer: true,
+        timeout: 120 * 1000,
+      }
+    : undefined,
+
   projects: [
+    // Unit tests
+    {
+      name: 'unit',
+      testMatch: ['unit/**/*.spec.js'],
+    },
+
     // Test API tidak butuh browser: cukup jalan sekali, bukan 3x.
     {
       name: 'api',
