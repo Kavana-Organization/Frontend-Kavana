@@ -92,44 +92,59 @@ Snapshot storage: `tests/ui/visual-baseline.spec.js-snapshots/`
 
 ---
 
-## 4. Known Failures Reference
+## 4. Known Failures Reference (49 Known Failures by Title)
 
-From the QA comprehensive suite baseline (`QA_REPORT.md` / `kavana-ui-redesign-plan.md` §1), 49 known failures exist prior to this redesign across the full multi-browser suite:
+Per QA comprehensive baseline (`QA_REPORT.md` / `kavana-ui-redesign-plan.md` §1), 49 known failures exist prior to this redesign across the test suite projects. Acceptance criterion across all redesign tasks is **no new failures against this baseline**.
 
-### Known Failure Categories and Titles
-1. **Mobile Viewport & Responsiveness Failures**
-   - `Login page has developer device section` (collapsed/hidden on mobile)
-   - `Register page renders all fields` (viewport overflow on mobile)
-   - `Responsive UI: mahasiswa dashboard and forms stay usable on configured viewport`
-   - `Responsive UI: login page stays usable on configured viewport`
-   - `Responsive UI: public landing page does not overflow on configured viewport`
-   - Mobile touch targets < 44px on compact navigation
-   - Mobile sidebar drawer overlay collision on narrow viewports (320px–375px)
-   - Academic table card stacking overflow on mobile
-
-2. **RBAC & Authorization Bypass Issues**
-   - `Admin cannot access /api/dosen/profile` (backend returns 200 instead of 403)
-   - `Admin cannot access /api/dosen/bimbingan` (backend returns 200 instead of 403)
-   - `Admin cannot access /api/developer/health` (backend returns 200 instead of 403)
-   - `dosen cannot access admin endpoint with valid test token`
-   - Admin management mutations cross-role leakage
-   - Developer device lock bypass on unauthenticated headers
-
-3. **Backend Cold-Start & Swagger Timeouts**
-   - `GET /docs returns Swagger UI` (Cloud Functions cold-start > 10s timeout)
-   - `GET / returns API OK message` (503 / timeout when functions cold)
-   - `GET /ping returns pong`
-   - `GET /live returns liveness status`
-   - POST to a GET-only endpoint returns 404 or 405
-
-4. **Authentication & Session Failures Under Offline / Staging 503**
-   - `admin dapat membuka seluruh subhalaman manajemen`
-   - `dosen login, membuka dashboard, lalu logout kembali ke login`
-   - `Developer device enrollment`
-   - `admin can access system management dashboard` (desktop & mobile)
-   - `dosen can open dashboard and see supervision context` (desktop & mobile)
-   - `register page exposes expected registration fields when available` (desktop & mobile)
-   - `register form handles invalid email format without creating account`
+1. `[e2e-desktop]` `tests/academic-flow/admin-management.spec.js` › Admin management › admin dapat membuka seluruh subhalaman manajemen
+2. `[e2e-desktop]` `tests/e2e/full-flow.spec.js` › Full flow › dosen login, membuka dashboard, lalu logout kembali ke login
+3. `[e2e-desktop]` `tests/qa-comprehensive/auth-all-roles.spec.js` › Auth all roles › Developer device enrollment
+4. `[e2e-desktop]` `tests/qa-comprehensive/error-handling.spec.js` › Error handling › POST to a GET-only endpoint returns 404 or 405
+5. `[e2e-desktop]` `tests/qa-comprehensive/frontend-pages.spec.js` › Frontend pages › Login page has developer device section
+6. `[e2e-desktop]` `tests/qa-comprehensive/frontend-pages.spec.js` › Frontend pages › Register page renders all fields
+7. `[e2e-desktop]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET / returns API OK message
+8. `[e2e-desktop]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET /ping returns pong
+9. `[e2e-desktop]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET /live returns liveness status
+10. `[e2e-desktop]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET /docs returns Swagger UI
+11. `[e2e-desktop]` `tests/security-basic/rbac.spec.js` › RBAC basic › dosen cannot access admin endpoint with valid test token
+12. `[e2e-desktop]` `tests/security-basic/validation.spec.js` › Validation basic › register form handles invalid email format without creating account
+13. `[e2e-desktop]` `tests/ui/admin-dashboard.spec.js` › Admin dashboard › admin can access system management dashboard
+14. `[e2e-mobile]` `tests/ui/admin-dashboard.spec.js` › Admin dashboard › admin can access system management dashboard
+15. `[e2e-desktop]` `tests/ui/auth.spec.js` › Authentication UI › register page exposes expected registration fields when available
+16. `[e2e-mobile]` `tests/ui/auth.spec.js` › Authentication UI › register page exposes expected registration fields when available
+17. `[e2e-desktop]` `tests/ui/dosen-dashboard.spec.js` › Dosen dashboard › dosen can open dashboard and see supervision context
+18. `[e2e-mobile]` `tests/ui/dosen-dashboard.spec.js` › Dosen dashboard › dosen can open dashboard and see supervision context
+19. `[api]` `tests/qa-comprehensive/rbac-cross-role.spec.js` › RBAC cross-role › Admin cannot access /api/dosen/profile
+20. `[api]` `tests/qa-comprehensive/rbac-cross-role.spec.js` › RBAC cross-role › Admin cannot access /api/dosen/bimbingan
+21. `[api]` `tests/qa-comprehensive/rbac-cross-role.spec.js` › RBAC cross-role › Admin cannot access /api/developer/health
+22. `[e2e-desktop]` `tests/qa-comprehensive/rbac-cross-role.spec.js` › RBAC cross-role › Admin cannot access /api/dosen/profile
+23. `[e2e-desktop]` `tests/qa-comprehensive/rbac-cross-role.spec.js` › RBAC cross-role › Admin cannot access /api/dosen/bimbingan
+24. `[e2e-desktop]` `tests/qa-comprehensive/rbac-cross-role.spec.js` › RBAC cross-role › Admin cannot access /api/developer/health
+25. `[api]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET /docs returns Swagger UI
+26. `[api]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET / returns API OK message
+27. `[api]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET /live returns liveness status
+28. `[api]` `tests/qa-comprehensive/health-api.spec.js` › Health API › GET /ping returns pong
+29. `[e2e-mobile]` `tests/qa-comprehensive/frontend-pages.spec.js` › Frontend pages › Login page has developer device section
+30. `[e2e-mobile]` `tests/qa-comprehensive/frontend-pages.spec.js` › Frontend pages › Register page renders all fields
+31. `[e2e-mobile]` `tests/ui/responsive.spec.js` › Responsive UI › mahasiswa dashboard and forms stay usable on configured viewport
+32. `[e2e-mobile]` `tests/ui/responsive.spec.js` › Responsive UI › login page stays usable on configured viewport
+33. `[e2e-mobile]` `tests/ui/responsive.spec.js` › Responsive UI › public landing page does not overflow on configured viewport
+34. `[e2e-mobile]` `tests/ui/auth.spec.js` › Authentication UI › empty login submit stays on login and shows validation or error state
+35. `[e2e-mobile]` `tests/ui/auth.spec.js` › Authentication UI › invalid email format cannot pass login flow
+36. `[e2e-mobile]` `tests/ui/auth.spec.js` › Authentication UI › register rejects empty required fields without creating production data
+37. `[e2e-mobile]` `tests/ui/forgot-password.spec.js` › Forgot password › halaman lupa password terbuka dan menampilkan form email
+38. `[e2e-mobile]` `tests/ui/forgot-password.spec.js` › Forgot password › email tidak valid tidak memicu permintaan OTP
+39. `[e2e-mobile]` `tests/ui/forgot-password.spec.js` › Forgot password › email tidak terdaftar tidak lolos ke step OTP
+40. `[e2e-mobile]` `tests/ui/forgot-password.spec.js` › Forgot password › tautan kembali ke login berfungsi
+41. `[e2e-mobile]` `tests/ui/forgot-password.spec.js` › Forgot password › login page menyediakan tautan lupa password
+42. `[e2e-mobile]` `tests/ui/kaprodi-dashboard.spec.js` › Kaprodi dashboard › kaprodi can access monitoring and coordinator-level menus
+43. `[e2e-mobile]` `tests/ui/koordinator-dashboard.spec.js` › Koordinator dashboard › koordinator can access coordinator menus
+44. `[e2e-mobile]` `tests/ui/mahasiswa-dashboard.spec.js` › Mahasiswa dashboard › mahasiswa dashboard shows core academic widgets
+45. `[e2e-mobile]` `tests/ui/penguji-dashboard.spec.js` › Penguji dashboard › penguji dapat membuka seluruh subhalaman bimbingan dan sidang
+46. `[e2e-mobile]` `tests/security-basic/validation.spec.js` › Validation basic › register form handles invalid email format without creating account
+47. `[api]` `tests/qa-comprehensive/security-checks.spec.js` › Security checks › Developer device lock rejects unauthorized device
+48. `[e2e-desktop]` `tests/qa-comprehensive/security-checks.spec.js` › Security checks › Developer device lock rejects unauthorized device
+49. `[api]` `tests/security-basic/rbac.spec.js` › RBAC basic › dosen cannot access admin endpoint with valid test token
 
 Acceptance criterion across all redesign tasks: **No new failures against this baseline**.
 

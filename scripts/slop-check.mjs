@@ -46,6 +46,16 @@ function main() {
   const args = process.argv.slice(2);
   const allowNonZero = args.includes('--baseline') || args.includes('--report');
 
+  let maxHits = null;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    if (arg.startsWith('--max-hits=')) {
+      maxHits = parseInt(arg.split('=')[1], 10);
+    } else if (arg === '--max-hits' && args[i + 1]) {
+      maxHits = parseInt(args[i + 1], 10);
+    }
+  }
+
   const srcDir = path.resolve('src');
   if (!fs.existsSync(srcDir)) {
     console.error('Directory src/ not found.');
@@ -110,6 +120,16 @@ function main() {
       for (const m of item.matches) {
         console.log(`    L${m.line} [${m.pattern}]: ${m.snippet}`);
       }
+    }
+  }
+
+  if (maxHits !== null) {
+    if (totalHits > maxHits) {
+      console.error(`\n[slop-check] FAILED: Found ${totalHits} slop pattern hits in src/ (exceeds threshold of ${maxHits})`);
+      process.exit(1);
+    } else {
+      console.log(`\n[slop-check] PASSED: Found ${totalHits} slop pattern hits in src/ (within threshold of ${maxHits}).`);
+      process.exit(0);
     }
   }
 
