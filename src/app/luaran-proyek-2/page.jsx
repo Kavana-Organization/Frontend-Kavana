@@ -19,68 +19,68 @@ export default function LuaranProyekDuaPage() {
       subtitle={project.summary}
       updatedLabel="8 Mei 2026"
     >
-      <article>
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-blue))]">
+      <article className="space-y-3">
+        <p className="text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
           Fokus Tahap Kedua
         </p>
-        <h2 className="mt-2 text-2xl font-black tracking-tight text-[hsl(var(--ctp-text))]">
+        <h2 className="text-xl font-bold tracking-tight text-[var(--text-strong)]">
           Luaran Proyek 2 menekankan aplikasi CRUD RDBMS yang dapat diuji dan artefak riset yang lengkap.
         </h2>
-        <p className="mt-4 max-w-3xl text-sm leading-8 text-[hsl(var(--ctp-subtext1))]">
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
           Paket luaran ini memosisikan aplikasi sebagai bukti implementasi teknis utama, sementara
           draft jurnal, laporan bermetodologi riset, dan poster menjadi pendukung akademik untuk
           menjelaskan masalah, pendekatan, hasil, serta evaluasi proyek.
         </p>
       </article>
 
-      <div className="grid gap-4 md:grid-cols-2">
+      <div className="grid gap-4 sm:grid-cols-2">
         {project.deliverables.map((item, index) => {
           const Icon = OUTPUT_ICONS[index] || CheckCircle2;
 
           return (
             <article
               key={item.title}
-              className="rounded-[28px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-crust)/0.62)] p-5 shadow-[0_18px_40px_-34px_hsl(var(--ctp-sapphire)/0.35)]"
+              className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-5"
             >
               <div className="flex items-start justify-between gap-3">
-                <span className="inline-flex h-12 w-12 items-center justify-center rounded-2xl bg-[hsl(var(--ctp-blue)/0.1)] text-[hsl(var(--ctp-blue))]">
+                <span className="inline-flex h-10 w-10 items-center justify-center rounded-lg bg-[var(--surface-sunken)] text-[var(--accent)]">
                   <Icon className="h-5 w-5" />
                 </span>
-                <Badge className="rounded-full border border-[hsl(var(--ctp-green)/0.25)] bg-[hsl(var(--ctp-green)/0.12)] px-3 py-1 text-[11px] font-semibold text-[hsl(var(--ctp-green))]">
+                <Badge variant="outline" className="border-[var(--line)] text-xs font-medium">
                   {item.status}
                 </Badge>
               </div>
 
-              <h3 className="mt-5 text-lg font-bold text-[hsl(var(--ctp-text))]">{item.title}</h3>
-              <p className="mt-3 text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">{item.description}</p>
+              <h3 className="mt-4 text-base font-bold text-[var(--text-strong)]">{item.title}</h3>
+              <p className="mt-2 text-sm leading-relaxed text-[var(--text-muted)]">{item.description}</p>
             </article>
           );
         })}
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <article className="rounded-[28px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.76)] p-6">
-          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">
+      <div className="grid gap-6 md:grid-cols-[1.1fr_0.9fr]">
+        <article className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-5">
+          <p className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             <BarChart3 className="h-4 w-4" />
             Cakupan Luaran
           </p>
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 space-y-2.5">
             {project.implementedScope.map((item) => (
-              <li key={item} className="flex items-start gap-3 text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
-                <CheckCircle2 className="mt-1 h-4 w-4 text-[hsl(var(--ctp-green))]" />
+              <li key={item} className="flex items-start gap-2.5 text-sm leading-relaxed text-[var(--text-body)]">
+                <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-[var(--accent)]" />
                 <span>{item}</span>
               </li>
             ))}
           </ul>
         </article>
 
-        <article className="rounded-[28px] border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.76)] p-6">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">
+        <article className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-5">
+          <p className="text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
             Catatan Akademik
           </p>
-          <ul className="mt-4 space-y-3">
+          <ul className="mt-4 space-y-2.5">
             {project.academicNotes.map((item) => (
-              <li key={item} className="text-sm leading-7 text-[hsl(var(--ctp-subtext1))]">
+              <li key={item} className="text-sm leading-relaxed text-[var(--text-body)]">
                 {item}
               </li>
             ))}

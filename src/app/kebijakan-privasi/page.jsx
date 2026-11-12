@@ -9,30 +9,41 @@ export default function KebijakanPrivasiPage() {
   return (
     <ResourcePageShell
       title="Kebijakan Privasi"
-      subtitle="Dokumen ini menjelaskan prinsip pengelolaan data pengguna dalam platform Kavana."
+      subtitle="Prinsip pengelolaan, kerahasiaan, dan perlindungan data sivitas akademika pada sistem Kavana."
       updatedLabel="26 Februari 2026"
     >
-      <article>
-        <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">Data yang Dikumpulkan</h2>
-        <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
-          Kavana menyimpan data identitas akademik dasar seperti nama, email institusi, role pengguna,
-          serta aktivitas akademik yang berkaitan langsung dengan proses bimbingan.
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">1. Data yang Dikumpulkan</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Kavana menyimpan informasi identitas akademik resmi seperti nama lengkap, Nomor Pokok Mahasiswa (NPM)
+          atau Nomor Induk Dosen Nasional (NIDN), alamat email institusi, rekam jejak bimbingan, naskah proposal,
+          serta berkas luaran akademik yang diunggah selama proses perkuliahan berlangsung.
         </p>
       </article>
 
-      <article>
-        <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">Tujuan Penggunaan Data</h2>
-        <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
-          Data digunakan untuk menjalankan proses akademik: validasi proposal, pencatatan bimbingan,
-          monitoring progres, dan administrasi sidang sesuai kebijakan program studi.
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">2. Tujuan Penggunaan Data</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Data yang tersimpan digunakan semata-mata untuk memfasilitasi administrasi bimbingan, validasi kelayakan proposal,
+          monitoring evaluasi dosen pembimbing, penyusunan berita acara sidang, dan pengarsipan luaran akademik sesuai
+          kebijakan Program Studi D4 Teknik Informatika ULBI.
         </p>
       </article>
 
-      <article>
-        <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">Keamanan dan Akses</h2>
-        <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
-          Akses data dibatasi berdasarkan role. Perubahan atau distribusi data di luar kebutuhan akademik
-          tidak diperbolehkan tanpa persetujuan resmi pengelola prodi.
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">3. Keamanan dan Pembatasan Hak Akses</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Akses terhadap data operasional dibatasi secara ketat berdasarkan peran pengguna (Role-Based Access Control).
+          Data bimbingan dan proposal mahasiswa hanya dapat diakses oleh mahasiswa bersangkutan, dosen pembimbing yang ditugaskan,
+          dewan penguji, koordinator, dan pimpinan program studi.
+        </p>
+      </article>
+
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">4. Penyimpanan dan Retensi Data</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Seluruh rekaman bimbingan dan berkas akademik disimpan dalam basis data institusi untuk kepentingan akreditasi
+          dan arsip akademik universitas selama masa retensi yang ditetapkan oleh peraturan institusi.
         </p>
       </article>
     </ResourcePageShell>

@@ -15,22 +15,27 @@ const FAQ_ITEMS = [
   {
     question: 'Apakah mahasiswa wajib memilih track sebelum mengajukan proposal?',
     answer:
-      'Ya. Pemilihan track diperlukan agar alur validasi, assignment pembimbing, dan pelaporan mengikuti kebijakan track yang benar.',
+      'Ya. Pemilihan track (Proyek 1, Proyek 2, Proyek 3, atau Internship) wajib dilakukan sebelum pengajuan proposal agar alur validasi, pedoman dokumen, dan penugasan dosen pembimbing sesuai dengan ketentuan kurikulum.',
   },
   {
-    question: 'Mengapa status bimbingan saya masih menunggu?',
+    question: 'Berapa minimal sesi bimbingan yang harus disetujui untuk maju sidang?',
     answer:
-      'Status menunggu berarti catatan bimbingan sudah terkirim namun belum divalidasi dosen pembimbing.',
+      'Mahasiswa wajib mengumpulkan minimal 8 sesi bimbingan yang telah disetujui (approved) oleh dosen pembimbing sebelum dapat mengajukan jadwal sidang.',
   },
   {
-    question: 'Bagaimana jika salah unggah berkas proposal atau laporan?',
+    question: 'Mengapa status bimbingan saya masih berstatus "Menunggu"?',
     answer:
-      'Silakan unggah kembali melalui menu terkait jika fitur replace tersedia, atau hubungi pengelola prodi untuk penyesuaian.',
+      'Status menunggu (pending) menandakan catatan logbook bimbingan telah berhasil dikirimkan oleh mahasiswa, namun belum ditinjau dan divalidasi oleh dosen pembimbing terkait.',
   },
   {
-    question: 'Apakah koordinator bisa melihat semua progres mahasiswa?',
+    question: 'Bagaimana jika terdapat kesalahan pada berkas proposal atau laporan yang telah diunggah?',
     answer:
-      'Ya. Koordinator dan kaprodi memiliki akses monitoring sesuai kewenangan akademik masing-masing.',
+      'Jika status dokumen masih dalam tahap revisi atau belum divalidasi, Anda dapat mengunggah ulang berkas perbaikan melalui menu yang tersedia. Jika status sudah terkunci, hubungi koordinator program studi.',
+  },
+  {
+    question: 'Apakah koordinator dan kaprodi dapat memantau seluruh proses bimbingan mahasiswa?',
+    answer:
+      'Ya. Koordinator dan kaprodi memiliki hak akses monitoring menyeluruh untuk melihat persebaran bimbingan, status proposal, kesiapan sidang, dan kelulusan revisi seluruh angkatan.',
   },
 ];
 
@@ -38,24 +43,24 @@ export default function FaqSistemPage() {
   return (
     <ResourcePageShell
       title="FAQ Sistem"
-      subtitle="Daftar pertanyaan umum mengenai penggunaan fitur utama Kavana."
+      subtitle="Daftar pertanyaan dan jawaban umum seputar operasional platform bimbingan akademik Kavana."
       updatedLabel="26 Februari 2026"
     >
       <Accordion
         type="single"
         collapsible
-        className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-crust)/0.62)] px-4"
+        className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] px-4"
       >
         {FAQ_ITEMS.map((item, index) => (
           <AccordionItem
             key={item.question}
             value={`faq-${index + 1}`}
-            className="border-[hsl(var(--ctp-surface1))]"
+            className="border-b border-[var(--line)] last:border-b-0 py-1"
           >
-            <AccordionTrigger className="text-sm font-bold text-[hsl(var(--ctp-text))] hover:no-underline">
+            <AccordionTrigger className="text-left text-sm font-semibold text-[var(--text-strong)] hover:no-underline">
               {item.question}
             </AccordionTrigger>
-            <AccordionContent className="text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
+            <AccordionContent className="text-sm leading-relaxed text-[var(--text-body)]">
               {item.answer}
             </AccordionContent>
           </AccordionItem>

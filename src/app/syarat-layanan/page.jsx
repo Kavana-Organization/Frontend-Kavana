@@ -9,34 +9,38 @@ export default function SyaratLayananPage() {
   return (
     <ResourcePageShell
       title="Syarat Layanan"
-      subtitle="Dengan menggunakan Kavana, pengguna menyetujui ketentuan layanan berikut."
+      subtitle="Ketentuan dan tata tertib penggunaan platform Kavana bagi mahasiswa, dosen, dan pengelola akademik."
       updatedLabel="26 Februari 2026"
     >
-      <article>
-        <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">1. Kepatuhan Akun</h2>
-        <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
-          Pengguna wajib menggunakan akun sesuai identitas akademik resmi dan menjaga kerahasiaan kredensial.
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">1. Kepatuhan Akun dan Kredensial</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Pengguna wajib menggunakan identitas akademik resmi yang terdaftar pada sistem universitas. Setiap pengguna bertanggung jawab penuh
+          atas keamanan kata sandi dan seluruh aktivitas yang dilakukan melalui akun masing-masing.
         </p>
       </article>
 
-      <article>
-        <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">2. Keakuratan Informasi</h2>
-        <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
-          Seluruh data proposal, bimbingan, dan laporan yang diunggah harus akurat, relevan, dan dapat dipertanggungjawabkan.
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">2. Keaslian dan Integritas Karya</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Seluruh proposal, catatan sesi bimbingan, naskah laporan, dan kode sumber proyek yang diunggah wajib merupakan karya asli
+          yang menjunjung tinggi integritas akademik dan bebas dari plagiasi.
         </p>
       </article>
 
-      <article>
-        <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">3. Etika Penggunaan</h2>
-        <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
-          Pengguna tidak diperkenankan menyalahgunakan sistem untuk aktivitas di luar proses akademik prodi.
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">3. Tata Kelola Sesi Bimbingan</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Pencatatan sesi bimbingan harus mencerminkan interaksi nyata antara mahasiswa dan dosen pembimbing. Pembimbing berhak menolak
+          atau meminta perbaikan terhadap logbook bimbingan yang tidak memenuhi standar kualitas yang ditetapkan.
         </p>
       </article>
 
-      <article>
-        <h2 className="text-xl font-bold text-[hsl(var(--ctp-text))]">4. Perubahan Ketentuan</h2>
-        <p className="mt-3 text-sm leading-relaxed text-[hsl(var(--ctp-subtext1))]">
-          Pengelola prodi berhak memperbarui ketentuan layanan sewaktu-waktu sesuai kebutuhan operasional.
+      <article className="space-y-3">
+        <h2 className="text-lg font-bold text-[var(--text-strong)]">4. Ketentuan Perubahan dan Pembaruan Sistem</h2>
+        <p className="text-sm leading-relaxed text-[var(--text-body)]">
+          Pengelola Program Studi D4 Teknik Informatika ULBI berhak memperbarui alur proses, instrumen penilaian, dan fitur sistem
+          sewaktu-waktu sesuai dengan penyesuaian kurikulum dan regulasi akademik universitas.
         </p>
       </article>
     </ResourcePageShell>

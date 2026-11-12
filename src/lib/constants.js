@@ -192,98 +192,89 @@ export const LANDING_CONTENT = {
     },
     nav: [
         { label: 'Beranda', href: '#top' },
-        { label: 'Fitur', href: '#features' },
-        { label: 'Peran', href: '#roles' },
-        { label: 'Alur', href: '#how' },
-        { label: 'Kontak', href: '#contact' },
+        { label: 'Alur', href: '#alur' },
+        { label: 'Peran', href: '#peran' },
+        { label: 'FAQ', href: '#faq' },
+        { label: 'Kontak', href: '#kontak' },
     ],
     hero: {
-        badge: 'Portal Akademik Program Studi D4TI ULBI',
-        title: 'Bimbingan Akademik Lebih Tertata dan Transparan',
+        badge: 'Portal Akademik D4 Teknik Informatika ULBI',
+        title: 'Proposal, bimbingan, sidang, dan revisi D4 Teknik Informatika dalam satu alur.',
         description:
-            'Platform terintegrasi untuk mahasiswa, dosen pembimbing, dan pengelola prodi D4 Teknik Informatika ULBI dalam proses proyek, internship, dan administrasi bimbingan.',
+            'Platform terintegrasi untuk mahasiswa, dosen pembimbing, dan pengelola prodi D4 Teknik Informatika ULBI dalam proses bimbingan, laporan proyek/magang, dan administrasi sidang.',
         primaryCta: { label: 'Daftar Akun', href: '/register' },
         secondaryCta: { label: 'Masuk Sistem', href: '/login' },
     },
-    stats: [
-        { value: 'Data Resmi', label: 'Statistik pengguna akan dipublikasikan' },
-        { value: 'Sedang Validasi', label: 'Informasi operasional sedang diverifikasi' },
-        { value: 'Diperbarui Berkala', label: 'Konten akan diperbarui oleh pengelola prodi' },
+    pipeline: [
+        { stage: 'Registrasi', role: 'Mahasiswa', desc: 'Pembuatan dan verifikasi akun akademik' },
+        { stage: 'Track', role: 'Mahasiswa', desc: 'Penentuan jalur proyek atau internship' },
+        { stage: 'Proposal', role: 'Mahasiswa', desc: 'Pengajuan judul dan draf proposal' },
+        { stage: 'Validasi', role: 'Pengelola Prodi', desc: 'Pemeriksaan berkas dan penetapan pembimbing' },
+        { stage: 'Bimbingan 8 sesi', role: 'Mahasiswa & Dosen', desc: 'Pencatatan sesi konsultasi dan logbook berkala' },
+        { stage: 'Laporan', role: 'Mahasiswa & Dosen', desc: 'Penyusunan naskah akhir dan persetujuan maju sidang' },
+        { stage: 'Sidang', role: 'Penguji & Koordinator', desc: 'Penjadwalan, presentasi, dan penilaian dewan penguji' },
+        { stage: 'Revisi', role: 'Mahasiswa & Dosen', desc: 'Penyelesaian perbaikan pascasidang dan finalisasi nilai' },
     ],
-    about: {
-        title: 'Mengapa Menggunakan Kavana?',
-        description:
-            'Kavana membantu proses bimbingan berjalan lebih terstruktur melalui komunikasi terdokumentasi, alur pengajuan yang jelas, dan pemantauan progress lintas peran.',
-        bullets: [
-            'Riwayat bimbingan terdokumentasi dalam satu platform.',
-            'Pengelolaan dokumen akademik lebih rapi dan mudah dipantau.',
-            'Koordinasi antara mahasiswa, dosen, dan pengelola lebih cepat.',
+    roleTabs: [
+        {
+            id: 'mahasiswa',
+            label: 'Mahasiswa',
+            title: 'Ruang kerja mahasiswa untuk mengelola seluruh tahapan akademik.',
+            screenshot: '/landing/mahasiswa.png',
+            screenshotAlt: 'Tampilan antarmuka portal mahasiswa Kavana menunjukkan ringkasan bimbingan dan alur akademik',
+            capabilities: [
+                'Pemilihan track proyek atau internship sesuai ketentuan kurikulum',
+                'Pengajuan proposal dan pelacakan status validasi koordinator',
+                'Pencatatan logbook bimbingan bertahap hingga syarat 8 sesi terpenuhi',
+                'Pengunggahan berkas laporan akhir dan pendaftaran jadwal sidang',
+            ],
+        },
+        {
+            id: 'dosen',
+            label: 'Dosen',
+            title: 'Pendampingan mahasiswa dengan log aktivitas yang transparan.',
+            screenshot: '/landing/dosen.png',
+            screenshotAlt: 'Tampilan antarmuka portal dosen Kavana',
+            capabilities: [
+                'Pemantauan daftar mahasiswa bimbingan aktif beserta riwayat perkembangan',
+                'Validasi, persetujuan, atau pengembalian revisi logbook sesi bimbingan',
+                'Pemberian catatan dan arahan bimbingan yang terdokumentasi rapi',
+                'Peninjauan kelayakan berkas draf laporan sebelum mahasiswa maju sidang',
+            ],
+        },
+        {
+            id: 'pengelola',
+            label: 'Pengelola Prodi',
+            title: 'Monitoring dan administrasi akademik prodi secara menyeluruh.',
+            screenshot: '/landing/koordinator.png',
+            screenshotAlt: 'Tampilan antarmuka portal koordinator Kavana',
+            capabilities: [
+                'Validasi berkas kelayakan proposal mahasiswa dan penetapan kuota track',
+                'Penugasan dosen pembimbing utama, pembimbing pendamping, dan penguji sidang',
+                'Monitoring rekap progres bimbingan seluruh angkatan secara terpusat',
+                'Penjadwalan sidang akhir, penetapan ruang sidang, dan pemantauan revisi nilai',
+            ],
+        },
+    ],
+    faqTeaser: {
+        title: 'Pertanyaan yang Sering Diajukan',
+        description: 'Jawaban ringkas seputar penggunaan platform bimbingan akademik Kavana.',
+        ctaLabel: 'Lihat Semua Pertanyaan di FAQ Sistem',
+        ctaHref: '/faq-sistem',
+        items: [
+            {
+                q: 'Apakah mahasiswa wajib memilih track sebelum mengajukan proposal?',
+                a: 'Ya. Pemilihan track proyek atau internship wajib dilakukan agar alur validasi dan penugasan dosen pembimbing sesuai dengan pedoman kurikulum prodi.',
+            },
+            {
+                q: 'Berapa jumlah minimal sesi bimbingan sebelum dapat mendaftar sidang?',
+                a: 'Mahasiswa diwajibkan menyelesaikan dan mendapatkan persetujuan minimal 8 sesi bimbingan resmi dari dosen pembimbing.',
+            },
+            {
+                q: 'Bagaimana proses validasi proposal oleh koordinator?',
+                a: 'Koordinator memeriksa kesesuaian topik, kelengkapan berkas, dan mendistribusikan dosen pembimbing yang relevan dengan bidang penelitian.',
+            },
         ],
-    },
-    features: [
-        {
-            num: '01',
-            title: 'Manajemen Proposal',
-            desc: 'Pengajuan proposal dilakukan secara digital dengan status yang dapat dipantau.',
-            color: 'from-primary to-blue-700',
-        },
-        {
-            num: '02',
-            title: 'Bimbingan Online',
-            desc: 'Pencatatan sesi bimbingan dan persetujuan dosen dalam satu alur kerja.',
-            color: 'from-emerald-600 to-teal-700',
-        },
-        {
-            num: '03',
-            title: 'Monitoring Progres',
-            desc: 'Koordinator dan kaprodi dapat memantau progres mahasiswa secara terpusat.',
-            color: 'from-amber-600 to-orange-700',
-        },
-        {
-            num: '04',
-            title: 'Jadwal Terstruktur',
-            desc: 'Penjadwalan sidang dan tindak lanjut bimbingan lebih terorganisir.',
-            color: 'from-cyan-700 to-blue-800',
-        },
-    ],
-    roles: [
-        {
-            letter: 'M',
-            title: 'Mahasiswa',
-            desc: 'Mengelola proposal, progres, dokumen, dan komunikasi bimbingan.',
-            gradient: 'from-primary to-blue-700',
-        },
-        {
-            letter: 'D',
-            title: 'Dosen Pembimbing',
-            desc: 'Memberikan arahan, review, dan persetujuan bimbingan mahasiswa.',
-            gradient: 'from-emerald-600 to-teal-700',
-        },
-        {
-            letter: 'K',
-            title: 'Koordinator',
-            desc: 'Memvalidasi alur akademik dan mengelola koordinasi lintas pengguna.',
-            gradient: 'from-cyan-700 to-blue-800',
-        },
-        {
-            letter: 'P',
-            title: 'Kaprodi',
-            desc: 'Melakukan monitoring strategis dan pengendalian proses pada level prodi.',
-            gradient: 'from-slate-700 to-slate-900',
-        },
-    ],
-    steps: [
-        { num: 1, title: 'Registrasi', desc: 'Pengguna membuat akun sesuai peran akademik.' },
-        { num: 2, title: 'Pilih Track', desc: 'Mahasiswa menentukan jalur proyek atau internship.' },
-        { num: 3, title: 'Pengajuan', desc: 'Proposal diajukan dan divalidasi oleh pengelola.' },
-        { num: 4, title: 'Bimbingan', desc: 'Sesi bimbingan berjalan dan tercatat terstruktur.' },
-        { num: 5, title: 'Finalisasi', desc: 'Dokumen akhir dan tahapan sidang diproses di sistem.' },
-    ],
-    cta: {
-        title: 'Mulai Gunakan Portal Prodi',
-        description:
-            'Akses sistem untuk mendukung proses bimbingan yang lebih rapi, terdokumentasi, dan akuntabel.',
-        button: { label: 'Buka Halaman Masuk', href: '/login' },
     },
     footer: {
         platformLinks: [
@@ -301,7 +292,7 @@ export const LANDING_CONTENT = {
             { label: 'Kebijakan Privasi', href: '/kebijakan-privasi' },
             { label: 'Syarat Layanan', href: '/syarat-layanan' },
         ],
-        copyright: 'Copyright 2026 Kavana Bimbingan Online.',
+        copyright: '© 2026 Kavana. Program Studi D4 Teknik Informatika ULBI.',
     },
 };
 
