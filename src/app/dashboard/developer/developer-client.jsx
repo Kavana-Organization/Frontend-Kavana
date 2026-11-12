@@ -1,7 +1,6 @@
 'use client';
 
 import { useCallback, useEffect, useState } from 'react';
-import { motion } from 'framer-motion';
 import {
   Activity,
   AlertTriangle,
@@ -10,7 +9,6 @@ import {
   Database,
   FileText,
   Globe2,
-  Info,
   KeyRound,
   ListChecks,
   LockKeyhole,
@@ -22,12 +20,25 @@ import {
   ShieldCheck,
   TerminalSquare,
   Trash2,
-  XCircle,
   Zap,
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Field } from '@/components/ui/field';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { developerAPI } from '@/lib/api';
 import { toast } from '@/lib/alert';
 
@@ -51,19 +62,6 @@ const MODE_DESCRIPTIONS = {
   devices: 'Device developer yang dikonfigurasi dan yang pernah dienroll.',
   'redis-cache': 'Key cache Redis yang aktif dan kontrol clear cache per prefix.',
   'permission-matrix': 'Peta akses efektif tiap role di sistem.',
-};
-
-const RESULT_TONE = {
-  success: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
-  ok: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
-  passed: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
-  warning: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
-  failed: 'border-red-400/30 bg-red-400/10 text-red-200',
-  error: 'border-red-400/30 bg-red-400/10 text-red-200',
-  revoked: 'border-red-400/30 bg-red-400/10 text-red-200',
-  active: 'border-emerald-400/30 bg-emerald-400/10 text-emerald-200',
-  pending: 'border-amber-400/30 bg-amber-400/10 text-amber-200',
-  default: 'border-[hsl(var(--ctp-overlay0)/0.5)] bg-[hsl(var(--ctp-surface1)/0.55)] text-[hsl(var(--ctp-subtext0))]',
 };
 
 function formatDateTime(value) {
@@ -99,45 +97,38 @@ function compactValue(value) {
   return String(value);
 }
 
-function StatusPill({ value, ok }) {
-  const normalized = ok === true ? 'ok' : ok === false ? 'failed' : String(value || 'default').toLowerCase();
-  const tone = RESULT_TONE[normalized] || RESULT_TONE.default;
+function mapPillTone(normalized) {
+  if (['success', 'ok', 'passed', 'active'].includes(normalized)) return 'approved';
+  if (['warning', 'pending'].includes(normalized)) return 'pending';
+  if (['failed', 'error', 'revoked', 'rejected'].includes(normalized)) return 'rejected';
+  return 'neutral';
+}
 
-  return (
-    <span className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-semibold ${tone}`}>
-      {normalized === 'failed' || normalized === 'error' ? <XCircle className="h-3.5 w-3.5" /> : <CheckCircle2 className="h-3.5 w-3.5" />}
-      {normalizeLabel(value || normalized)}
-    </span>
-  );
+function StatusPill({ value, ok }) {
+  const normalized =
+    ok === true ? 'ok' : ok === false ? 'failed' : String(value || 'default').toLowerCase();
+  return <StatusBadge status={mapPillTone(normalized)} label={normalizeLabel(value || normalized)} />;
 }
 
 function StatusCard({ title, value, description, icon: Icon, ok }) {
   return (
-    <Card variant="muted">
-      <CardHeader>
-        <CardDescription>{title}</CardDescription>
-        <CardTitle className="flex items-center gap-3 text-2xl text-[hsl(var(--ctp-text))]">
-          {value}
+    <Card variant="muted" className="min-w-0">
+      <CardHeader className="pb-2">
+        <div className="flex items-center justify-between gap-2">
+          <CardDescription className="text-xs font-medium text-[var(--text-muted)]">
+            {title}
+          </CardDescription>
+          {Icon ? <Icon className="h-4 w-4 shrink-0 text-[var(--text-muted)]" aria-hidden="true" /> : null}
+        </div>
+        <CardTitle className="flex flex-wrap items-center gap-2 text-xl font-semibold text-[var(--text-strong)] font-mono tabular-nums break-words">
+          <span>{value}</span>
           {ok !== undefined ? <StatusPill value={ok ? 'OK' : 'Issue'} ok={ok} /> : null}
         </CardTitle>
       </CardHeader>
-      <CardContent className="flex items-center justify-between text-sm text-[hsl(var(--ctp-subtext0))]">
-        <span>{description}</span>
-        <span className="grid h-10 w-10 place-items-center rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.5)] bg-[hsl(var(--ctp-surface1)/0.55)]">
-          <Icon className="h-5 w-5" />
-        </span>
+      <CardContent className="pt-0">
+        <p className="text-xs text-[var(--text-muted)] tabular-nums break-words">{description}</p>
       </CardContent>
     </Card>
-  );
-}
-
-function EmptyState({ title = 'Belum ada data', description = 'Data belum tersedia dari backend.' }) {
-  return (
-    <div className="rounded-3xl border border-dashed border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-base)/0.35)] p-8 text-center">
-      <Info className="mx-auto mb-3 h-8 w-8 text-[hsl(var(--ctp-subtext0))]" />
-      <p className="font-semibold text-[hsl(var(--ctp-text))]">{title}</p>
-      <p className="mt-1 text-sm text-[hsl(var(--ctp-subtext0))]">{description}</p>
-    </div>
   );
 }
 
@@ -146,14 +137,21 @@ function KeyValueGrid({ items }) {
   if (entries.length === 0) return null;
 
   return (
-    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+    <dl className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
       {entries.map(([key, value]) => (
-        <div key={key} className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.45)] p-3">
-          <p className="text-[10px] uppercase tracking-[0.22em] text-[hsl(var(--ctp-subtext0))]">{normalizeLabel(key)}</p>
-          <p className="mt-1 break-words text-sm font-semibold text-[hsl(var(--ctp-text))]">{compactValue(value)}</p>
+        <div
+          key={key}
+          className="min-w-0 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] p-3"
+        >
+          <dt className="text-xs font-medium text-[var(--text-muted)] break-words">
+            {normalizeLabel(key)}
+          </dt>
+          <dd className="mt-1 break-all font-mono text-xs font-medium tabular-nums text-[var(--text-strong)]">
+            {compactValue(value)}
+          </dd>
         </div>
       ))}
-    </div>
+    </dl>
   );
 }
 
@@ -163,11 +161,20 @@ function renderChecks(checks = []) {
   return (
     <div className="grid gap-3 md:grid-cols-2">
       {checks.map((check) => (
-        <div key={check.name} className="flex items-start justify-between gap-4 rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.45)] p-4">
-          <div>
-            <p className="font-semibold text-[hsl(var(--ctp-text))]">{normalizeLabel(check.name)}</p>
-            <p className="mt-1 text-sm text-[hsl(var(--ctp-subtext0))]">
-              {check.latency_ms !== undefined ? `${check.latency_ms} ms` : check.count !== undefined ? `${check.count} item` : check.error || 'Check selesai'}
+        <div
+          key={check.name}
+          className="flex flex-wrap items-start justify-between gap-3 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 min-w-0"
+        >
+          <div className="min-w-0">
+            <p className="text-sm font-semibold text-[var(--text-strong)] break-words">
+              {normalizeLabel(check.name)}
+            </p>
+            <p className="mt-1 font-mono text-xs tabular-nums text-[var(--text-muted)] break-words">
+              {check.latency_ms !== undefined
+                ? `${check.latency_ms} ms`
+                : check.count !== undefined
+                  ? `${check.count} item`
+                  : check.error || 'Check selesai'}
             </p>
           </div>
           <StatusPill value={check.ok ? 'OK' : 'Issue'} ok={Boolean(check.ok)} />
@@ -180,51 +187,98 @@ function renderChecks(checks = []) {
 function HealthView({ data }) {
   const isSynthetic = Array.isArray(data?.checks);
   const status = data?.status || (isSynthetic ? data.status : 'unknown');
-  const dbOk = isSynthetic ? data.checks?.find((check) => check.name === 'database_ping')?.ok : data?.db?.ok;
-  const redisOk = isSynthetic ? data.checks?.find((check) => check.name === 'redis_configured')?.ok : data?.redis?.ok || data?.redis?.configured;
+  const dbOk = isSynthetic
+    ? data.checks?.find((check) => check.name === 'database_ping')?.ok
+    : data?.db?.ok;
+  const redisOk = isSynthetic
+    ? data.checks?.find((check) => check.name === 'redis_configured')?.ok
+    : data?.redis?.ok || data?.redis?.configured;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatusCard title="Overall" value={normalizeLabel(status)} description="Status sistem saat ini" icon={Activity} ok={status === 'ok' || status === 'passed'} />
-        <StatusCard title="Database" value={dbOk ? 'OK' : 'Issue'} description={`${data?.db?.latency_ms ?? data?.checks?.find((check) => check.name === 'database_ping')?.latency_ms ?? '-'} ms`} icon={Server} ok={Boolean(dbOk)} />
-        <StatusCard title="Redis" value={redisOk ? 'Aktif' : 'Tidak aktif'} description="Cache dan invalidasi data" icon={Database} ok={Boolean(redisOk)} />
-        <StatusCard title="Turnstile" value={data?.runtime?.turnstile_enabled ? 'On' : '-'} description="Proteksi login" icon={Shield} ok={data?.runtime?.turnstile_enabled} />
+        <StatusCard
+          title="Overall"
+          value={normalizeLabel(status)}
+          description="Status sistem saat ini"
+          icon={Activity}
+          ok={status === 'ok' || status === 'passed'}
+        />
+        <StatusCard
+          title="Database"
+          value={dbOk ? 'OK' : 'Issue'}
+          description={`${data?.db?.latency_ms ?? data?.checks?.find((check) => check.name === 'database_ping')?.latency_ms ?? '-'} ms`}
+          icon={Server}
+          ok={Boolean(dbOk)}
+        />
+        <StatusCard
+          title="Redis"
+          value={redisOk ? 'Aktif' : 'Tidak aktif'}
+          description="Cache dan invalidasi data"
+          icon={Database}
+          ok={Boolean(redisOk)}
+        />
+        <StatusCard
+          title="Turnstile"
+          value={data?.runtime?.turnstile_enabled ? 'On' : '-'}
+          description="Proteksi login"
+          icon={Shield}
+          ok={data?.runtime?.turnstile_enabled}
+        />
       </div>
 
       {isSynthetic ? (
         <section className="space-y-3">
-          <h3 className="text-sm font-semibold text-[hsl(var(--ctp-text))]">Hasil Synthetic Test</h3>
+          <h2 className="text-sm font-semibold text-[var(--text-strong)]">Hasil Synthetic Test</h2>
           {renderChecks(data.checks)}
         </section>
       ) : (
         <div className="grid gap-4 lg:grid-cols-2">
-          <div className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.45)] p-4">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold text-[hsl(var(--ctp-text))]">
-              <ListChecks className="h-4 w-4" />
-              Dependency
-            </h3>
-            <KeyValueGrid
-              items={{
-                database: data?.db?.ok ? `OK (${data?.db?.latency_ms ?? '-'} ms)` : data?.db?.error || 'Issue',
-                redis: data?.redis?.configured ? (data?.redis?.ok ? `OK (${data?.redis?.latency_ms ?? '-'} ms)` : data?.redis?.error || 'Configured') : 'Belum dikonfigurasi',
-              }}
-            />
-          </div>
-          <div className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.45)] p-4">
-            <h3 className="mb-3 flex items-center gap-2 font-semibold text-[hsl(var(--ctp-text))]">
-              <Globe2 className="h-4 w-4" />
-              Runtime
-            </h3>
-            <KeyValueGrid
-              items={{
-                environment: data?.runtime?.node_env,
-                cors_origins: Array.isArray(data?.runtime?.cors_origins) ? data.runtime.cors_origins.join(', ') : '-',
-                email_notifications: data?.runtime?.email_notifications_enabled ? 'Aktif' : 'Nonaktif',
-                turnstile: data?.runtime?.turnstile_enabled ? 'Aktif' : 'Nonaktif',
-              }}
-            />
-          </div>
+          <Card variant="muted" className="min-w-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--text-strong)]">
+                <ListChecks className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+                <span>Dependency</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <KeyValueGrid
+                items={{
+                  database: data?.db?.ok
+                    ? `OK (${data?.db?.latency_ms ?? '-'} ms)`
+                    : data?.db?.error || 'Issue',
+                  redis: data?.redis?.configured
+                    ? data?.redis?.ok
+                      ? `OK (${data?.redis?.latency_ms ?? '-'} ms)`
+                      : data?.redis?.error || 'Configured'
+                    : 'Belum dikonfigurasi',
+                }}
+              />
+            </CardContent>
+          </Card>
+
+          <Card variant="muted" className="min-w-0">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--text-strong)]">
+                <Globe2 className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+                <span>Runtime</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <KeyValueGrid
+                items={{
+                  environment: data?.runtime?.node_env,
+                  cors_origins: Array.isArray(data?.runtime?.cors_origins)
+                    ? data.runtime.cors_origins.join(', ')
+                    : '-',
+                  email_notifications: data?.runtime?.email_notifications_enabled
+                    ? 'Aktif'
+                    : 'Nonaktif',
+                  turnstile: data?.runtime?.turnstile_enabled ? 'Aktif' : 'Nonaktif',
+                }}
+              />
+            </CardContent>
+          </Card>
         </div>
       )}
     </div>
@@ -233,60 +287,98 @@ function HealthView({ data }) {
 
 function LogsView({ data, type }) {
   const logs = Array.isArray(data) ? data : [];
-  const successCount = logs.filter((log) => String(log.result || '').toLowerCase() === 'success').length;
-  const failedCount = logs.filter((log) => String(log.result || '').toLowerCase() !== 'success').length;
+  const successCount = logs.filter(
+    (log) => String(log.result || '').toLowerCase() === 'success'
+  ).length;
+  const failedCount = logs.filter(
+    (log) => String(log.result || '').toLowerCase() !== 'success'
+  ).length;
   const uniqueRoles = new Set(logs.map((log) => log.role).filter(Boolean)).size;
 
   if (logs.length === 0) {
-    return <EmptyState title="Log kosong" description="Belum ada log yang dikembalikan backend." />;
+    return <EmptyState icon={FileText} title="Log kosong" description="Belum ada log yang dikembalikan backend." />;
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatusCard title="Total Log" value={logs.length} description={`Log ${type === 'auth' ? 'auth' : 'audit'} terakhir`} icon={FileText} />
+        <StatusCard
+          title="Total Log"
+          value={logs.length}
+          description={`Log ${type === 'auth' ? 'auth' : 'audit'} terakhir`}
+          icon={FileText}
+        />
         <StatusCard title="Success" value={successCount} description="Aksi berhasil" icon={CheckCircle2} ok />
-        <StatusCard title="Perlu Dicek" value={failedCount} description={`${uniqueRoles} role terlibat`} icon={AlertTriangle} ok={failedCount === 0} />
+        <StatusCard
+          title="Perlu Dicek"
+          value={failedCount}
+          description={`${uniqueRoles} role terlibat`}
+          icon={AlertTriangle}
+          ok={failedCount === 0}
+        />
       </div>
 
       <div className="space-y-3">
-        {logs.map((log) => {
+        {logs.map((log, index) => {
           const details = parseDetails(log.details);
           const result = String(log.result || 'unknown').toLowerCase();
 
           return (
-            <article key={log.id || log.request_id} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.48)] p-4">
+            <article
+              key={log.id || log.request_id || index}
+              className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 min-w-0"
+            >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="space-y-2">
+                <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill value={result} ok={result === 'success'} />
-                    <span className="rounded-full border border-[hsl(var(--ctp-overlay0)/0.45)] px-3 py-1 text-xs text-[hsl(var(--ctp-subtext0))]">{normalizeLabel(log.role)}</span>
-                    <span className="rounded-full border border-[hsl(var(--ctp-overlay0)/0.45)] px-3 py-1 text-xs text-[hsl(var(--ctp-subtext0))]">User #{log.user_id || '-'}</span>
+                    <Badge variant="outline" className="rounded-md">
+                      {normalizeLabel(log.role)}
+                    </Badge>
+                    <Badge variant="secondary" className="rounded-md font-mono text-xs tabular-nums">
+                      User #{log.user_id || '-'}
+                    </Badge>
                   </div>
-                  <h3 className="text-base font-semibold text-[hsl(var(--ctp-text))]">{normalizeLabel(log.action)}</h3>
-                  <p className="text-sm text-[hsl(var(--ctp-subtext0))]">
-                    Target: <span className="text-[hsl(var(--ctp-text))]">{log.target || '-'}</span>
-                    {log.target_id ? ` #${log.target_id}` : ''}
+                  <h3 className="text-base font-semibold text-[var(--text-strong)] break-words">
+                    {normalizeLabel(log.action)}
+                  </h3>
+                  <p className="text-sm text-[var(--text-muted)] break-words">
+                    Target:{' '}
+                    <span className="font-mono text-xs text-[var(--text-strong)]">
+                      {log.target || '-'}
+                      {log.target_id ? ` #${log.target_id}` : ''}
+                    </span>
                   </p>
                 </div>
-                <div className="text-left text-xs text-[hsl(var(--ctp-subtext0))] lg:text-right">
+
+                <div className="shrink-0 font-mono text-xs tabular-nums text-[var(--text-muted)] lg:text-right">
                   <p className="flex items-center gap-1 lg:justify-end">
-                    <Clock className="h-3.5 w-3.5" />
-                    {formatDateTime(log.created_at)}
+                    <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span>{formatDateTime(log.created_at)}</span>
                   </p>
-                  <p className="mt-1">IP: {log.ip_address || '-'}</p>
+                  <p className="mt-1 break-all">IP: {log.ip_address || '-'}</p>
                   <p className="mt-1 break-all">Request: {log.request_id || '-'}</p>
                 </div>
               </div>
 
               {details ? (
-                <div className="mt-4">
+                <div className="mt-4 space-y-2 border-t border-[var(--line)] pt-3 min-w-0">
                   <KeyValueGrid items={details} />
+                  <details className="rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)]">
+                    <summary className="cursor-pointer select-none px-3 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-strong)]">
+                      Lihat JSON mentah
+                    </summary>
+                    <pre className="overflow-x-auto border-t border-[var(--line)] p-3 font-mono text-xs text-[var(--text-body)] whitespace-pre-wrap break-all">
+                      {JSON.stringify(details, null, 2)}
+                    </pre>
+                  </details>
                 </div>
               ) : null}
 
               {log.user_agent ? (
-                <p className="mt-3 truncate text-xs text-[hsl(var(--ctp-subtext0))]">User agent: {log.user_agent}</p>
+                <p className="mt-3 font-mono text-xs text-[var(--text-muted)] break-all">
+                  User agent: {log.user_agent}
+                </p>
               ) : null}
             </article>
           );
@@ -297,7 +389,10 @@ function LogsView({ data, type }) {
 }
 
 function isPageVisitTracker(row) {
-  return row.event_category === 'page_visit' || ['login', 'register', 'login_page_visit', 'register_page_visit'].includes(row.event_type);
+  return (
+    row.event_category === 'page_visit' ||
+    ['login', 'register', 'login_page_visit', 'register_page_visit'].includes(row.event_type)
+  );
 }
 
 function isFailedAuthTracker(row) {
@@ -318,55 +413,96 @@ function AuthTrackerView({ data }) {
   const uniqueIps = new Set(rows.map((row) => row.isp_ip || row.request_ip).filter(Boolean)).size;
 
   if (rows.length === 0) {
-    return <EmptyState title="Tracker kosong" description="Belum ada kunjungan atau event login/daftar yang tercatat." />;
+    return (
+      <EmptyState
+        icon={Globe2}
+        title="Tracker kosong"
+        description="Belum ada kunjungan atau event login/daftar yang tercatat."
+      />
+    );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
-        <StatusCard title="Total Tracker" value={rows.length} description={`${uniqueIps} IP unik`} icon={Globe2} />
-        <StatusCard title="Page Visit" value={pageVisitCount} description="Dedupe 24 jam/browser" icon={MonitorSmartphone} />
-        <StatusCard title="Auth Event" value={authEventCount} description="Setiap submit login/daftar" icon={Shield} />
-        <StatusCard title="Failed" value={failedCount} description="Login/daftar gagal" icon={AlertTriangle} ok={failedCount === 0} />
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatusCard
+          title="Total Tracker"
+          value={rows.length}
+          description={`${uniqueIps} IP unik`}
+          icon={Globe2}
+        />
+        <StatusCard
+          title="Page Visit"
+          value={pageVisitCount}
+          description="Dedupe 24 jam/browser"
+          icon={MonitorSmartphone}
+        />
+        <StatusCard
+          title="Auth Event"
+          value={authEventCount}
+          description="Setiap submit login/daftar"
+          icon={Shield}
+        />
+        <StatusCard
+          title="Failed"
+          value={failedCount}
+          description="Login/daftar gagal"
+          icon={AlertTriangle}
+          ok={failedCount === 0}
+        />
       </div>
 
       <div className="space-y-3">
-        {rows.map((row) => {
+        {rows.map((row, index) => {
           const failed = isFailedAuthTracker(row);
 
           return (
-            <article key={row.id} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.48)] p-4">
+            <article
+              key={row.id || index}
+              className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 min-w-0"
+            >
               <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                <div className="min-w-0 space-y-2">
+                <div className="min-w-0 flex-1 space-y-2">
                   <div className="flex flex-wrap items-center gap-2">
                     <StatusPill value={row.event_type} ok={failed ? false : undefined} />
-                    <span className="rounded-full border border-[hsl(var(--ctp-overlay0)/0.45)] px-3 py-1 text-xs text-[hsl(var(--ctp-subtext0))]">
-                      {normalizeLabel(row.event_category || (isPageVisitTracker(row) ? 'page_visit' : 'auth_event'))}
-                    </span>
+                    <Badge variant="outline" className="rounded-md">
+                      {normalizeLabel(
+                        row.event_category || (isPageVisitTracker(row) ? 'page_visit' : 'auth_event')
+                      )}
+                    </Badge>
                     {row.auth_status ? <StatusPill value={row.auth_status} ok={!failed} /> : null}
-                    <span className="rounded-full border border-[hsl(var(--ctp-overlay0)/0.45)] px-3 py-1 text-xs text-[hsl(var(--ctp-subtext0))]">
+                    <Badge variant="secondary" className="rounded-md font-mono text-xs">
                       {row.hostname || '-'}
-                    </span>
+                    </Badge>
                   </div>
-                  <h3 className="break-all text-base font-semibold text-[hsl(var(--ctp-text))]">{getTrackerTitle(row)}</h3>
-                  <p className="truncate text-sm text-[hsl(var(--ctp-subtext0))]">{row.browser || '-'}</p>
+                  <h3 className="break-all font-mono text-sm font-semibold text-[var(--text-strong)]">
+                    {getTrackerTitle(row)}
+                  </h3>
+                  <p className="text-xs text-[var(--text-muted)] break-words">
+                    {row.browser || '-'}
+                  </p>
                 </div>
-                <div className="text-left text-xs text-[hsl(var(--ctp-subtext0))] lg:text-right">
+
+                <div className="shrink-0 font-mono text-xs tabular-nums text-[var(--text-muted)] lg:text-right">
                   <p className="flex items-center gap-1 lg:justify-end">
-                    <Clock className="h-3.5 w-3.5" />
-                    {formatDateTime(row.created_at)}
+                    <Clock className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span>{formatDateTime(row.created_at)}</span>
                   </p>
-                  <p className="mt-1 flex items-center gap-1 lg:justify-end">
-                    <MapPin className="h-3.5 w-3.5" />
-                    {[row.city, row.region, row.country_name].filter(Boolean).join(', ') || '-'}
+                  <p className="mt-1 flex items-center gap-1 lg:justify-end font-sans">
+                    <MapPin className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+                    <span>
+                      {[row.city, row.region, row.country_name].filter(Boolean).join(', ') || '-'}
+                    </span>
                   </p>
-                  <p className="mt-1">IP: {row.isp_ip || row.request_ip || '-'}</p>
+                  <p className="mt-1 break-all">IP: {row.isp_ip || row.request_ip || '-'}</p>
                 </div>
               </div>
 
-              <div className="mt-4 grid gap-4 xl:grid-cols-3">
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">Auth</p>
+              <div className="mt-4 grid gap-4 xl:grid-cols-3 border-t border-[var(--line)] pt-4">
+                <div className="min-w-0">
+                  <p className="mb-2 micro-label text-xs font-semibold text-[var(--text-muted)]">
+                    Auth
+                  </p>
                   <KeyValueGrid
                     items={{
                       flow: row.auth_flow,
@@ -377,8 +513,10 @@ function AuthTrackerView({ data }) {
                     }}
                   />
                 </div>
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">Client</p>
+                <div className="min-w-0">
+                  <p className="mb-2 micro-label text-xs font-semibold text-[var(--text-muted)]">
+                    Client
+                  </p>
                   <KeyValueGrid
                     items={{
                       browser_language: row.browser_language,
@@ -390,8 +528,10 @@ function AuthTrackerView({ data }) {
                     }}
                   />
                 </div>
-                <div>
-                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.18em] text-[hsl(var(--ctp-subtext0))]">ISP</p>
+                <div className="min-w-0">
+                  <p className="mb-2 micro-label text-xs font-semibold text-[var(--text-muted)]">
+                    ISP
+                  </p>
                   <KeyValueGrid
                     items={{
                       ip: row.isp_ip,
@@ -421,56 +561,146 @@ function DevicesView({ data, onRevoke }) {
   const database = Array.isArray(data?.database) ? data.database : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatusCard title="Configured Device" value={configured.length} description="Dari GitHub Secret/env" icon={KeyRound} />
-        <StatusCard title="Enrolled Device" value={database.length} description="Device tersimpan DB" icon={LockKeyhole} />
-        <StatusCard title="Active Device" value={database.filter((device) => device.status === 'active').length} description="Masih boleh dipakai login" icon={ShieldCheck} />
+        <StatusCard
+          title="Configured Device"
+          value={configured.length}
+          description="Dari GitHub Secret/env"
+          icon={KeyRound}
+        />
+        <StatusCard
+          title="Enrolled Device"
+          value={database.length}
+          description="Device tersimpan DB"
+          icon={LockKeyhole}
+        />
+        <StatusCard
+          title="Active Device"
+          value={database.filter((device) => device.status === 'active').length}
+          description="Masih boleh dipakai login"
+          icon={ShieldCheck}
+        />
       </div>
 
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-[hsl(var(--ctp-text))]">Device Dari Konfigurasi</h3>
-        {configured.length === 0 ? (
-          <EmptyState title="Belum ada configured device" description="Tambahkan DEVELOPER_DEVICE_IDS dan DEVELOPER_DEVICE_TOKEN_HASHES." />
-        ) : (
-          <div className="grid gap-3 md:grid-cols-2">
-            {configured.map((device) => (
-              <div key={device.device_id} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.45)] p-4">
-                <p className="font-semibold text-[hsl(var(--ctp-text))]">{device.device_id}</p>
-                <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">Token hash: {device.token_hash || '-'}</p>
-                <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">Sumber: {device.source || 'env'}</p>
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <Card variant="muted" className="min-w-0">
+        <CardHeader>
+          <CardTitle className="text-base text-[var(--text-strong)]">
+            Device Dari Konfigurasi
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {configured.length === 0 ? (
+            <EmptyState
+              icon={KeyRound}
+              title="Belum ada configured device"
+              description="Tambahkan DEVELOPER_DEVICE_IDS dan DEVELOPER_DEVICE_TOKEN_HASHES."
+            />
+          ) : (
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Device ID</TableHead>
+                  <TableHead>Token Hash</TableHead>
+                  <TableHead>Sumber</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {configured.map((device) => (
+                  <TableRow key={device.device_id}>
+                    <TableCell data-label="Device ID" className="min-w-0">
+                      <span className="font-mono text-xs font-semibold text-[var(--text-strong)] break-all">
+                        {device.device_id}
+                      </span>
+                    </TableCell>
+                    <TableCell data-label="Token Hash" className="min-w-0">
+                      <span className="font-mono text-xs text-[var(--text-muted)] break-all">
+                        {device.token_hash || '-'}
+                      </span>
+                    </TableCell>
+                    <TableCell data-label="Sumber">
+                      <Badge variant="outline" className="rounded-md font-mono text-xs">
+                        {device.source || 'env'}
+                      </Badge>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
-      <section className="space-y-3">
-        <h3 className="text-sm font-semibold text-[hsl(var(--ctp-text))]">Device Enrolled</h3>
-        {database.length === 0 ? (
-          <EmptyState title="Belum ada device yang dienroll" description="Enroll sekali dari browser developer agar cookie device tersimpan." />
-        ) : (
-          <div className="space-y-3">
-            {database.map((device) => (
-              <div key={device.id} className="flex flex-col gap-3 rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.48)] p-4 xl:flex-row xl:items-center xl:justify-between">
-                <div>
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="font-semibold text-[hsl(var(--ctp-text))]">{device.device_name || device.device_id}</p>
-                    <StatusPill value={device.status} />
-                  </div>
-                  <p className="mt-1 text-sm text-[hsl(var(--ctp-subtext0))]">{device.developer_email}</p>
-                  <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">Last login: {formatDateTime(device.last_login_at)} | IP: {device.last_ip || '-'}</p>
-                </div>
-                {device.status !== 'revoked' ? (
-                  <Button type="button" variant="destructive" onClick={() => onRevoke(device.id)}>
-                    Revoke
-                  </Button>
-                ) : null}
-              </div>
-            ))}
-          </div>
-        )}
-      </section>
+      <Card variant="muted" className="min-w-0">
+        <CardHeader>
+          <CardTitle className="text-base text-[var(--text-strong)]">Device Enrolled</CardTitle>
+        </CardHeader>
+        <CardContent>
+          {database.length === 0 ? (
+            <EmptyState
+              icon={LockKeyhole}
+              title="Belum ada device yang dienroll"
+              description="Enroll sekali dari browser developer agar cookie device tersimpan."
+            />
+          ) : (
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Device</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Login Terakhir</TableHead>
+                  <TableHead>IP</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {database.map((device) => (
+                  <TableRow key={device.id}>
+                    <TableCell data-label="Device" className="min-w-0">
+                      <span className="font-mono text-xs font-semibold text-[var(--text-strong)] break-all">
+                        {device.device_name || device.device_id}
+                      </span>
+                    </TableCell>
+                    <TableCell data-label="Email" className="min-w-0">
+                      <span className="text-sm text-[var(--text-body)] whitespace-normal break-all">
+                        {device.developer_email || '-'}
+                      </span>
+                    </TableCell>
+                    <TableCell data-label="Status">
+                      <StatusPill value={device.status} />
+                    </TableCell>
+                    <TableCell data-label="Login Terakhir">
+                      <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                        {formatDateTime(device.last_login_at)}
+                      </span>
+                    </TableCell>
+                    <TableCell data-label="IP">
+                      <span className="font-mono text-xs tabular-nums text-[var(--text-muted)] break-all">
+                        {device.last_ip || '-'}
+                      </span>
+                    </TableCell>
+                    <TableCell data-label="Aksi" className="sm:text-right">
+                      {device.status !== 'revoked' ? (
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => onRevoke(device.id)}
+                        >
+                          Revoke
+                        </Button>
+                      ) : (
+                        <span className="text-xs text-[var(--text-muted)]">-</span>
+                      )}
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
@@ -479,31 +709,86 @@ function RedisView({ data, cachePrefix, setCachePrefix, onClear }) {
   const keys = Array.isArray(data?.keys) ? data.keys : [];
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <StatusCard title="Redis" value={data?.configured ? 'Configured' : 'Off'} description="Status koneksi cache" icon={Database} ok={Boolean(data?.configured)} />
-        <StatusCard title="Pattern" value={data?.pattern || '-'} description="Pattern pencarian key" icon={TerminalSquare} />
-        <StatusCard title="Key Ditemukan" value={data?.count ?? keys.length} description="Dibatasi untuk keamanan UI" icon={ListChecks} />
+        <StatusCard
+          title="Redis"
+          value={data?.configured ? 'Configured' : 'Off'}
+          description="Status koneksi cache"
+          icon={Database}
+          ok={Boolean(data?.configured)}
+        />
+        <StatusCard
+          title="Pattern"
+          value={data?.pattern || '-'}
+          description="Pattern pencarian key"
+          icon={TerminalSquare}
+        />
+        <StatusCard
+          title="Key Ditemukan"
+          value={data?.count ?? keys.length}
+          description="Dibatasi untuk keamanan UI"
+          icon={ListChecks}
+        />
       </div>
 
-      <div className="flex flex-col gap-2 rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.45)] p-4 sm:flex-row">
-        <Input value={cachePrefix} onChange={(event) => setCachePrefix(event.target.value)} placeholder="Prefix redis, contoh: kavana:" />
-        <Button type="button" variant="destructive" onClick={onClear}>
-          <Trash2 className="mr-2 h-4 w-4" />
-          Clear Prefix
-        </Button>
-      </div>
+      <Card variant="muted" className="min-w-0">
+        <CardContent className="pt-5">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
+            <div className="flex-1 min-w-0">
+              <Field label="Prefix Redis">
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    name="cachePrefix"
+                    value={cachePrefix}
+                    onChange={(event) => setCachePrefix(event.target.value)}
+                    placeholder="Prefix redis, contoh: kavana:"
+                    className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)] font-mono"
+                  />
+                )}
+              </Field>
+            </div>
+            <Button type="button" variant="destructive" onClick={onClear} className="shrink-0">
+              <Trash2 className="h-4 w-4" />
+              <span>Clear Prefix</span>
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
 
       {keys.length === 0 ? (
-        <EmptyState title="Tidak ada key cache" description="Redis aktif tapi tidak ada key yang cocok dengan pattern saat ini." />
+        <EmptyState
+          icon={Database}
+          title="Tidak ada key cache"
+          description="Redis aktif tapi tidak ada key yang cocok dengan pattern saat ini."
+        />
       ) : (
-        <div className="grid gap-2">
-          {keys.map((key) => (
-            <div key={key} className="rounded-2xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.48)] px-4 py-3 font-mono text-xs text-[hsl(var(--ctp-subtext1))]">
-              {key}
-            </div>
-          ))}
-        </div>
+        <Card variant="muted" className="min-w-0">
+          <CardHeader>
+            <CardTitle className="text-base text-[var(--text-strong)]">Daftar Key Cache</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Key Cache</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {keys.map((key) => (
+                  <TableRow key={key}>
+                    <TableCell data-label="Key Cache" className="min-w-0">
+                      <span className="font-mono text-xs text-[var(--text-body)] whitespace-normal break-all">
+                        {key}
+                      </span>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
@@ -513,27 +798,39 @@ function PermissionMatrixView({ data }) {
   const entries = Object.entries(data || {});
 
   if (entries.length === 0) {
-    return <EmptyState title="Permission matrix kosong" description="Backend belum mengirim data role dan permission." />;
+    return (
+      <EmptyState
+        icon={Shield}
+        title="Permission matrix kosong"
+        description="Backend belum mengirim data role dan permission."
+      />
+    );
   }
 
   return (
     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
       {entries.map(([role, permissions]) => (
-        <div key={role} className="rounded-3xl border border-[hsl(var(--ctp-surface1))] bg-[hsl(var(--ctp-base)/0.48)] p-4">
-          <div className="mb-3 flex items-center justify-between gap-3">
-            <h3 className="font-semibold text-[hsl(var(--ctp-text))]">{normalizeLabel(role)}</h3>
-            <span className="rounded-full border border-[hsl(var(--ctp-overlay0)/0.45)] px-3 py-1 text-xs text-[hsl(var(--ctp-subtext0))]">
-              {Array.isArray(permissions) ? permissions.length : 0} izin
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {(Array.isArray(permissions) ? permissions : []).map((permission) => (
-              <span key={permission} className="rounded-full border border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface1)/0.45)] px-3 py-1 text-xs text-[hsl(var(--ctp-subtext1))]">
-                {normalizeLabel(permission)}
-              </span>
-            ))}
-          </div>
-        </div>
+        <Card key={role} variant="muted" className="min-w-0">
+          <CardHeader className="pb-3">
+            <div className="flex items-center justify-between gap-2">
+              <CardTitle className="text-base text-[var(--text-strong)]">
+                {normalizeLabel(role)}
+              </CardTitle>
+              <Badge variant="outline" className="rounded-md font-mono text-xs tabular-nums">
+                {Array.isArray(permissions) ? permissions.length : 0} izin
+              </Badge>
+            </div>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1.5">
+              {(Array.isArray(permissions) ? permissions : []).map((permission) => (
+                <Badge key={permission} variant="secondary" className="rounded-md font-normal">
+                  {normalizeLabel(permission)}
+                </Badge>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
       ))}
     </div>
   );
@@ -608,9 +905,10 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[hsl(var(--ctp-blue)/0.3)] border-t-[hsl(var(--ctp-blue))]" />
-      </div>
+      <LoadingState
+        variant={mode === 'dashboard' || mode === 'health' ? 'dashboard' : 'table'}
+        label={`Memuat ${MODE_LABELS[mode] || 'Developer Center'}`}
+      />
     );
   }
 
@@ -618,51 +916,80 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
   const isSyntheticResult = Array.isArray(data?.checks);
   const healthContentData = isSyntheticResult ? data : health || data;
   let renderedContent = <HealthView data={data} />;
-  if (mode === 'dashboard' || mode === 'health') renderedContent = <HealthView data={healthContentData} />;
+  if (mode === 'dashboard' || mode === 'health') {
+    renderedContent = <HealthView data={healthContentData} />;
+  }
   if (mode === 'audit-logs') renderedContent = <LogsView data={data} type="audit" />;
   if (mode === 'auth-logs') renderedContent = <LogsView data={data} type="auth" />;
   if (mode === 'auth-trackers') renderedContent = <AuthTrackerView data={data} />;
   if (mode === 'devices') renderedContent = <DevicesView data={data} onRevoke={revokeDevice} />;
   if (mode === 'redis-cache') {
-    renderedContent = <RedisView data={data} cachePrefix={cachePrefix} setCachePrefix={setCachePrefix} onClear={clearCache} />;
+    renderedContent = (
+      <RedisView
+        data={data}
+        cachePrefix={cachePrefix}
+        setCachePrefix={setCachePrefix}
+        onClear={clearCache}
+      />
+    );
   }
   if (mode === 'permission-matrix') renderedContent = <PermissionMatrixView data={data} />;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+    <div className="space-y-6">
+      <PageHeader
+        title={MODE_LABELS[mode] || 'Developer Center'}
+        subtitle={MODE_DESCRIPTIONS[mode] || 'Panel teknis developer.'}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <Button type="button" variant="outline" onClick={load}>
+            <RefreshCw className="h-4 w-4" />
+            <span>Refresh</span>
+          </Button>
+          {mode === 'dashboard' || mode === 'health' ? (
+            <Button type="button" onClick={runSyntheticTests}>
+              <Zap className="h-4 w-4" />
+              <span>Run Synthetic Test</span>
+            </Button>
+          ) : null}
+        </div>
+      </PageHeader>
+
       {isDashboard && health ? (
         <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <StatusCard title="Database" value={health?.db?.ok ? 'OK' : 'Issue'} description={`${health?.db?.latency_ms ?? '-'} ms`} icon={Server} ok={Boolean(health?.db?.ok)} />
-          <StatusCard title="Redis" value={health?.redis?.configured ? (health?.redis?.ok ? 'OK' : 'Configured') : 'Off'} description="Cache dan realtime backbone" icon={Database} ok={Boolean(health?.redis?.configured)} />
-          <StatusCard title="Turnstile" value={health?.runtime?.turnstile_enabled ? 'On' : 'Off'} description="Login protection" icon={Shield} ok={Boolean(health?.runtime?.turnstile_enabled)} />
-          <StatusCard title="Mode" value={health?.runtime?.node_env || '-'} description="Runtime environment" icon={Activity} />
+          <StatusCard
+            title="Database"
+            value={health?.db?.ok ? 'OK' : 'Issue'}
+            description={`${health?.db?.latency_ms ?? '-'} ms`}
+            icon={Server}
+            ok={Boolean(health?.db?.ok)}
+          />
+          <StatusCard
+            title="Redis"
+            value={
+              health?.redis?.configured ? (health?.redis?.ok ? 'OK' : 'Configured') : 'Off'
+            }
+            description="Cache dan realtime backbone"
+            icon={Database}
+            ok={Boolean(health?.redis?.configured)}
+          />
+          <StatusCard
+            title="Turnstile"
+            value={health?.runtime?.turnstile_enabled ? 'On' : 'Off'}
+            description="Login protection"
+            icon={Shield}
+            ok={Boolean(health?.runtime?.turnstile_enabled)}
+          />
+          <StatusCard
+            title="Mode"
+            value={health?.runtime?.node_env || '-'}
+            description="Runtime environment"
+            icon={Activity}
+          />
         </div>
       ) : null}
 
-      <Card variant="muted">
-        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div>
-            <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-              <TerminalSquare className="h-5 w-5" />
-              {MODE_LABELS[mode] || 'Developer Center'}
-            </CardTitle>
-            <CardDescription>{MODE_DESCRIPTIONS[mode] || 'Panel teknis developer.'}</CardDescription>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            <Button type="button" variant="outline" onClick={load}>
-              <RefreshCw className="mr-2 h-4 w-4" />
-              Refresh
-            </Button>
-            {(mode === 'dashboard' || mode === 'health') ? (
-              <Button type="button" onClick={runSyntheticTests}>
-                <Zap className="mr-2 h-4 w-4" />
-                Run Synthetic Test
-              </Button>
-            ) : null}
-          </div>
-        </CardHeader>
-        <CardContent>{renderedContent}</CardContent>
-      </Card>
-    </motion.div>
+      {renderedContent}
+    </div>
   );
 }

@@ -2,19 +2,28 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { UserCog, Plus, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Plus, UserCog } from 'lucide-react';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/field';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
+import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { adminAPI } from '@/lib/api';
-import { DashboardDialog } from '@/components/shared/dashboard-dialog';
-
-function getInitials(n) { return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+import { TITLE_MAP } from '@/lib/constants';
 
 export default function KelolaDosenPage() {
   const router = useRouter();
@@ -26,7 +35,10 @@ export default function KelolaDosenPage() {
   const [form, setForm] = useState({ nama: '', email: '', password: '' });
 
   useEffect(() => {
-    if (role && role !== 'admin') { router.replace(`/dashboard/${role}`); return; }
+    if (role && role !== 'admin') {
+      router.replace(`/dashboard/${role}`);
+      return;
+    }
     loadData();
   }, [role, router]);
 
@@ -34,64 +46,210 @@ export default function KelolaDosenPage() {
     try {
       const res = await adminAPI.getAllDosen();
       if (res.ok) setList(Array.isArray(res.data) ? res.data : []);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleCreate = async (e) => {
     e.preventDefault();
-    if (!form.nama || !form.email || !form.password) { toast.error('Semua field wajib diisi'); return; }
+    if (!form.nama || !form.email || !form.password) {
+      toast.error('Semua field wajib diisi');
+      return;
+    }
     try {
       const res = await adminAPI.createDosen(form);
-      if (res.ok) { toast.success('Dosen berhasil ditambahkan!'); setShowModal(false); setForm({ nama: '', email: '', password: '' }); loadData(); }
-      else toast.error(res.error || 'Gagal');
-    } catch { toast.error('Kesalahan jaringan'); }
+      if (res.ok) {
+        toast.success('Dosen berhasil ditambahkan!');
+        setShowModal(false);
+        setForm({ nama: '', email: '', password: '' });
+        loadData();
+      } else {
+        toast.error(res.error || 'Gagal');
+      }
+    } catch {
+      toast.error('Kesalahan jaringan');
+    }
   };
 
-  const filtered = list.filter(d => !search || (d.nama||'').toLowerCase().includes(search.toLowerCase()));
-  const inputCls = "bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]";
+  const filtered = list.filter(
+    (d) => !search || (d.nama || '').toLowerCase().includes(search.toLowerCase())
+  );
+  const activeSupervising = list.filter((d) => Number(d.jumlah_bimbingan || 0) > 0).length;
+  const totalBimbingan = list.reduce((sum, d) => sum + Number(d.jumlah_bimbingan || 0), 0);
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" /></div>;
+  if (loading) {
+    return <LoadingState variant="table" label="Memuat data dosen" />;
+  }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+    <div className="space-y-6">
+      <PageHeader
+        title={TITLE_MAP['kelola-dosen'] || 'Kelola Dosen'}
+        subtitle="Tambah akun dosen pembimbing baru dan pantau beban bimbingan mahasiswa."
+      >
+        <Button type="button" onClick={() => setShowModal(true)}>
+          <Plus className="h-4 w-4" />
+          <span>Tambah</span>
+        </Button>
+      </PageHeader>
+
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+        <div className="bg-[var(--surface-raised)] p-4 min-w-0">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total Dosen</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {list.length}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4 min-w-0">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Aktif Membimbing</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+            {activeSupervising}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4 min-w-0">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total Bimbingan</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-blue))] font-mono tabular-nums">
+            {totalBimbingan}
+          </p>
+        </div>
+      </div>
+
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><UserCog className="h-4 w-4" /> Kelola Dosen</CardTitle>
-          <div className="flex gap-3">
-            <Input placeholder="Cari..." value={search} onChange={e => setSearch(e.target.value)} className={"w-48 " + inputCls} />
-            <Button onClick={() => setShowModal(true)} className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"><Plus className="h-4 w-4 mr-1" /> Tambah</Button>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <UserCog className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+            <span>Daftar Dosen</span>
+          </CardTitle>
+          <div className="w-full sm:w-64">
+            <Field label="Cari dosen">
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="search"
+                  placeholder="Cari nama dosen..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
           </div>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="text-center py-12"><UserCog className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" /><p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada data</p></div>
+            <EmptyState
+              icon={UserCog}
+              title="Tidak ada data dosen"
+              description="Belum ada dosen terdaftar atau tidak ada hasil yang sesuai dengan pencarian."
+              action={
+                <Button type="button" variant="outline" onClick={() => setShowModal(true)}>
+                  <Plus className="h-4 w-4" />
+                  <span>Tambah Dosen</span>
+                </Button>
+              }
+            />
           ) : (
-            <div className="space-y-2">
-              {filtered.map((d, i) => (
-                <div key={d.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center gap-3 p-3">
-                  <div className="h-10 w-10 rounded-full bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-green))] flex items-center justify-center text-sm font-bold">{getInitials(d.nama)}</div>
-                  <div className="flex-1"><p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{d.nama || '-'}</p><p className="text-xs text-[hsl(var(--ctp-subtext0))]">{d.email || '-'}</p></div>
-                  <Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">{d.jumlah_bimbingan || 0} mhs</Badge>
-                </div>
-              ))}
-            </div>
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Dosen</TableHead>
+                  <TableHead>Email</TableHead>
+                  <TableHead className="text-right">Bimbingan</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((d, i) => {
+                  const count = Number(d.jumlah_bimbingan || 0);
+                  return (
+                    <TableRow key={d.id || i}>
+                      <TableCell data-label="Dosen" className="min-w-0">
+                        <span className="font-medium text-[var(--text-strong)] whitespace-normal break-words">
+                          {d.nama || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell data-label="Email" className="min-w-0">
+                        <span className="text-sm text-[var(--text-body)] whitespace-normal break-all">
+                          {d.email || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell data-label="Bimbingan" className="sm:text-right">
+                        <StatusBadge
+                          status={count > 0 ? 'active' : 'neutral'}
+                          label={`${count} mhs`}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      <DashboardDialog open={showModal} onOpenChange={setShowModal}>
-        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-4">Tambah Dosen</h3>
-        <form onSubmit={handleCreate} className="space-y-3">
-          <div><Label className="text-[hsl(var(--ctp-subtext1))]">Nama</Label><Input value={form.nama} onChange={e => setForm({...form, nama: e.target.value})} className={inputCls} /></div>
-          <div><Label className="text-[hsl(var(--ctp-subtext1))]">Email</Label><Input type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})} className={inputCls} /></div>
-          <div><Label className="text-[hsl(var(--ctp-subtext1))]">Password</Label><Input type="password" value={form.password} onChange={e => setForm({...form, password: e.target.value})} className={inputCls} /></div>
-          <div className="flex justify-end gap-3 pt-2">
-            <Button type="button" onClick={() => setShowModal(false)} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">Batal</Button>
-            <Button type="submit" className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]">Tambah</Button>
+      <DashboardDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+        title="Tambah Dosen"
+        description="Isi data akun dosen pembimbing baru."
+        className="rounded-xl border-[var(--line)] bg-[var(--surface-raised)] text-[var(--text-strong)]"
+      >
+        <div className="mb-4 space-y-1">
+          <h3 className="text-base font-semibold text-[var(--text-strong)]">Tambah Dosen</h3>
+          <p className="text-xs text-[var(--text-muted)]">
+            Lengkapi identitas dan kredensial awal untuk akun dosen baru.
+          </p>
+        </div>
+        <form onSubmit={handleCreate} className="space-y-4">
+          <Field label="Nama" required>
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="nama"
+                value={form.nama}
+                onChange={(e) => setForm({ ...form, nama: e.target.value })}
+                placeholder="Nama lengkap dan gelar"
+                className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+              />
+            )}
+          </Field>
+          <Field label="Email" required>
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="email"
+                type="email"
+                value={form.email}
+                onChange={(e) => setForm({ ...form, email: e.target.value })}
+                placeholder="nama@ulbi.ac.id"
+                className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+              />
+            )}
+          </Field>
+          <Field label="Password" required>
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="password"
+                type="password"
+                value={form.password}
+                onChange={(e) => setForm({ ...form, password: e.target.value })}
+                placeholder="Minimal 8 karakter"
+                className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+              />
+            )}
+          </Field>
+          <div className="flex flex-wrap justify-end gap-2 pt-2">
+            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
+              Batal
+            </Button>
+            <Button type="submit">Tambah</Button>
           </div>
         </form>
       </DashboardDialog>
-    </motion.div>
+    </div>
   );
 }

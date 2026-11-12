@@ -3,28 +3,60 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  Shield, Pencil, KeyRound, ToggleLeft, ToggleRight, Trash2, Save, UserCog,
+  KeyRound,
+  Pencil,
+  Save,
+  Shield,
+  ToggleLeft,
+  ToggleRight,
+  Trash2,
+  UserCog,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/field';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { adminAPI } from '@/lib/api';
+import { TITLE_MAP } from '@/lib/constants';
 
-function getInitials(n) { return (n || '?').split(' ').map((w) => w[0]).join('').toUpperCase().slice(0, 2); }
-
-const ROLE_COLORS = { mahasiswa: 'ctp-blue', dosen: 'ctp-green', koordinator: 'ctp-teal', kaprodi: 'ctp-mauve', admin: 'ctp-red' };
+const ROLE_COLORS = {
+  mahasiswa: 'ctp-blue',
+  dosen: 'ctp-green',
+  koordinator: 'ctp-teal',
+  kaprodi: 'ctp-mauve',
+  admin: 'ctp-red',
+};
 const JALUR_OPTIONS = ['regular', 'rpl'];
 
 const EMPTY_FORM = {
@@ -113,23 +145,30 @@ export default function KelolaUsersPage() {
     setPasswordOpen(true);
   };
 
-  const filtered = useMemo(() => users.filter((user) => {
-    if (filterRole !== 'all' && user.role !== filterRole) return false;
-    if (!search) return true;
-    const keyword = search.toLowerCase();
-    return [user.nama, user.email, user.npm, user.nidn]
-      .filter(Boolean)
-      .some((value) => String(value).toLowerCase().includes(keyword));
-  }), [filterRole, search, users]);
+  const filtered = useMemo(
+    () =>
+      users.filter((user) => {
+        if (filterRole !== 'all' && user.role !== filterRole) return false;
+        if (!search) return true;
+        const keyword = search.toLowerCase();
+        return [user.nama, user.email, user.npm, user.nidn]
+          .filter(Boolean)
+          .some((value) => String(value).toLowerCase().includes(keyword));
+      }),
+    [filterRole, search, users]
+  );
 
-  const roleCounts = useMemo(() => ({
-    all: users.length,
-    mahasiswa: users.filter((user) => user.role === 'mahasiswa').length,
-    dosen: users.filter((user) => user.role === 'dosen').length,
-    koordinator: users.filter((user) => user.role === 'koordinator').length,
-    kaprodi: users.filter((user) => user.role === 'kaprodi').length,
-    admin: users.filter((user) => user.role === 'admin').length,
-  }), [users]);
+  const roleCounts = useMemo(
+    () => ({
+      all: users.length,
+      mahasiswa: users.filter((user) => user.role === 'mahasiswa').length,
+      dosen: users.filter((user) => user.role === 'dosen').length,
+      koordinator: users.filter((user) => user.role === 'koordinator').length,
+      kaprodi: users.filter((user) => user.role === 'kaprodi').length,
+      admin: users.filter((user) => user.role === 'admin').length,
+    }),
+    [users]
+  );
 
   const handleToggle = async (user) => {
     try {
@@ -249,242 +288,396 @@ export default function KelolaUsersPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="table" label="Memuat daftar pengguna" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-2 gap-4 md:grid-cols-3 xl:grid-cols-6">
-        {Object.entries(roleCounts).map(([entryRole, count]) => (
-          <Card variant="muted"
-            key={entryRole}
-            className={`cursor-pointer ${filterRole === entryRole ? 'ring-2 ring-[hsl(var(--ctp-lavender))]' : ''}`}
-            onClick={() => setFilterRole(entryRole)}
-          >
-            <CardContent className="pt-5 pb-4">
-              <p className="text-xs text-[hsl(var(--ctp-subtext0))] capitalize">{entryRole === 'all' ? 'Semua' : entryRole}</p>
-              <p className="text-xl font-bold text-[hsl(var(--ctp-text))]">{count}</p>
-            </CardContent>
-          </Card>
-        ))}
+    <div className="space-y-6">
+      <PageHeader
+        title={TITLE_MAP['kelola-users'] || 'Kelola Users'}
+        subtitle="Filter berdasarkan peran, perbarui profil akun, atur ulang kata sandi, atau ubah status aktif pengguna."
+      />
+
+      <div className="space-y-2">
+        <span id="filter-role-label" className="block text-xs font-medium text-[var(--text-muted)]">
+          Filter peran pengguna
+        </span>
+        <div
+          role="group"
+          aria-labelledby="filter-role-label"
+          className="flex flex-wrap gap-2"
+        >
+          {Object.entries(roleCounts).map(([entryRole, count]) => {
+            const active = filterRole === entryRole;
+            const roleTitle =
+              entryRole === 'all'
+                ? 'Semua'
+                : entryRole.charAt(0).toUpperCase() + entryRole.slice(1);
+            return (
+              <Button
+                key={entryRole}
+                type="button"
+                size="sm"
+                variant={active ? 'default' : 'outline'}
+                aria-pressed={active}
+                onClick={() => setFilterRole(entryRole)}
+                className="gap-2"
+              >
+                <span>{roleTitle}</span>
+                <span className="font-mono text-xs tabular-nums opacity-80">{count}</span>
+              </Button>
+            );
+          })}
+        </div>
       </div>
 
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <Shield className="h-4 w-4" /> Kelola Users
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <Shield className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+            <span>Daftar Pengguna</span>
           </CardTitle>
-          <Input
-            placeholder="Cari user..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64 bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
-          />
+          <div className="w-full sm:w-72">
+            <Field label="Cari pengguna">
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="search"
+                  placeholder="Nama, email, NPM, atau NIDN..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
+          </div>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <Shield className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada user</p>
-            </div>
+            <EmptyState
+              icon={Shield}
+              title="Tidak ada user"
+              description="Belum ada pengguna terdaftar atau tidak ada data yang sesuai dengan filter."
+            />
           ) : (
-            <div className="space-y-3">
-              {filtered.map((user, index) => {
-                const color = ROLE_COLORS[user.role] || 'ctp-overlay1';
-                return (
-                  <div key={user.id || index} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4">
-                    <div className="flex flex-col gap-4 xl:flex-row xl:items-center">
-                      <div className="flex items-center gap-3 flex-1 min-w-0">
-                        <div className={`h-10 w-10 shrink-0 rounded-full bg-[hsl(var(--${color})/0.20)] text-[hsl(var(--${color}))] flex items-center justify-center text-sm font-bold`}>
-                          {getInitials(user.nama)}
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Pengguna</TableHead>
+                  <TableHead>Peran</TableHead>
+                  <TableHead>Identitas</TableHead>
+                  <TableHead>Kontak</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead className="text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((user, index) => {
+                  const color = ROLE_COLORS[user.role] || 'ctp-overlay1';
+                  const isActive = user.is_active !== false;
+                  return (
+                    <TableRow key={user.id || index}>
+                      <TableCell data-label="Pengguna" className="min-w-0">
+                        <div className="min-w-0 space-y-0.5 text-right sm:text-left">
+                          <p className="font-medium text-[var(--text-strong)] whitespace-normal break-words">
+                            {user.nama || '-'}
+                          </p>
+                          <p className="text-xs text-[var(--text-muted)] whitespace-normal break-all">
+                            {user.email || '-'}
+                          </p>
                         </div>
-                        <div className="min-w-0">
-                          <p className="text-sm font-semibold text-[hsl(var(--ctp-text))] truncate">{user.nama || '-'}</p>
-                          <p className="text-xs text-[hsl(var(--ctp-subtext0))] truncate">{user.email || '-'}</p>
-                          <div className="mt-2 flex flex-wrap gap-2">
-                            <Badge className={`rounded-xl capitalize border border-[hsl(var(--${color})/0.35)] bg-[hsl(var(--${color})/0.12)] text-[hsl(var(--${color}))]`}>
-                              {user.role}
+                      </TableCell>
+                      <TableCell data-label="Peran">
+                        <div className="flex flex-wrap justify-end gap-1.5 sm:justify-start">
+                          <Badge
+                            variant="outline"
+                            className={`rounded-md capitalize border-[hsl(var(--${color})/0.35)] bg-[hsl(var(--${color})/0.12)] text-[hsl(var(--${color}))]`}
+                          >
+                            {user.role}
+                          </Badge>
+                          {user.role === 'mahasiswa' && user.jalur ? (
+                            <Badge variant="secondary" className="rounded-md">
+                              {String(user.jalur).toUpperCase()}
                             </Badge>
-                            {user.role === 'mahasiswa' && user.jalur ? (
-                              <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-                                {String(user.jalur).toUpperCase()}
-                              </Badge>
-                            ) : null}
-                            <Badge className={`rounded-xl border ${user.is_active === false ? 'border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.12)] text-[hsl(var(--ctp-red))]' : 'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))]'}`}>
-                              {user.is_active === false ? 'Nonaktif' : 'Aktif'}
-                            </Badge>
-                          </div>
+                          ) : null}
                         </div>
-                      </div>
-
-                      <div className="grid grid-cols-1 gap-2 text-xs text-[hsl(var(--ctp-subtext0))] sm:grid-cols-3 xl:min-w-[420px]">
-                        <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] px-3 py-2">
-                          <div className="text-[var(--text-muted)]">Identitas</div>
-                          <div className="mt-1 font-medium text-[hsl(var(--ctp-text))]">{user.npm || user.nidn || '-'}</div>
+                      </TableCell>
+                      <TableCell data-label="Identitas">
+                        <div className="font-mono text-xs tabular-nums text-[var(--text-body)]">
+                          <span>{user.npm || user.nidn || '-'}</span>
+                          {user.angkatan ? (
+                            <span className="text-[var(--text-muted)]"> · {user.angkatan}</span>
+                          ) : null}
                         </div>
-                        <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] px-3 py-2">
-                          <div className="text-[var(--text-muted)]">No. WA</div>
-                          <div className="mt-1 font-medium text-[hsl(var(--ctp-text))]">{user.no_wa || '-'}</div>
+                      </TableCell>
+                      <TableCell data-label="Kontak">
+                        <span className="font-mono text-xs tabular-nums text-[var(--text-body)] break-all">
+                          {user.no_wa || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell data-label="Status">
+                        <StatusBadge
+                          status={isActive ? 'active' : 'revoked'}
+                          label={isActive ? 'Aktif' : 'Nonaktif'}
+                        />
+                      </TableCell>
+                      <TableCell data-label="Aksi">
+                        <div className="flex flex-wrap justify-end gap-1.5">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditDialog(user)}
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                            <span>Edit Profil</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openPasswordDialog(user)}
+                          >
+                            <KeyRound className="h-3.5 w-3.5" />
+                            <span>Reset Password</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => handleToggle(user)}
+                          >
+                            {isActive ? (
+                              <ToggleRight className="h-4 w-4" />
+                            ) : (
+                              <ToggleLeft className="h-4 w-4" />
+                            )}
+                            <span>{isActive ? 'Nonaktifkan' : 'Aktifkan'}</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="destructive"
+                            onClick={() => {
+                              setSelectedUser(user);
+                              setDeleteDialogOpen(true);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                            <span>Hapus</span>
+                          </Button>
                         </div>
-                        <div className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] px-3 py-2">
-                          <div className="text-[var(--text-muted)]">Angkatan</div>
-                          <div className="mt-1 font-medium text-[hsl(var(--ctp-text))]">{user.angkatan || '-'}</div>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4 flex flex-wrap gap-2">
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => openEditDialog(user)}
-                        className="rounded-xl bg-[hsl(var(--ctp-blue)/0.16)] text-[hsl(var(--ctp-blue))] hover:bg-[hsl(var(--ctp-blue)/0.24)] border border-[hsl(var(--ctp-blue)/0.28)]"
-                      >
-                        <Pencil className="h-3.5 w-3.5 mr-1" />
-                        Edit Profil
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        onClick={() => openPasswordDialog(user)}
-                        className="rounded-xl bg-[hsl(var(--ctp-mauve)/0.16)] text-[hsl(var(--ctp-mauve))] hover:bg-[hsl(var(--ctp-mauve)/0.24)] border border-[hsl(var(--ctp-mauve)/0.28)]"
-                      >
-                        <KeyRound className="h-3.5 w-3.5 mr-1" />
-                        Reset Password
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => handleToggle(user)}
-                        className={`rounded-xl border ${user.is_active === false ? 'text-[hsl(var(--ctp-green))] border-[hsl(var(--ctp-green)/0.28)] bg-[hsl(var(--ctp-green)/0.10)]' : 'text-[hsl(var(--ctp-peach))] border-[hsl(var(--ctp-peach)/0.28)] bg-[hsl(var(--ctp-peach)/0.10)]'}`}
-                      >
-                        {user.is_active === false ? <ToggleLeft className="h-4 w-4 mr-1" /> : <ToggleRight className="h-4 w-4 mr-1" />}
-                        {user.is_active === false ? 'Aktifkan' : 'Nonaktifkan'}
-                      </Button>
-                      <Button
-                        type="button"
-                        size="sm"
-                        variant="ghost"
-                        onClick={() => {
-                          setSelectedUser(user);
-                          setDeleteDialogOpen(true);
-                        }}
-                        className="rounded-xl border border-[hsl(var(--ctp-red)/0.28)] bg-[hsl(var(--ctp-red)/0.10)] text-[hsl(var(--ctp-red))]"
-                      >
-                        <Trash2 className="h-4 w-4 mr-1" />
-                        Hapus
-                      </Button>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      <Dialog open={editOpen} onOpenChange={(open) => { if (!saving && !open) resetDialogs(); }}>
-        <DialogContent className="border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0))] text-[hsl(var(--ctp-text))] max-w-2xl">
+      <Dialog
+        open={editOpen}
+        onOpenChange={(open) => {
+          if (!saving && !open) resetDialogs();
+        }}
+      >
+        <DialogContent className="max-w-2xl bg-[var(--surface-raised)] border-[var(--line)] text-[var(--text-strong)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserCog className="h-5 w-5" /> Edit User
+              <UserCog className="h-5 w-5 text-[var(--text-muted)]" />
+              <span>Edit User</span>
             </DialogTitle>
-            <DialogDescription className="text-[hsl(var(--ctp-subtext0))]">
+            <DialogDescription className="text-[var(--text-muted)]">
               Perbarui data dasar user dari panel admin.
             </DialogDescription>
           </DialogHeader>
 
           <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-            <div className="space-y-2">
-              <Label>Nama</Label>
-              <Input value={profileForm.nama} onChange={(e) => setProfileForm((prev) => ({ ...prev, nama: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input value={profileForm.email} onChange={(e) => setProfileForm((prev) => ({ ...prev, email: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-            </div>
-            <div className="space-y-2">
-              <Label>No. WhatsApp</Label>
-              <Input value={profileForm.no_wa} onChange={(e) => setProfileForm((prev) => ({ ...prev, no_wa: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-            </div>
+            <Field label="Nama" required>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="nama"
+                  value={profileForm.nama}
+                  onChange={(e) =>
+                    setProfileForm((prev) => ({ ...prev, nama: e.target.value }))
+                  }
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
+            <Field label="Email" required>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="email"
+                  type="email"
+                  value={profileForm.email}
+                  onChange={(e) =>
+                    setProfileForm((prev) => ({ ...prev, email: e.target.value }))
+                  }
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
+            <Field label="No. WhatsApp">
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="no_wa"
+                  value={profileForm.no_wa}
+                  onChange={(e) =>
+                    setProfileForm((prev) => ({ ...prev, no_wa: e.target.value }))
+                  }
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
             {selectedUser?.role === 'mahasiswa' ? (
               <>
-                <div className="space-y-2">
-                  <Label>NPM</Label>
-                  <Input value={profileForm.npm} onChange={(e) => setProfileForm((prev) => ({ ...prev, npm: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Angkatan</Label>
-                  <Input value={profileForm.angkatan} onChange={(e) => setProfileForm((prev) => ({ ...prev, angkatan: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Jalur</Label>
-                  <Select value={profileForm.jalur} onValueChange={(value) => setProfileForm((prev) => ({ ...prev, jalur: value }))}>
-                    <SelectTrigger className="w-full bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]">
-                      <SelectValue placeholder="Pilih jalur" />
-                    </SelectTrigger>
-                    <SelectContent className="border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0))] text-[hsl(var(--ctp-text))]">
-                      {JALUR_OPTIONS.map((jalur) => (
-                        <SelectItem key={jalur} value={jalur}>
-                          {jalur.toUpperCase()}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                <Field label="NPM" required>
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      name="npm"
+                      value={profileForm.npm}
+                      onChange={(e) =>
+                        setProfileForm((prev) => ({ ...prev, npm: e.target.value }))
+                      }
+                      className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)] font-mono tabular-nums"
+                    />
+                  )}
+                </Field>
+                <Field label="Angkatan">
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      name="angkatan"
+                      value={profileForm.angkatan}
+                      onChange={(e) =>
+                        setProfileForm((prev) => ({ ...prev, angkatan: e.target.value }))
+                      }
+                      className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)] font-mono tabular-nums"
+                    />
+                  )}
+                </Field>
+                <div className="md:col-span-2">
+                  <Field label="Jalur">
+                    {(a11y) => (
+                      <Select
+                        name="jalur"
+                        value={profileForm.jalur}
+                        onValueChange={(value) =>
+                          setProfileForm((prev) => ({ ...prev, jalur: value }))
+                        }
+                      >
+                        <SelectTrigger
+                          id={a11y.id}
+                          aria-describedby={a11y['aria-describedby']}
+                          aria-invalid={a11y['aria-invalid']}
+                          className="w-full bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                        >
+                          <SelectValue placeholder="Pilih jalur" />
+                        </SelectTrigger>
+                        <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)] text-[var(--text-strong)]">
+                          {JALUR_OPTIONS.map((jalur) => (
+                            <SelectItem key={jalur} value={jalur}>
+                              {jalur.toUpperCase()}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </Field>
                 </div>
               </>
             ) : (
-              <div className="space-y-2">
-                <Label>NIDN</Label>
-                <Input value={profileForm.nidn} onChange={(e) => setProfileForm((prev) => ({ ...prev, nidn: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-              </div>
+              <Field label="NIDN" required>
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    name="nidn"
+                    value={profileForm.nidn}
+                    onChange={(e) =>
+                      setProfileForm((prev) => ({ ...prev, nidn: e.target.value }))
+                    }
+                    className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)] font-mono tabular-nums"
+                  />
+                )}
+              </Field>
             )}
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="secondary" disabled={saving} onClick={resetDialogs} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
+            <Button type="button" variant="outline" disabled={saving} onClick={resetDialogs}>
               Batal
             </Button>
-            <Button type="button" disabled={saving} onClick={handleSaveProfile} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]">
-              <Save className="h-4 w-4 mr-1" />
-              {saving ? 'Menyimpan...' : 'Simpan Perubahan'}
+            <Button type="button" disabled={saving} onClick={handleSaveProfile}>
+              <Save className="h-4 w-4" />
+              <span>{saving ? 'Menyimpan...' : 'Simpan Perubahan'}</span>
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      <Dialog open={passwordOpen} onOpenChange={(open) => { if (!saving && !open) resetDialogs(); }}>
-        <DialogContent className="border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0))] text-[hsl(var(--ctp-text))]">
+      <Dialog
+        open={passwordOpen}
+        onOpenChange={(open) => {
+          if (!saving && !open) resetDialogs();
+        }}
+      >
+        <DialogContent className="bg-[var(--surface-raised)] border-[var(--line)] text-[var(--text-strong)]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <KeyRound className="h-5 w-5" /> Reset Password
+              <KeyRound className="h-5 w-5 text-[var(--text-muted)]" />
+              <span>Reset Password</span>
             </DialogTitle>
-            <DialogDescription className="text-[hsl(var(--ctp-subtext0))]">
+            <DialogDescription className="text-[var(--text-muted)]">
               Set password baru untuk {selectedUser?.nama || 'user'}.
             </DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4">
-            <div className="space-y-2">
-              <Label>Password Baru</Label>
-              <Input type="password" value={passwordForm.new_password} onChange={(e) => setPasswordForm((prev) => ({ ...prev, new_password: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-            </div>
-            <div className="space-y-2">
-              <Label>Konfirmasi Password</Label>
-              <Input type="password" value={passwordForm.confirm_password} onChange={(e) => setPasswordForm((prev) => ({ ...prev, confirm_password: e.target.value }))} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-            </div>
+            <Field label="Password Baru" required hint="Minimal 8 karakter">
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="new_password"
+                  type="password"
+                  value={passwordForm.new_password}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({ ...prev, new_password: e.target.value }))
+                  }
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
+            <Field label="Konfirmasi Password" required>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="confirm_password"
+                  type="password"
+                  value={passwordForm.confirm_password}
+                  onChange={(e) =>
+                    setPasswordForm((prev) => ({
+                      ...prev,
+                      confirm_password: e.target.value,
+                    }))
+                  }
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
           </div>
 
           <DialogFooter>
-            <Button type="button" variant="secondary" disabled={saving} onClick={resetDialogs} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
+            <Button type="button" variant="outline" disabled={saving} onClick={resetDialogs}>
               Batal
             </Button>
-            <Button type="button" disabled={saving} onClick={handleResetPassword} className="rounded-2xl bg-[hsl(var(--ctp-mauve)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-mauve)/0.30)] border border-[hsl(var(--ctp-mauve)/0.35)]">
+            <Button type="button" disabled={saving} onClick={handleResetPassword}>
               {saving ? 'Memproses...' : 'Reset Password'}
             </Button>
           </DialogFooter>
@@ -497,11 +690,15 @@ export default function KelolaUsersPage() {
           if (!saving && !open) resetDialogs();
         }}
         title="Hapus User"
-        description={selectedUser ? `Hapus user ${selectedUser.nama}? Aksi ini tidak dapat dibatalkan.` : 'Hapus user ini?'}
+        description={
+          selectedUser
+            ? `Hapus user ${selectedUser.nama}? Aksi ini tidak dapat dibatalkan.`
+            : 'Hapus user ini?'
+        }
         confirmLabel="Hapus"
         onConfirm={handleDelete}
         loading={saving}
       />
-    </motion.div>
+    </div>
   );
 }

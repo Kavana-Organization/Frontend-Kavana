@@ -2,11 +2,23 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Activity, Server, Database, Clock, Shield, Search } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Activity, Clock, Database, Shield } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Field } from '@/components/ui/field';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { adminAPI } from '@/lib/api';
 
@@ -23,6 +35,21 @@ function parseDetails(details) {
   } catch (_) {
     return null;
   }
+}
+
+function formatDetailValue(value) {
+  if (value === null || value === undefined || value === '') return '-';
+  if (typeof value === 'boolean') return value ? 'Ya' : 'Tidak';
+  if (typeof value === 'object') return JSON.stringify(value);
+  return String(value);
+}
+
+function mapResultToStatus(result) {
+  const normalized = String(result || '').trim().toLowerCase();
+  if (['success', 'ok', 'passed', 'active'].includes(normalized)) return 'approved';
+  if (['pending', 'waiting', 'warning'].includes(normalized)) return 'pending';
+  if (['failed', 'error', 'revoked', 'rejected'].includes(normalized)) return 'rejected';
+  return 'neutral';
 }
 
 export default function MonitoringSistemPage() {
@@ -80,156 +107,221 @@ export default function MonitoringSistemPage() {
   }, [auditLogs, search]);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="dashboard" label="Memuat data monitoring sistem" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
+    <div className="space-y-6">
+      <PageHeader
+        title="Monitoring Sistem"
+        subtitle="Pantau aktivitas sistem terbaru, indikator operasional, dan riwayat audit log."
+      />
+
+      {/* Metric Strip */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
         {[
-          { label: 'Total Users', value: stats.total_users || 0, icon: Activity, color: 'ctp-text' },
-          { label: 'Mahasiswa', value: stats.total_mahasiswa || 0, icon: Server, color: 'ctp-blue' },
-          { label: 'Dosen', value: stats.total_dosen || 0, icon: Database, color: 'ctp-green' },
-          { label: 'Admin', value: stats.total_admin || 0, icon: Shield, color: 'ctp-red' },
+          { label: 'Total Users', value: stats.total_users || 0, cls: 'text-[var(--text-strong)]' },
+          { label: 'Mahasiswa', value: stats.total_mahasiswa || 0, cls: 'text-[hsl(var(--ctp-blue))]' },
+          { label: 'Dosen', value: stats.total_dosen || 0, cls: 'text-[hsl(var(--ctp-green))]' },
+          { label: 'Admin', value: stats.total_admin || 0, cls: 'text-[hsl(var(--ctp-red))]' },
         ].map((item) => (
-          <Card variant="muted" key={item.label}>
-            <CardContent className="pt-6">
-              <div className="flex items-center justify-between">
-                <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{item.label}</p>
-                <item.icon className={`h-4 w-4 text-[hsl(var(--${item.color}))]`} />
-              </div>
-              <p className={`text-2xl font-bold text-[hsl(var(--${item.color}))] mt-1`}>{item.value}</p>
-            </CardContent>
-          </Card>
+          <div key={item.label} className="bg-[var(--surface-raised)] p-4 sm:p-5 min-w-0">
+            <p className="text-xs font-medium text-[var(--text-muted)]">{item.label}</p>
+            <p className={`mt-1 text-2xl font-semibold font-mono tabular-nums ${item.cls}`}>
+              {item.value}
+            </p>
+          </div>
         ))}
       </div>
 
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-2">
-        <Card variant="muted">
+        <Card variant="muted" className="min-w-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-              <Clock className="h-4 w-4" /> Aktivitas Terbaru
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+              <Clock className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+              <span>Aktivitas Terbaru</span>
             </CardTitle>
           </CardHeader>
           <CardContent>
             {activities.length === 0 ? (
-              <div className="text-center py-12">
-                <Activity className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-                <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada aktivitas</p>
-              </div>
+              <EmptyState
+                icon={Activity}
+                title="Tidak ada aktivitas"
+                description="Aktivitas terbaru sistem akan tercatat di sini."
+              />
             ) : (
-              <div className="space-y-2">
-                {activities.map((activity, index) => (
-                  <div key={activity.id || index} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-3 p-3">
-                    <div className="h-2 w-2 rounded-full bg-[hsl(var(--ctp-green))] mt-1.5" />
-                    <div className="flex-1">
-                      <p className="text-sm text-[hsl(var(--ctp-text))]">{activity.message || activity.action || '-'}</p>
-                      <p className="text-xs text-[hsl(var(--ctp-subtext0))] mt-1">{formatDateTime(activity.created_at || activity.timestamp)}</p>
-                    </div>
-                    <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-                      {activity.result || 'success'}
-                    </Badge>
-                  </div>
-                ))}
-              </div>
+              <Table stackOnMobile>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Aktivitas</TableHead>
+                    <TableHead>Waktu</TableHead>
+                    <TableHead className="text-right">Status</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {activities.map((activity, index) => (
+                    <TableRow key={activity.id || index}>
+                      <TableCell data-label="Aktivitas" className="min-w-0">
+                        <span className="text-sm text-[var(--text-strong)] whitespace-normal break-words">
+                          {activity.message || activity.action || '-'}
+                        </span>
+                      </TableCell>
+                      <TableCell data-label="Waktu">
+                        <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                          {formatDateTime(activity.created_at || activity.timestamp)}
+                        </span>
+                      </TableCell>
+                      <TableCell data-label="Status" className="sm:text-right">
+                        <StatusBadge
+                          status={mapResultToStatus(activity.result || 'success')}
+                          label={activity.result || 'success'}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
             )}
           </CardContent>
         </Card>
 
-        <Card variant="muted">
+        <Card variant="muted" className="min-w-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-              <Database className="h-4 w-4" /> Status Sistem
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+              <Database className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+              <span>Status Sistem</span>
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
-            {[
-              { label: 'Proposal Pending', value: stats.proposal_pending || 0, color: 'ctp-peach' },
-              { label: 'Bimbingan Aktif', value: stats.bimbingan_aktif || 0, color: 'ctp-blue' },
-              { label: 'Laporan Pending', value: stats.laporan_pending || 0, color: 'ctp-mauve' },
-              { label: 'Sidang Scheduled', value: stats.sidang_scheduled || 0, color: 'ctp-green' },
-              { label: 'User Nonaktif', value: stats.users_inactive || 0, color: 'ctp-red' },
-            ].map((item) => (
-              <div key={item.label} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-4 py-3 flex items-center justify-between">
-                <span className="text-sm text-[hsl(var(--ctp-subtext0))]">{item.label}</span>
-                <span className={`text-base font-semibold text-[hsl(var(--${item.color}))]`}>{item.value}</span>
-              </div>
-            ))}
+          <CardContent>
+            <div className="divide-y divide-[var(--line)] rounded-xl border border-[var(--line)] bg-[var(--surface-raised)]">
+              {[
+                { label: 'Proposal Pending', value: stats.proposal_pending || 0, cls: 'text-[hsl(var(--ctp-peach))]' },
+                { label: 'Bimbingan Aktif', value: stats.bimbingan_aktif || 0, cls: 'text-[hsl(var(--ctp-blue))]' },
+                { label: 'Laporan Pending', value: stats.laporan_pending || 0, cls: 'text-[hsl(var(--ctp-mauve))]' },
+                { label: 'Sidang Scheduled', value: stats.sidang_scheduled || 0, cls: 'text-[hsl(var(--ctp-green))]' },
+                { label: 'User Nonaktif', value: stats.users_inactive || 0, cls: 'text-[hsl(var(--ctp-red))]' },
+              ].map((item) => (
+                <div key={item.label} className="flex items-center justify-between gap-3 px-4 py-3">
+                  <span className="text-sm text-[var(--text-muted)]">{item.label}</span>
+                  <span className={`text-base font-semibold font-mono tabular-nums ${item.cls}`}>
+                    {item.value}
+                  </span>
+                </div>
+              ))}
+            </div>
           </CardContent>
         </Card>
       </div>
 
-      <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <Shield className="h-4 w-4" /> Audit Logs
+      <Card variant="muted" className="min-w-0">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <Shield className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+            <span>Audit Logs</span>
           </CardTitle>
-          <div className="relative w-full max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[var(--text-muted)]" />
-            <Input
-              placeholder="Cari action, target, user..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
-            />
+          <div className="w-full sm:w-80">
+            <Field label="Cari audit log">
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="search"
+                  placeholder="Cari action, target, user..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
           </div>
         </CardHeader>
         <CardContent>
           {filteredAuditLogs.length === 0 ? (
-            <div className="text-center py-12">
-              <Shield className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada audit log</p>
-            </div>
+            <EmptyState
+              icon={Shield}
+              title="Tidak ada audit log"
+              description="Belum ada log audit atau tidak ada entri yang cocok dengan kata kunci pencarian."
+            />
           ) : (
             <div className="space-y-3">
-              {filteredAuditLogs.map((log) => {
+              {filteredAuditLogs.map((log, index) => {
                 const details = parseDetails(log.details);
-                const resultClass = log.result === 'success'
-                  ? 'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.12)] text-[hsl(var(--ctp-green))]'
-                  : 'border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.12)] text-[hsl(var(--ctp-red))]';
+                const detailEntries =
+                  details && typeof details === 'object' && !Array.isArray(details)
+                    ? Object.entries(details)
+                    : details !== null
+                      ? [['data', details]]
+                      : [];
 
                 return (
-                  <div key={log.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4">
+                  <article
+                    key={log.id || index}
+                    className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 min-w-0"
+                  >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
-                      <div className="space-y-2">
+                      <div className="min-w-0 flex-1 space-y-2">
                         <div className="flex flex-wrap items-center gap-2">
-                          <Badge className="rounded-xl border border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]">
-                            {log.action}
+                          <Badge variant="outline" className="rounded-md font-mono text-xs">
+                            {log.action || '-'}
                           </Badge>
-                          <Badge className={`rounded-xl border ${resultClass}`}>
-                            {log.result}
-                          </Badge>
+                          <StatusBadge
+                            status={mapResultToStatus(log.result)}
+                            label={log.result || 'unknown'}
+                          />
                           {log.target ? (
-                            <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-                              {log.target}{log.target_id ? ` #${log.target_id}` : ''}
+                            <Badge variant="secondary" className="rounded-md font-mono text-xs">
+                              {log.target}
+                              {log.target_id ? ` #${log.target_id}` : ''}
                             </Badge>
                           ) : null}
                         </div>
-                        <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                          Admin/User: {log.user_id || '-'} • Role: {log.role || '-'} • Request: {log.request_id || '-'}
+                        <p className="font-mono text-xs tabular-nums text-[var(--text-muted)] break-all">
+                          Admin/User: {log.user_id || '-'} · Role: {log.role || '-'} · Request:{' '}
+                          {log.request_id || '-'}
                         </p>
-                        {details ? (
-                          <pre className="whitespace-pre-wrap rounded-xl border border-[hsl(var(--ctp-overlay0)/0.25)] bg-[hsl(var(--ctp-surface1)/0.20)] p-3 text-xs text-[hsl(var(--ctp-subtext1))] overflow-x-auto">
-                            {JSON.stringify(details, null, 2)}
-                          </pre>
-                        ) : null}
                       </div>
-                      <div className="text-xs text-[hsl(var(--ctp-subtext0))] lg:text-right">
+                      <div className="shrink-0 font-mono text-xs tabular-nums text-[var(--text-muted)] lg:text-right">
                         <div>{formatDateTime(log.created_at)}</div>
-                        <div className="mt-1">{log.ip_address || '-'}</div>
+                        <div className="mt-1 break-all">{log.ip_address || '-'}</div>
                       </div>
                     </div>
-                  </div>
+
+                    {details ? (
+                      <div className="mt-3 space-y-2 border-t border-[var(--line)] pt-3 min-w-0">
+                        {detailEntries.length > 0 ? (
+                          <dl className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-3">
+                            {detailEntries.map(([key, value]) => (
+                              <div
+                                key={key}
+                                className="min-w-0 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2"
+                              >
+                                <dt className="text-xs font-medium text-[var(--text-muted)] break-words">
+                                  {key}
+                                </dt>
+                                <dd className="mt-0.5 font-mono text-xs tabular-nums text-[var(--text-strong)] break-all">
+                                  {formatDetailValue(value)}
+                                </dd>
+                              </div>
+                            ))}
+                          </dl>
+                        ) : null}
+
+                        <details className="rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)]">
+                          <summary className="cursor-pointer select-none px-3 py-2 text-xs font-medium text-[var(--text-muted)] hover:text-[var(--text-strong)]">
+                            Lihat JSON mentah
+                          </summary>
+                          <pre className="overflow-x-auto border-t border-[var(--line)] p-3 font-mono text-xs text-[var(--text-body)] whitespace-pre-wrap break-all">
+                            {JSON.stringify(details, null, 2)}
+                          </pre>
+                        </details>
+                      </div>
+                    ) : null}
+                  </article>
                 );
               })}
             </div>
           )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }
