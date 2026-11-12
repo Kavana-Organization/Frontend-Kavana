@@ -366,7 +366,7 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
       <TooltipProvider delayDuration={300}>
         <div className="flex min-h-screen bg-transparent">
           {/* Desktop Sidebar */}
-          <DesktopSidebar role={currentRole} />
+          <DesktopSidebar role={currentRole} notificationStats={notificationStats} />
 
           {/* Main Content */}
           <main className="min-w-0 flex-1 pb-10">
@@ -376,7 +376,7 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                 <div className="flex items-center gap-3">
                   {/* Mobile hamburger */}
                   <div className="lg:hidden">
-                    <MobileSidebar role={currentRole} />
+                    <MobileSidebar role={currentRole} notificationStats={notificationStats} />
                   </div>
 
                   {/* Page title + date */}
