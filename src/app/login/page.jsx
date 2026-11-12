@@ -211,7 +211,7 @@ export default function LoginPage() {
   const errCls = 'border-[hsl(var(--ctp-red))] focus-visible:ring-[hsl(var(--ctp-red))]';
 
   return (
-    <div className="min-h-screen bg-[var(--surface-page)] px-4 py-8 sm:px-6 lg:px-8 flex items-center justify-center">
+    <main className="min-h-screen bg-[var(--surface-page)] px-4 py-8 sm:px-6 lg:px-8 flex items-center justify-center">
       {/* Load Cloudflare Turnstile script */}
       {TURNSTILE_SITE_KEY && (
         <Script
@@ -368,7 +368,7 @@ export default function LoginPage() {
                         />
                         <button
                           type="button"
-                          className="absolute right-2.5 top-1/2 -translate-y-1/2 grid place-items-center text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors [@media(pointer:coarse)]:right-0.5 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
+                          className="absolute right-1 top-1/2 -translate-y-1/2 size-8 grid place-items-center rounded text-[var(--text-muted)] hover:text-[var(--text-strong)] transition-colors [@media(pointer:coarse)]:right-0.5 [@media(pointer:coarse)]:min-h-11 [@media(pointer:coarse)]:min-w-11"
                           aria-label={showPassword ? 'Sembunyikan password' : 'Tampilkan password'}
                           onClick={() => setShowPassword((prev) => !prev)}
                         >
@@ -482,6 +482,6 @@ export default function LoginPage() {
           </Card>
         </motion.div>
       </div>
-    </div>
+    </main>
   );
 }

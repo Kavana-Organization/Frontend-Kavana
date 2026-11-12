@@ -401,11 +401,11 @@ export function DashboardLayout({ children, allowedRoles = [] }) {
                       variant="ghost"
                       size="icon"
                       className="ctp-focus relative h-11 w-11 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] hover:bg-[var(--surface-sunken)]"
-                      aria-label="Notifications"
                     >
                       <Bell className="h-4 w-4 text-[var(--text-muted)]" />
+                      <span className="sr-only">Notifikasi</span>
                       {totalNotifications > 0 && (
-                        <span className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[hsl(var(--ctp-red))] px-1 text-[10px] font-bold text-white leading-none">
+                        <span aria-hidden="true" className="absolute -top-1 -right-1 flex h-4 min-w-4 items-center justify-center rounded-full bg-[hsl(var(--ctp-red))] px-1 text-[10px] font-bold text-white leading-none">
                           {totalNotifications > 99 ? '99+' : totalNotifications}
                         </span>
                       )}

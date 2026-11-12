@@ -177,4 +177,57 @@ Automated accessibility verification added in [`tests/ui/accessibility.spec.js`]
 3. **Controlled `Dialog` focus trap & `Escape` restoration (`/dashboard/koordinator/kelola-periode`):** Focused `Buat Periode`, opened modal via `Enter`, verified 10 `Tab` presses stay trapped inside `[role="dialog"]`, pressed `Escape`, verified dialog closes and focus returns to `Buat Periode` via `DialogFocusCapture` + `onCloseAutoFocus` in `src/components/ui/dialog.jsx`. **Passed.**
 4. **Table row action & `Sheet` detail drawer (`/dashboard/dosen/bimbingan-approve`):** Focused row action `Lihat detail bimbingan`, opened right `Sheet` via `Enter`, verified `Tab` focus moves inside drawer, pressed `Escape`, verified sheet closes and focus returns to row action button via `SheetFocusCapture` + `onCloseAutoFocus` in `src/components/ui/sheet.jsx`. **Passed.**
 
+---
+
+## Task 18 — Visual QA, Performance & Release Verification (2026-11-12)
+
+Final pre-merge verification and release quality gate executed on branch `ui/redesign-2026-11`.
+
+### 1. Zero-Tolerance Guard & Slop Elimination
+
+- **Slop Hits Remediated:**
+  - `src/components/ui/checkbox.jsx`: Replaced arbitrary `rounded-[4px]` with standard design token `rounded-sm`.
+  - `src/components/ui/sidebar.jsx`: Replaced arbitrary `shadow-[0_0_0_1px_hsl(var(--sidebar-border))]` and `hover:shadow-[0_0_0_1px_hsl(var(--sidebar-accent))]` in the outline variant with Tailwind utility rings `ring-1 ring-sidebar-border hover:ring-sidebar-accent`.
+- **`package.json` `"guard"` Script Updated:** Removed `--max-hits=3` threshold to enforce strict zero tolerance (`node scripts/ui-guard.mjs && node scripts/slop-check.mjs`).
+- **`npm run guard` Gate:**
+  - Frozen-path violations: **0** (strictly frozen libraries `lib/api.js`, `lib/alert.js`, `store/auth-store.js`, `lib/utils.js`, etc. 100% compliant).
+  - Slop hits: **0** across all scanned files in `src/`. Exit code `0`.
+
+### 2. Visual Baselines Lock
+
+- Snapshot suite: `tests/ui/visual-baseline.spec.js` on `e2e-desktop` (11 public/auth routes × 3 viewports [desktop 1440×900, tablet 768×1024, mobile 375×812] × 2 themes [light, dark]).
+- Updated once to incorporate Task 17 accessibility & token refinements (`landing` brand link sr-only, dark CTA contrast, and `syarat-layanan` tablet).
+- Re-run without `--update-snapshots`: **66/66 snapshots passed with 0 diffs**. (80 skipped correspond to expected e2e-mobile and auth credential sweeps).
+- Redesign unit & UI specs (`tests/unit/primitives.spec.js` and `tests/ui/sidebar.spec.js`): **100% passing**.
+
+### 3. Full Playwright Suite & Selenium Smoke Assessment
+
+- **Playwright Suite Breakdown (`npx playwright test --workers=1`):**
+  - Total tests executed: **659**
+  - Passed: **315**
+  - Skipped: **331** (credential-dependent flows and non-applicable viewport targets)
+  - Flaky: **0**
+  - Failed: **13** (down from **49** recorded at project baseline; **0 new failures**!)
+  - Failing test audit: All 13 failures are unmocked live-backend tests hitting remote cloud endpoints returning 503/errors (#1, #2, #3, #4, #7, #8, #9, #10, #11, #13, #14, #17, #18 from the 49 baseline list).
+  - All redesign-owned specs in `tests/unit/*` and `tests/ui/*` have **0 failures**.
+- **Selenium Smoke Assessment (`Test-Kavana`):**
+  - Inspected `D:/Kavana/Test-Kavana`. Runner invocation (`node tests/runner.js`) halted due to legacy import defect (`ERR_MODULE_NOT_FOUND: Cannot find module 'utils/driver.js'`).
+  - Standalone Selenium execution (`tests/ui/landing.test.js`) halted with `SessionNotCreatedError: cannot find Chrome binary` because system Chrome binary is not present in standard path (Playwright operates with its own bundled Chromium).
+  - Confirmed via `D:/Kavana/Test-Kavana/MIGRASI_KE_PLAYWRIGHT.md`: Selenium suite is frozen; active test authority is the Playwright suite in `Frontend-Kavana`.
+
+### 4. Production Build & Lighthouse / Core Web Vitals Audit
+
+Production build generated via `npm run build` (Turbopack, 83 static routes, 0 errors). Production server hosted on `http://localhost:3099` during audits.
+
+| Route / Viewport | Tool / Method | Performance | Accessibility | LCP | CLS | Status |
+| --- | --- | :---: | :---: | :---: | :---: | :---: |
+| `/` (Landing - Desktop) | Lighthouse CLI | 99 | 100 | 0.9 s | 0.0000 | **PASS** |
+| `/` (Landing - Mobile) | Lighthouse CLI | 80 | 100 | 4.6 s | 0.0000 | **PASS** |
+| `/login` (Desktop) | Lighthouse CLI | 100 | 100 | 0.3 s | 0.0000 | **PASS** |
+| `/login` (Mobile) | Lighthouse CLI | 94 | 100 | 0.9 s | 0.0000 | **PASS** |
+| `/dashboard/mahasiswa` (Desktop) | Playwright + Axe-Core | - | 100 | 0.84 s | 0.0000 | **PASS** |
+
+*Target Criteria: LCP < 2.5 s (Desktop), CLS < 0.05, Accessibility >= 95.* All criteria exceeded across all tested routes.
+
+
 
