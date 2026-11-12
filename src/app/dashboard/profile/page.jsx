@@ -2,31 +2,23 @@
 
 import { useCallback, useEffect, useState, useRef, useSyncExternalStore } from 'react';
 import { useRouter } from 'next/navigation';
+import Image from 'next/image';
 import {
   User, Mail, Phone, GraduationCap, Hash, Camera, Save,
   Shield, Briefcase, Calendar, Pencil, X, Key, Sun, Moon,
-  LogOut, ChevronRight, Bell, BellOff, Globe,
+  LogOut, ChevronRight,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/field';
+import { PageHeader } from '@/components/layout/page-header';
+import { LoadingState } from '@/components/shared/loading-state';
+import { StatusBadge } from '@/components/shared/status-badge';
 import { useAuthStore } from '@/store/auth-store';
-import Image from 'next/image';
 import { authAPI, mahasiswaAPI, dosenAPI, koordinatorAPI, kaprodiAPI, uploadAPI } from '@/lib/api';
-
-// ==============================
-// CONSTANTS
-// ==============================
-const ROLE_LABELS = {
-  mahasiswa: 'Mahasiswa',
-  dosen: 'Dosen Pembimbing',
-  koordinator: 'Koordinator',
-  kaprodi: 'Kepala Program Studi',
-  admin: 'Administrator',
-};
+import { ROLE_LABEL } from '@/lib/constants';
 
 function getProfileAPI(role) {
   switch (role) {
@@ -40,20 +32,17 @@ function getProfileAPI(role) {
 
 function getInitials(name) {
   if (!name) return '?';
-  return name.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase();
+  return name.split(' ').filter(Boolean).map((w) => w[0]).slice(0, 2).join('').toUpperCase();
 }
 
 function useIsHydrated() {
   return useSyncExternalStore(
-    () => () => { },
+    () => () => {},
     () => true,
     () => false
   );
 }
 
-// ==============================
-// THEME HOOK (mirrors dashboard-layout)
-// ==============================
 function useThemeLocal() {
   const resolveTheme = useCallback((value) => {
     if (value === 'dark' || value === 'light') return value;
@@ -89,19 +78,9 @@ function useThemeLocal() {
   return { theme, setTheme, mounted };
 }
 
-// ==============================
-// STYLES
-// ==============================
-const inputCls = "rounded-xl bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))] placeholder:text-[hsl(var(--ctp-overlay1))] focus-visible:ring-[hsl(var(--ctp-lavender)/0.5)]";
-const labelCls = "text-sm font-medium text-[hsl(var(--ctp-subtext1))]";
-const sectionTitleCls = "text-xs font-semibold uppercase tracking-wider text-[hsl(var(--ctp-subtext0))] mb-3";
-
-// ==============================
-// MAIN PAGE
-// ==============================
 export default function ProfilePage() {
   const router = useRouter();
-  const { user, role, setUser, logout } = useAuthStore();
+  const { role, setUser, logout } = useAuthStore();
   const { theme, setTheme, mounted } = useThemeLocal();
   const fileInputRef = useRef(null);
 
@@ -119,6 +98,7 @@ export default function ProfilePage() {
   const [pwSaving, setPwSaving] = useState(false);
 
   const isMahasiswa = role === 'mahasiswa';
+  const roleDisplay = ROLE_LABEL[role] || role || '-';
 
   const loadProfile = useCallback(async () => {
     setLoading(true);
@@ -156,7 +136,7 @@ export default function ProfilePage() {
 
       const res = await authAPI.updateProfile(payload);
       if (res.ok) {
-        setProfile(prev => ({ ...prev, ...payload }));
+        setProfile((prev) => ({ ...prev, ...payload }));
         setUser({ ...profile, ...payload });
         setEditing(false);
         toast.success('Profil berhasil disimpan!');
@@ -242,8 +222,12 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
+      <div className="space-y-6">
+        <PageHeader
+          title="Profil Saya"
+          subtitle="Kelola informasi identitas, preferensi tampilan, dan keamanan akun Anda."
+        />
+        <LoadingState variant="form" label="Memuat profil" />
       </div>
     );
   }
@@ -257,237 +241,307 @@ export default function ProfilePage() {
     null;
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-      className="space-y-6 max-w-3xl mx-auto"
-    >
-      {/* ===================== PROFILE HEADER ===================== */}
-      <Card variant="muted" className="overflow-hidden">
-        <div className="h-20 bg-[var(--surface-sunken)] border-b border-[var(--line)]" />
-        <CardContent className="-mt-12 pb-6">
-          <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
-            {/* Avatar */}
-            <div className="relative group">
-              <div className="relative w-20 h-20 rounded-2xl border-4 border-[hsl(var(--ctp-surface0))] bg-[hsl(var(--ctp-surface1))] flex items-center justify-center overflow-hidden shadow-lg">
-                {avatarUrl ? (
-                  <Image src={avatarUrl} alt="Avatar" className="object-cover" fill sizes="80px" />
-                ) : (
-                  <span className="text-xl font-bold text-[hsl(var(--ctp-lavender))]">
-                    {getInitials(p.nama)}
-                  </span>
-                )}
-              </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                disabled={uploading}
-                aria-label={uploading ? 'Mengunggah foto profil' : 'Unggah foto profil'}
-                className="absolute inset-0 rounded-2xl bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
-              >
-                {uploading ? (
-                  <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Camera className="w-5 h-5 text-white" />
-                )}
-              </button>
-              <input ref={fileInputRef} type="file" accept=".png,.jpg,.jpeg,image/png,image/jpeg" className="hidden" onChange={handleAvatarUpload} />
-            </div>
+    <div className="space-y-6">
+      <PageHeader
+        title="Profil Saya"
+        subtitle="Kelola informasi identitas, preferensi tampilan, dan keamanan akun Anda."
+      />
 
-            {/* Name & badges */}
-            <div className="flex-1 text-center sm:text-left">
-              <h2 className="text-lg font-bold text-[hsl(var(--ctp-text))]">{p.nama || '-'}</h2>
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">{p.email || '-'}</p>
-              <div className="flex items-center justify-center sm:justify-start gap-2 mt-1.5">
-                <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-[hsl(var(--ctp-lavender)/0.35)] bg-[hsl(var(--ctp-lavender)/0.12)] text-[hsl(var(--ctp-lavender))]">
-                  <Shield className="w-3 h-3" />
-                  {ROLE_LABELS[role] || role}
-                </span>
-                {isMahasiswa && p.angkatan && (
-                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium border border-[hsl(var(--ctp-teal)/0.35)] bg-[hsl(var(--ctp-teal)/0.12)] text-[hsl(var(--ctp-teal))]">
-                    {p.angkatan}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Edit toggle */}
-            {!editing ? (
-              <Button onClick={() => setEditing(true)} variant="secondary" size="xs">
-                <Pencil className="w-3.5 h-3.5 mr-1.5" /> Edit
-              </Button>
-            ) : (
-              <Button onClick={cancelEdit} variant="secondary" size="xs">
-                <X className="w-3.5 h-3.5 mr-1.5" /> Batal
-              </Button>
-            )}
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ===================== SECTION: PROFIL / EDIT ===================== */}
-      <div>
-        <p className={sectionTitleCls}>Informasi Profil</p>
-        <AnimatePresence mode="wait">
-          {editing ? (
-            <motion.div key="edit" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Card variant="muted">
-                <CardContent className="pt-6">
-                  <form onSubmit={handleSave} className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div className="space-y-2">
-                        <Label className={labelCls}>Nama Lengkap</Label>
-                        <Input value={form.nama} onChange={e => setForm(f => ({ ...f, nama: e.target.value }))} placeholder="Nama lengkap" className={inputCls} />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className={labelCls}>Email</Label>
-                        <Input type="email" value={form.email} onChange={e => setForm(f => ({ ...f, email: e.target.value }))} placeholder="email@example.com" className={inputCls} />
-                      </div>
-                    </div>
-                    {isMahasiswa && (
-                      <div className="space-y-2">
-                        <Label className={labelCls}>No. WhatsApp</Label>
-                        <Input value={form.no_wa} onChange={e => setForm(f => ({ ...f, no_wa: e.target.value }))} placeholder="08xxxxxxxxxx" className={inputCls} />
-                      </div>
+      <div
+        data-testid="profile-grid"
+        className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start"
+      >
+        {/* ===================== LEFT COLUMN: IDENTITY ===================== */}
+        <div data-testid="profile-identity-col" className="space-y-6 min-w-0">
+          <Card variant="muted" className="bg-[var(--surface-raised)]">
+            <CardContent className="pt-1">
+              <div className="flex flex-col sm:flex-row sm:items-center gap-4">
+                <div className="relative group w-fit shrink-0">
+                  <div className="relative h-16 w-16 sm:h-20 sm:w-20 rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center justify-center overflow-hidden">
+                    {avatarUrl ? (
+                      <Image src={avatarUrl} alt="Avatar" className="object-cover" fill sizes="80px" />
+                    ) : (
+                      <span className="text-xl font-semibold font-mono text-[var(--text-strong)]">
+                        {getInitials(p.nama)}
+                      </span>
                     )}
-                    <div className="flex gap-3 pt-1">
-                      <Button type="submit" disabled={saving} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]">
-                        <Save className="w-4 h-4 mr-2" />{saving ? 'Menyimpan...' : 'Simpan'}
-                      </Button>
-                    </div>
-                  </form>
-                </CardContent>
-              </Card>
-            </motion.div>
-          ) : (
-            <motion.div key="view" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-              <Card variant="muted">
-                <CardContent className="pt-6">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <InfoRow icon={Mail} label="Email" value={p.email} />
-                    <InfoRow icon={Hash} label={isMahasiswa ? 'NPM' : 'NIDN'} value={isMahasiswa ? p.npm : p.nidn} />
-                    {isMahasiswa && <InfoRow icon={Phone} label="WhatsApp" value={p.no_wa || p.whatsapp} />}
-                    {isMahasiswa && <InfoRow icon={Calendar} label="Angkatan" value={p.angkatan} />}
-                    {isMahasiswa && <InfoRow icon={Briefcase} label="Track" value={p.track} />}
-                    {isMahasiswa && <InfoRow icon={GraduationCap} label="Dosen Pembimbing" value={dosenPembimbingDisplay} />}
-                    {!isMahasiswa && <InfoRow icon={Briefcase} label="Jabatan" value={ROLE_LABELS[role]} />}
                   </div>
-                </CardContent>
-              </Card>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-
-      {/* ===================== SECTION: TAMPILAN ===================== */}
-      <div>
-        <p className={sectionTitleCls}>Tampilan</p>
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <div className="flex items-center justify-between mb-2">
-              <div>
-                <div className="text-sm font-medium text-[hsl(var(--ctp-text))]">Tema Aplikasi</div>
-                <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Pilih tampilan yang nyaman untuk kamu.</div>
-              </div>
-            </div>
-            {mounted && (
-              <div className="grid grid-cols-2 gap-2 mt-3">
-                {[
-                  { id: 'light', label: 'Terang', icon: Sun },
-                  { id: 'dark', label: 'Gelap', icon: Moon },
-                ].map(({ id, label, icon: Ic }) => (
                   <button
-                    key={id}
-                    onClick={() => setTheme(id)}
-                    className={`flex flex-col items-center gap-2 rounded-2xl border p-3 transition-all cursor-pointer ${
-                      theme === id
-                        ? 'border-[hsl(var(--ctp-lavender)/0.6)] bg-[hsl(var(--ctp-lavender)/0.10)] text-[hsl(var(--ctp-lavender))]'
-                        : 'border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)] text-[hsl(var(--ctp-subtext0))] hover:bg-[hsl(var(--ctp-surface0)/0.35)]'
-                    }`}
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    aria-label={uploading ? 'Mengunggah foto profil' : 'Unggah foto profil'}
+                    className="absolute inset-0 min-h-11 min-w-11 rounded-xl bg-black/50 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity flex items-center justify-center cursor-pointer"
                   >
-                    <Ic className="w-5 h-5" />
-                    <span className="text-xs font-medium">{label}</span>
+                    <Camera className="h-5 w-5 text-white" aria-hidden="true" />
                   </button>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ===================== SECTION: KEAMANAN ===================== */}
-      <div>
-        <p className={sectionTitleCls}>Keamanan</p>
-        <Card variant="muted">
-          <CardHeader className="pb-2">
-            <CardTitle className="flex items-center gap-2 text-sm text-[hsl(var(--ctp-text))]">
-              <Key className="h-4 w-4" /> Ubah Password
-            </CardTitle>
-            <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Perbarui password akun Anda.</CardDescription>
-          </CardHeader>
-          <CardContent>
-            <form onSubmit={handleChangePw} className="space-y-3">
-              <div className="space-y-2">
-                <Label className={labelCls}>Password Lama</Label>
-                <Input type="password" value={pwForm.oldPw} onChange={e => setPwForm(f => ({ ...f, oldPw: e.target.value }))} className={inputCls} placeholder="••••••••" />
-              </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                <div className="space-y-2">
-                  <Label className={labelCls}>Password Baru</Label>
-                  <Input type="password" value={pwForm.newPw} onChange={e => setPwForm(f => ({ ...f, newPw: e.target.value }))} className={inputCls} placeholder="••••••••" />
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".png,.jpg,.jpeg,image/png,image/jpeg"
+                    className="hidden"
+                    onChange={handleAvatarUpload}
+                  />
                 </div>
-                <div className="space-y-2">
-                  <Label className={labelCls}>Konfirmasi</Label>
-                  <Input type="password" value={pwForm.confirmPw} onChange={e => setPwForm(f => ({ ...f, confirmPw: e.target.value }))} className={inputCls} placeholder="••••••••" />
+
+                <div className="min-w-0 flex-1 space-y-1">
+                  <h2 className="text-base font-semibold text-[var(--text-strong)] break-words">
+                    {p.nama || '-'}
+                  </h2>
+                  <p className="text-sm text-[var(--text-muted)] break-all">{p.email || '-'}</p>
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <span className="inline-flex items-center gap-1.5 rounded-md border border-[var(--line)] bg-[var(--surface-sunken)] px-2 py-0.5 text-xs font-medium text-[var(--text-strong)]">
+                      <Shield className="h-3.5 w-3.5 text-[var(--text-muted)]" aria-hidden="true" />
+                      <span>{roleDisplay}</span>
+                    </span>
+                    <StatusBadge
+                      status={p.is_active === false ? 'inactive' : 'active'}
+                      label={p.is_active === false ? 'Nonaktif' : 'Aktif'}
+                    />
+                    {isMahasiswa && p.angkatan && (
+                      <span className="inline-flex items-center rounded-md border border-[var(--line)] bg-[var(--surface-sunken)] px-2 py-0.5 text-xs font-mono tabular-nums text-[var(--text-muted)]">
+                        {p.angkatan}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
-              <Button type="submit" disabled={pwSaving} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]">
-                <Key className="w-4 h-4 mr-2" />{pwSaving ? 'Menyimpan...' : 'Ubah Password'}
-              </Button>
-            </form>
-          </CardContent>
-        </Card>
-      </div>
+            </CardContent>
+          </Card>
 
-      {/* ===================== SECTION: AKUN ===================== */}
-      <div>
-        <p className={sectionTitleCls}>Akun</p>
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <button
-              onClick={handleLogout}
-              className="flex items-center justify-between w-full rounded-2xl border border-[hsl(var(--ctp-red)/0.25)] bg-[hsl(var(--ctp-red)/0.06)] hover:bg-[hsl(var(--ctp-red)/0.12)] p-3.5 transition-colors group cursor-pointer"
-            >
-              <div className="flex items-center gap-3">
-                <LogOut className="w-4 h-4 text-[hsl(var(--ctp-red))]" />
-                <div className="text-left">
-                  <div className="text-sm font-medium text-[hsl(var(--ctp-red))]">Keluar dari akun</div>
-                  <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Anda akan diminta login kembali.</div>
-                </div>
+          <Card variant="muted" className="bg-[var(--surface-raised)]">
+            <CardHeader className="flex flex-row items-center justify-between gap-3 border-b border-[var(--line)]">
+              <div className="min-w-0">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <User className="h-4 w-4 text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+                  <span>Informasi Profil</span>
+                </CardTitle>
+                <CardDescription>Data identitas dan kontak terdaftar pada akun Anda.</CardDescription>
               </div>
-              <ChevronRight className="w-4 h-4 text-[hsl(var(--ctp-red)/0.5)] group-hover:text-[hsl(var(--ctp-red))] transition-colors" />
-            </button>
-          </CardContent>
-        </Card>
-      </div>
+              {!editing ? (
+                <Button onClick={() => setEditing(true)} variant="outline" size="sm" className="shrink-0">
+                  <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Edit</span>
+                </Button>
+              ) : (
+                <Button onClick={cancelEdit} variant="secondary" size="sm" className="shrink-0">
+                  <X className="h-3.5 w-3.5" aria-hidden="true" />
+                  <span>Batal</span>
+                </Button>
+              )}
+            </CardHeader>
+            <CardContent>
+              {editing ? (
+                <form onSubmit={handleSave} className="space-y-4">
+                  <Field label="Nama Lengkap" required>
+                    {(a11y) => (
+                      <Input
+                        {...a11y}
+                        name="nama"
+                        value={form.nama}
+                        onChange={(e) => setForm((f) => ({ ...f, nama: e.target.value }))}
+                        placeholder="Nama lengkap"
+                      />
+                    )}
+                  </Field>
+                  <Field label="Email" required>
+                    {(a11y) => (
+                      <Input
+                        {...a11y}
+                        name="email"
+                        type="email"
+                        value={form.email}
+                        onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))}
+                        placeholder="email@example.com"
+                      />
+                    )}
+                  </Field>
+                  {isMahasiswa && (
+                    <Field label="No. WhatsApp">
+                      {(a11y) => (
+                        <Input
+                          {...a11y}
+                          name="no_wa"
+                          value={form.no_wa}
+                          onChange={(e) => setForm((f) => ({ ...f, no_wa: e.target.value }))}
+                          placeholder="08xxxxxxxxxx"
+                          className="font-mono tabular-nums"
+                        />
+                      )}
+                    </Field>
+                  )}
+                  <div className="flex flex-wrap items-center gap-2 pt-1">
+                    <Button type="submit" disabled={saving}>
+                      <Save className="h-4 w-4" aria-hidden="true" />
+                      <span>{saving ? 'Menyimpan...' : 'Simpan'}</span>
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InfoRow icon={Mail} label="Email" value={p.email} breakAll />
+                  <InfoRow
+                    icon={Hash}
+                    label={isMahasiswa ? 'NPM' : 'NIDN'}
+                    value={isMahasiswa ? p.npm : p.nidn}
+                    mono
+                  />
+                  {isMahasiswa && (
+                    <InfoRow icon={Phone} label="WhatsApp" value={p.no_wa || p.whatsapp} mono />
+                  )}
+                  {isMahasiswa && (
+                    <InfoRow icon={Calendar} label="Angkatan" value={p.angkatan} mono />
+                  )}
+                  {isMahasiswa && (
+                    <InfoRow icon={Briefcase} label="Track" value={p.track} />
+                  )}
+                  {isMahasiswa && (
+                    <InfoRow icon={GraduationCap} label="Dosen Pembimbing" value={dosenPembimbingDisplay} />
+                  )}
+                  {!isMahasiswa && (
+                    <InfoRow icon={Briefcase} label="Jabatan" value={roleDisplay} />
+                  )}
+                </dl>
+              )}
+            </CardContent>
+          </Card>
+        </div>
 
-      {/* Bottom spacing */}
-      <div className="h-4" />
-    </motion.div>
-  );
-}
+        {/* ===================== RIGHT COLUMN: SECURITY & PREFERENCES ===================== */}
+        <div data-testid="profile-security-col" className="space-y-6 min-w-0">
+          <Card variant="muted" className="bg-[var(--surface-raised)]">
+            <CardHeader className="border-b border-[var(--line)]">
+              <CardTitle className="flex items-center gap-2 text-base">
+                <Key className="h-4 w-4 text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+                <span>Ubah Password</span>
+              </CardTitle>
+              <CardDescription>Perbarui password akun Anda secara berkala.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <form onSubmit={handleChangePw} className="space-y-4">
+                <Field label="Password Lama" required>
+                  {(a11y) => (
+                    <Input
+                      {...a11y}
+                      name="oldPw"
+                      type="password"
+                      value={pwForm.oldPw}
+                      onChange={(e) => setPwForm((f) => ({ ...f, oldPw: e.target.value }))}
+                      placeholder="••••••••"
+                    />
+                  )}
+                </Field>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <Field label="Password Baru" required hint="Minimal 6 karakter.">
+                    {(a11y) => (
+                      <Input
+                        {...a11y}
+                        name="newPw"
+                        type="password"
+                        value={pwForm.newPw}
+                        onChange={(e) => setPwForm((f) => ({ ...f, newPw: e.target.value }))}
+                        placeholder="••••••••"
+                      />
+                    )}
+                  </Field>
+                  <Field label="Konfirmasi Password" required>
+                    {(a11y) => (
+                      <Input
+                        {...a11y}
+                        name="confirmPw"
+                        type="password"
+                        value={pwForm.confirmPw}
+                        onChange={(e) => setPwForm((f) => ({ ...f, confirmPw: e.target.value }))}
+                        placeholder="••••••••"
+                      />
+                    )}
+                  </Field>
+                </div>
+                <Button type="submit" disabled={pwSaving}>
+                  <Key className="h-4 w-4" aria-hidden="true" />
+                  <span>{pwSaving ? 'Menyimpan...' : 'Ubah Password'}</span>
+                </Button>
+              </form>
+            </CardContent>
+          </Card>
 
-// ==============================
-// INFO ROW COMPONENT
-// ==============================
-function InfoRow({ icon: Icon, label, value }) {
-  return (
-    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5">
-      <div className="flex items-center gap-1.5 text-[11px] text-[hsl(var(--ctp-subtext0))] mb-0.5">
-        <Icon className="w-3 h-3" />{label}
+          <Card variant="muted" className="bg-[var(--surface-raised)]">
+            <CardHeader className="border-b border-[var(--line)]">
+              <CardTitle className="text-base">Tampilan</CardTitle>
+              <CardDescription>Pilih tema tampilan antarmuka aplikasi.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {mounted && (
+                <div className="grid grid-cols-2 gap-3" role="group" aria-label="Tema aplikasi">
+                  {[
+                    { id: 'light', label: 'Terang', icon: Sun },
+                    { id: 'dark', label: 'Gelap', icon: Moon },
+                  ].map(({ id, label, icon: Ic }) => {
+                    const active = theme === id;
+                    return (
+                      <button
+                        key={id}
+                        type="button"
+                        aria-pressed={active}
+                        onClick={() => setTheme(id)}
+                        className={`flex min-h-11 items-center justify-center gap-2 rounded-lg border px-3 py-2.5 text-sm font-medium transition-colors cursor-pointer ${
+                          active
+                            ? 'border-[var(--accent)] bg-[var(--accent-soft)] text-[var(--accent)]'
+                            : 'border-[var(--line)] bg-[var(--surface-sunken)] text-[var(--text-body)] hover:text-[var(--text-strong)]'
+                        }`}
+                      >
+                        <Ic className="h-4 w-4 shrink-0" aria-hidden="true" />
+                        <span>{label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card variant="muted" className="bg-[var(--surface-raised)]">
+            <CardHeader className="border-b border-[var(--line)]">
+              <CardTitle className="text-base">Sesi Akun</CardTitle>
+              <CardDescription>Akhiri sesi Anda pada perangkat ini.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <button
+                type="button"
+                onClick={handleLogout}
+                className="flex min-h-11 items-center justify-between w-full rounded-lg border border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.08)] hover:bg-[hsl(var(--ctp-red)/0.14)] px-4 py-3 transition-colors group cursor-pointer"
+              >
+                <div className="flex items-center gap-3 min-w-0">
+                  <LogOut className="h-4 w-4 text-[hsl(var(--ctp-red))] shrink-0" aria-hidden="true" />
+                  <div className="text-left min-w-0">
+                    <div className="text-sm font-semibold text-[hsl(var(--ctp-red))]">Keluar dari akun</div>
+                    <div className="text-xs text-[var(--text-muted)]">Anda akan diminta login kembali.</div>
+                  </div>
+                </div>
+                <ChevronRight className="h-4 w-4 text-[hsl(var(--ctp-red))] shrink-0" aria-hidden="true" />
+              </button>
+            </CardContent>
+          </Card>
+        </div>
       </div>
-      <div className="text-sm font-medium text-[hsl(var(--ctp-text))]">{value || '-'}</div>
     </div>
   );
 }
 
+function InfoRow({ icon: Icon, label, value, mono = false, breakAll = false }) {
+  return (
+    <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5 min-w-0">
+      <dt className="flex items-center gap-1.5 text-xs text-[var(--text-muted)] mb-0.5">
+        <Icon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+        <span>{label}</span>
+      </dt>
+      <dd
+        className={`text-sm font-medium text-[var(--text-strong)] ${
+          mono ? 'font-mono tabular-nums' : ''
+        } ${breakAll ? 'break-all' : 'break-words'}`}
+      >
+        {value || '-'}
+      </dd>
+    </div>
+  );
+}
