@@ -265,7 +265,7 @@ export default function ProfilePage() {
     >
       {/* ===================== PROFILE HEADER ===================== */}
       <Card variant="muted" className="overflow-hidden">
-        <div className="h-24 bg-gradient-to-r from-[hsl(var(--ctp-lavender)/0.25)] via-[hsl(var(--ctp-blue)/0.18)] to-[hsl(var(--ctp-teal)/0.20)]" />
+        <div className="h-20 bg-[var(--surface-sunken)] border-b border-[var(--line)]" />
         <CardContent className="-mt-12 pb-6">
           <div className="flex flex-col sm:flex-row items-center sm:items-end gap-4">
             {/* Avatar */}

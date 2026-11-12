@@ -9,22 +9,35 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/field';
+import { PageHeader } from '@/components/layout/page-header';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
 
 const TRACK_LABELS = {
-  'proyek1': 'Proyek 1', 'proyek2': 'Proyek 2', 'proyek3': 'Proyek 3',
-  'proyek-1': 'Proyek 1', 'proyek-2': 'Proyek 2', 'proyek-3': 'Proyek 3',
+  proyek1: 'Proyek 1',
+  proyek2: 'Proyek 2',
+  proyek3: 'Proyek 3',
+  'proyek-1': 'Proyek 1',
+  'proyek-2': 'Proyek 2',
+  'proyek-3': 'Proyek 3',
 };
 
 function getInitials(name) {
-  return (name || '?').split(' ').map(w => w[0]).join('').toUpperCase().slice(0, 2);
+  return (name || '?')
+    .split(' ')
+    .filter(Boolean)
+    .map((w) => w[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2);
 }
 
 export default function KelompokPage() {
   const router = useRouter();
-  const { role, user } = useAuthStore();
+  const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [userTrack, setUserTrack] = useState(null);
   const [myKelompok, setMyKelompok] = useState(null);
@@ -34,7 +47,10 @@ export default function KelompokPage() {
   const [creating, setCreating] = useState(false);
 
   useEffect(() => {
-    if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
+    if (role && role !== 'mahasiswa') {
+      router.replace(`/dashboard/${role}`);
+      return;
+    }
     loadData();
   }, [role, router]);
 
@@ -42,18 +58,34 @@ export default function KelompokPage() {
     setLoading(true);
     try {
       const profileRes = await mahasiswaAPI.getProfile();
-      if (profileRes.ok) setUserTrack(profileRes.data.track);
+      const p = (profileRes.data?.data && typeof profileRes.data.data === 'object')
+        ? profileRes.data.data
+        : (profileRes.data || {});
+      const track = p.track;
+      if (track) setUserTrack(track);
 
-      if (!profileRes.data?.track) { setLoading(false); return; }
-      if (profileRes.data.track.startsWith('internship')) { setLoading(false); return; }
+      if (!track) {
+        setLoading(false);
+        return;
+      }
+      if (String(track).startsWith('internship')) {
+        setLoading(false);
+        return;
+      }
 
       const kelRes = await mahasiswaAPI.getMyKelompok();
-      if (kelRes.ok && kelRes.data?.kelompok) {
-        setMyKelompok(kelRes.data.kelompok);
-        setMembers(kelRes.data.anggota || []);
+      const kData = (kelRes.data?.data && typeof kelRes.data.data === 'object')
+        ? kelRes.data.data
+        : (kelRes.data || {});
+      if (kelRes.ok && kData?.kelompok) {
+        setMyKelompok(kData.kelompok);
+        setMembers(kData.anggota || []);
       } else {
         const availRes = await mahasiswaAPI.getAvailableKelompok();
-        if (availRes.ok) setAvailable(Array.isArray(availRes.data) ? availRes.data : []);
+        const aData = (availRes.data?.data && Array.isArray(availRes.data.data))
+          ? availRes.data.data
+          : (Array.isArray(availRes.data) ? availRes.data : []);
+        if (availRes.ok) setAvailable(aData);
       }
     } catch (err) {
       console.error(err);
@@ -63,186 +95,256 @@ export default function KelompokPage() {
   };
 
   const handleCreate = async () => {
-    if (!newName.trim()) { toast.warning('Nama kelompok wajib diisi'); return; }
+    if (!newName.trim()) {
+      toast.warning('Nama kelompok wajib diisi');
+      return;
+    }
     setCreating(true);
     try {
-      const res = await mahasiswaAPI.createKelompok(newName);
-      if (res.ok) { toast.success('Kelompok berhasil dibuat!'); loadData(); }
-      else toast.error(res.error || 'Gagal membuat kelompok');
-    } catch { toast.error('Kesalahan jaringan'); }
-    finally { setCreating(false); }
+      const res = await mahasiswaAPI.createKelompok(newName.trim());
+      if (res.ok) {
+        toast.success('Kelompok berhasil dibuat!');
+        setNewName('');
+        loadData();
+      } else {
+        toast.error(res.error || 'Gagal membuat kelompok');
+      }
+    } catch {
+      toast.error('Kesalahan jaringan');
+    } finally {
+      setCreating(false);
+    }
   };
 
   const handleJoin = async (id) => {
     try {
       const res = await mahasiswaAPI.joinKelompok(id);
-      if (res.ok) { toast.success('Berhasil bergabung!'); loadData(); }
-      else toast.error(res.error || 'Gagal bergabung');
-    } catch { toast.error('Kesalahan jaringan'); }
+      if (res.ok) {
+        toast.success('Berhasil bergabung ke kelompok!');
+        loadData();
+      } else {
+        toast.error(res.error || 'Gagal bergabung');
+      }
+    } catch {
+      toast.error('Kesalahan jaringan');
+    }
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="dashboard" label="Memuat data kelompok" />;
   }
 
-  // No track
+  // No track selected
   if (!userTrack) {
     return (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <Card variant="muted">
-          <CardContent className="flex flex-col items-center py-16 text-center">
-            <AlertTriangle className="h-12 w-12 text-[hsl(var(--ctp-peach))] mb-4" />
-            <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Track Belum Dipilih</h2>
-            <p className="text-sm text-[hsl(var(--ctp-subtext0))] mb-4">Pilih track terlebih dahulu sebelum membuat kelompok.</p>
-            <Button onClick={() => router.push('/dashboard/mahasiswa/track')} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-lavender)/0.35)]">
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <PageHeader
+          title="Kelompok Proyek"
+          subtitle="Bentuk atau bergabung dengan kelompok proyek untuk semester aktif."
+        />
+        <EmptyState
+          icon={AlertTriangle}
+          title="Track Belum Dipilih"
+          description="Pilih track terlebih dahulu sebelum membuat atau bergabung ke kelompok proyek."
+          action={
+            <Button onClick={() => router.push('/dashboard/mahasiswa/track')} className="min-h-[44px]">
               Pilih Track
             </Button>
-          </CardContent>
-        </Card>
+          }
+        />
       </motion.div>
     );
   }
 
-  // Internship
+  // Internship track
   if (userTrack.startsWith('internship')) {
     return (
-      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}>
-        <Card variant="muted">
-          <CardContent className="flex flex-col items-center py-16 text-center">
-            <Users className="h-12 w-12 text-[hsl(var(--ctp-blue))] mb-4" />
-            <h2 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-2">Track Internship</h2>
-            <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Internship dilakukan secara individual. Anda tidak perlu membentuk kelompok.</p>
-          </CardContent>
-        </Card>
+      <motion.div initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} className="space-y-6">
+        <PageHeader
+          title="Kelompok Proyek"
+          subtitle="Informasi keikutsertaan kelompok akademik."
+        />
+        <EmptyState
+          icon={Users}
+          title="Track Internship (Individu)"
+          description="Internship dilakukan secara individual di perusahaan mitra. Anda tidak perlu membentuk atau bergabung ke kelompok proyek."
+        />
       </motion.div>
     );
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-5">
-      {/* My kelompok */}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        title="Kelompok Proyek"
+        subtitle="Kelola tim kelompok proyek atau bergabung dengan kelompok yang masih memerlukan anggota."
+      />
+
+      {/* My Kelompok Section */}
       <Card variant="muted">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <Users className="h-4 w-4" /> Kelompok Saya
-          </CardTitle>
-          <CardDescription className="text-[hsl(var(--ctp-subtext0))]">
-            Track: {TRACK_LABELS[userTrack] || userTrack}
-          </CardDescription>
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+                <Users className="h-4 w-4" /> Kelompok Saya
+              </CardTitle>
+              <CardDescription className="text-[var(--text-muted)]">
+                Track: {TRACK_LABELS[userTrack] || userTrack}
+              </CardDescription>
+            </div>
+            {myKelompok && (
+              <Badge variant="outline">
+                {TRACK_LABELS[myKelompok.track] || myKelompok.track}
+              </Badge>
+            )}
+          </div>
         </CardHeader>
         <CardContent>
           {myKelompok ? (
-            <div className="space-y-3">
-              <div className="rounded-2xl border border-[hsl(var(--ctp-lavender)/0.35)] bg-[hsl(var(--ctp-lavender)/0.08)] p-4">
+            <div className="space-y-4">
+              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4 sm:p-5">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="font-semibold text-[hsl(var(--ctp-text))]">{myKelompok.nama}</h3>
-                  <Badge className="rounded-xl bg-[hsl(var(--ctp-green)/0.15)] text-[hsl(var(--ctp-green))] border border-[hsl(var(--ctp-green)/0.3)]">
-                    {TRACK_LABELS[myKelompok.track] || myKelompok.track}
-                  </Badge>
+                  <h3 className="font-semibold text-base text-[var(--text-strong)] break-words">
+                    {myKelompok.nama}
+                  </h3>
+                  <span className="text-xs text-[var(--text-muted)] font-mono tabular-nums">
+                    Anggota {members.length}/2
+                  </span>
                 </div>
-                <p className="text-sm text-[hsl(var(--ctp-subtext0))] mb-3">Anggota ({members.length}/2)</p>
-                <div className="space-y-2">
+
+                <div className="space-y-2.5">
                   {members.map((m, i) => (
-                    <div key={m.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center gap-3 p-3">
-                      <div className="h-9 w-9 rounded-full bg-[hsl(var(--ctp-lavender)/0.25)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-xs font-bold">
+                    <div
+                      key={m.id || i}
+                      className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] flex items-center gap-3 p-3"
+                    >
+                      <div className="h-9 w-9 rounded-md bg-[var(--surface-sunken)] border border-[var(--line)] text-[var(--text-strong)] flex items-center justify-center text-xs font-semibold">
                         {getInitials(m.nama)}
                       </div>
-                      <div>
-                        <p className="text-sm font-medium text-[hsl(var(--ctp-text))]">{m.nama}</p>
-                        <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{m.npm}</p>
+                      <div className="min-w-0 flex-1">
+                        <p className="text-sm font-medium text-[var(--text-strong)] truncate">
+                          {m.nama}
+                        </p>
+                        <p className="text-xs text-[var(--text-muted)] font-mono tabular-nums">
+                          {m.npm}
+                        </p>
                       </div>
                     </div>
                   ))}
                 </div>
-                {members.length < 2 && (
-                  <p className="text-xs text-[hsl(var(--ctp-peach))] mt-3 flex items-center gap-1">
-                    <Clock className="h-3 w-3" /> Menunggu 1 anggota lagi
+
+                {members.length < 2 ? (
+                  <p className="text-xs text-[hsl(var(--ctp-peach))] mt-3 flex items-center gap-1.5">
+                    <Clock className="h-3.5 w-3.5 shrink-0" />
+                    <span>Menunggu 1 anggota rekan kelompok lagi.</span>
                   </p>
-                )}
-                {members.length >= 2 && (
-                  <p className="text-xs text-[hsl(var(--ctp-green))] mt-3 flex items-center gap-1">
-                    <CheckCircle2 className="h-3 w-3" /> Kelompok sudah lengkap!
+                ) : (
+                  <p className="text-xs text-[hsl(var(--ctp-green))] mt-3 flex items-center gap-1.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0" />
+                    <span>Kelompok sudah lengkap (2/2 anggota).</span>
                   </p>
                 )}
               </div>
             </div>
           ) : (
-            <div className="text-center py-8">
-              <Users className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum tergabung dalam kelompok</p>
-              <p className="text-xs text-[hsl(var(--ctp-subtext0))] mt-1">Buat baru atau gabung ke kelompok yang tersedia</p>
-            </div>
+            <EmptyState
+              icon={Users}
+              title="Belum tergabung dalam kelompok"
+              description="Buat kelompok baru di bawah atau bergabung ke kelompok yang masih membuka slot anggota."
+            />
           )}
         </CardContent>
       </Card>
 
       {!myKelompok && (
         <>
-          {/* Create */}
+          {/* Create Group */}
           <Card variant="muted">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
+              <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
                 <Plus className="h-4 w-4" /> Buat Kelompok Baru
               </CardTitle>
+              <CardDescription className="text-[var(--text-muted)]">
+                Bentuk kelompok proyek baru dan undang rekan Anda untuk bergabung.
+              </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex gap-3">
-                <Input
-                  placeholder="Nama kelompok"
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
-                />
-                <Button
-                  onClick={handleCreate}
-                  disabled={creating}
-                  className="rounded-2xl shrink-0 bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]"
-                >
-                  <Plus className="h-4 w-4 mr-1" /> {creating ? 'Membuat...' : 'Buat'}
-                </Button>
-              </div>
+              <Field
+                label="Nama kelompok"
+                required
+                hint="Masukkan nama kelompok proyek untuk memulai tim baru."
+              >
+                {(a11y) => (
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Input
+                      {...a11y}
+                      placeholder="Nama kelompok"
+                      value={newName}
+                      onChange={(e) => setNewName(e.target.value)}
+                      className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)] min-h-[44px] flex-1"
+                    />
+                    <Button
+                      onClick={handleCreate}
+                      disabled={creating}
+                      className="min-h-[44px] shrink-0"
+                    >
+                      <Plus className="h-4 w-4 mr-1.5" />
+                      <span>{creating ? 'Membuat...' : 'Buat Kelompok'}</span>
+                    </Button>
+                  </div>
+                )}
+              </Field>
             </CardContent>
           </Card>
 
-          {/* Available */}
+          {/* Available Groups */}
           <Card variant="muted">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
+              <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
                 <UserPlus className="h-4 w-4" /> Kelompok Tersedia
               </CardTitle>
-              <CardDescription className="text-[hsl(var(--ctp-subtext0))]">
-                Kelompok yang masih memerlukan anggota
+              <CardDescription className="text-[var(--text-muted)]">
+                Daftar kelompok proyek yang masih membutuhkan anggota.
               </CardDescription>
             </CardHeader>
             <CardContent>
               {available.length === 0 ? (
-                <div className="text-center py-6">
-                  <Search className="h-8 w-8 mx-auto text-[var(--text-muted)] mb-2" />
-                  <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada kelompok tersedia</p>
-                </div>
+                <EmptyState
+                  icon={Search}
+                  title="Tidak ada kelompok tersedia"
+                  description="Belum ada kelompok lain yang membuka pendaftaran anggota pada track ini."
+                />
               ) : (
-                <div className="space-y-2">
+                <div className="space-y-3">
                   {available.map((k) => (
-                    <div key={k.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center justify-between p-3">
-                      <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 rounded-xl bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))] flex items-center justify-center">
+                    <div
+                      key={k.id}
+                      className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center justify-between gap-3 p-3.5"
+                    >
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="h-10 w-10 shrink-0 rounded-lg bg-[var(--surface-raised)] border border-[var(--line)] text-[var(--text-strong)] flex items-center justify-center">
                           <Users className="h-5 w-5" />
                         </div>
-                        <div>
-                          <p className="text-sm font-medium text-[hsl(var(--ctp-text))]">{k.nama}</p>
-                          <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{k.jumlah_anggota}/2 anggota · {TRACK_LABELS[k.track] || k.track}</p>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-[var(--text-strong)] truncate">
+                            {k.nama}
+                          </p>
+                          <p className="text-xs text-[var(--text-muted)] font-mono tabular-nums">
+                            {k.jumlah_anggota}/2 anggota · {TRACK_LABELS[k.track] || k.track}
+                          </p>
                         </div>
                       </div>
                       <Button
                         onClick={() => handleJoin(k.id)}
                         size="sm"
-                        className="rounded-2xl bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-blue)/0.30)] border border-[hsl(var(--ctp-blue)/0.35)]"
+                        className="min-h-[44px] shrink-0"
                       >
-                        <UserPlus className="h-4 w-4 mr-1" /> Gabung
+                        <UserPlus className="h-4 w-4 mr-1.5" /> Gabung
                       </Button>
                     </div>
                   ))}

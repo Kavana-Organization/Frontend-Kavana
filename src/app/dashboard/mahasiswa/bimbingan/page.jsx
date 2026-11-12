@@ -3,16 +3,18 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import {
-  MessageSquare, Plus, Edit, Trash2, CheckCircle2, Clock, XCircle, AlertTriangle,
-  Download, FileText,
+  MessageSquare,
+  Plus,
+  Edit,
+  Download,
+  FileText,
 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Field } from '@/components/ui/field';
 import { Textarea } from '@/components/ui/textarea';
 import { Progress } from '@/components/ui/progress';
 import {
@@ -21,16 +23,15 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
 const MAX_SESSIONS = 8;
-const STATUS_MAP = {
-  approved: { label: 'Disetujui', color: 'ctp-green', Icon: CheckCircle2 },
-  pending: { label: 'Pending', color: 'ctp-yellow', Icon: Clock },
-  rejected: { label: 'Revisi', color: 'ctp-red', Icon: XCircle },
-};
 
 function toDateInputValue(value) {
   if (!value) return '';
@@ -75,7 +76,10 @@ export default function BimbinganPage() {
   const [exporting, setExporting] = useState(false);
 
   useEffect(() => {
-    if (role && role !== 'mahasiswa') { router.replace(`/dashboard/${role}`); return; }
+    if (role && role !== 'mahasiswa') {
+      router.replace(`/dashboard/${role}`);
+      return;
+    }
     loadAll();
   }, [role, router]);
 
@@ -83,11 +87,13 @@ export default function BimbinganPage() {
     try {
       const profileRes = await mahasiswaAPI.getProfile();
       if (profileRes.ok) {
-        const p = profileRes.data;
+        const p = (profileRes.data?.data && typeof profileRes.data.data === 'object')
+          ? profileRes.data.data
+          : (profileRes.data || {});
         setTrackName(p.track || '');
         setDosenNama(p.dosen_nama || '');
         setJudulProyek(p.judul_proyek || '');
-        setHasPembimbing(p.status_proposal === 'approved' && !!p.dosen_nama);
+        setHasPembimbing(p.status_proposal === 'approved' && Boolean(p.dosen_nama));
         const approvedEnrollment = Array.isArray(p.enrollments)
           ? p.enrollments.find((e) => e.status_proposal === 'approved' && e.dosen_id)
           : null;
@@ -96,19 +102,37 @@ export default function BimbinganPage() {
         setBimbinganScheduleStatus(p.bimbingan_schedule_status || approvedEnrollment?.jadwal_status || '');
       }
       const bimRes = await mahasiswaAPI.getMyBimbingan();
-      if (bimRes.ok && bimRes.data) {
-        setSessions(bimRes.data.map(b => ({
-          id: b.id, date: toDateInputValue(b.tanggal), topic: b.topik || b.kegiatan || '',
-          notes: b.catatan || '', mingguKe: b.minggu_ke, status: b.status || 'pending',
+      if (bimRes.ok) {
+        const rawList = Array.isArray(bimRes.data)
+          ? bimRes.data
+          : Array.isArray(bimRes.data?.data)
+          ? bimRes.data.data
+          : [];
+        setSessions(rawList.map((b) => ({
+          id: b.id,
+          date: toDateInputValue(b.tanggal),
+          topic: b.topik || b.kegiatan || '',
+          notes: b.catatan || '',
+          mingguKe: b.minggu_ke,
+          status: b.status || 'pending',
         })));
       }
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const openAdd = () => {
-    if (!hasPembimbing) { toast.warning('Upload proposal dan dapatkan dosen pembimbing terlebih dahulu.'); return; }
-    if (activeSessionCount >= MAX_SESSIONS) { toast.info('Bimbingan aktif sudah mencapai 8 sesi. Tunggu review dosen atau ajukan ulang jika ada yang ditolak.'); return; }
+    if (!hasPembimbing) {
+      toast.warning('Upload proposal dan dapatkan dosen pembimbing terlebih dahulu.');
+      return;
+    }
+    if (activeSessionCount >= MAX_SESSIONS) {
+      toast.info('Bimbingan aktif sudah mencapai 8 sesi. Tunggu review dosen atau ajukan ulang jika ada yang ditolak.');
+      return;
+    }
     if (isScheduleCompleted) {
       toast.warning('Jadwal proyek sudah selesai. Bimbingan baru tidak bisa ditambahkan.');
       return;
@@ -129,7 +153,10 @@ export default function BimbinganPage() {
   };
 
   const handleSubmit = async () => {
-    if (!form.date || !form.topic || !form.notes) { toast.error('Semua field wajib diisi'); return; }
+    if (!form.date || !form.topic || !form.notes) {
+      toast.error('Semua field wajib diisi');
+      return;
+    }
     if (bimbinganStartDate && form.date < bimbinganStartDate) {
       toast.error(`Tanggal bimbingan tidak boleh sebelum ${bimbinganStartDate}`);
       return;
@@ -140,20 +167,30 @@ export default function BimbinganPage() {
     }
     try {
       const res = await mahasiswaAPI.createBimbingan({
-        tanggal: form.date, minggu_ke: nextSessionNumber, topik: form.topic, catatan: form.notes,
+        tanggal: form.date,
+        minggu_ke: nextSessionNumber,
+        topik: form.topic,
+        catatan: form.notes,
       });
-      if (res.ok) { toast.success('Bimbingan berhasil disimpan'); setShowModal(false); loadAll(); }
-      else toast.error(res.error || 'Gagal menyimpan');
-    } catch { toast.error('Kesalahan jaringan'); }
+      if (res.ok) {
+        toast.success('Bimbingan berhasil disimpan');
+        setShowModal(false);
+        loadAll();
+      } else {
+        toast.error(res.error || 'Gagal menyimpan');
+      }
+    } catch {
+      toast.error('Kesalahan jaringan');
+    }
   };
 
-  const approvedCount = sessions.filter(s => s.status === 'approved').length;
-  const activeSessionCount = sessions.filter(s => s.status !== 'rejected').length;
+  const approvedCount = sessions.filter((s) => s.status === 'approved').length;
+  const activeSessionCount = sessions.filter((s) => s.status !== 'rejected').length;
   const nextSessionNumber = Math.min(MAX_SESSIONS, activeSessionCount + 1);
   const isScheduleCompleted = String(bimbinganScheduleStatus || '').toLowerCase() === 'completed';
-  const isScheduleEnded = !!bimbinganEndDate && todayDateInputValue() > bimbinganEndDate;
+  const isScheduleEnded = Boolean(bimbinganEndDate && todayDateInputValue() > bimbinganEndDate);
   const canAddBimbingan = activeSessionCount < MAX_SESSIONS && !isScheduleEnded && !isScheduleCompleted;
-  const canExport = hasPembimbing && !!judulProyek && approvedCount > 0;
+  const canExport = hasPembimbing && Boolean(judulProyek) && approvedCount > 0;
 
   const handleExport = async (format) => {
     if (!canExport || exporting) return;
@@ -175,41 +212,60 @@ export default function BimbinganPage() {
   const progress = (approvedCount / MAX_SESSIONS) * 100;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="dashboard" label="Memuat catatan bimbingan" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-5">
-      {/* Info cards */}
+    <motion.div
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25 }}
+      className="space-y-6"
+    >
+      <PageHeader
+        title="Bimbingan Online"
+        subtitle="Catat dan pantau sesi bimbingan bersama dosen pembimbing hingga memenuhi kuota 8 sesi sidang."
+      />
+
+      {/* Info summary strip */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Track Aktif</p>
-            <p className="text-base font-semibold text-[hsl(var(--ctp-text))] mt-1">{trackName || 'Belum dipilih'}</p>
+          <CardContent className="p-5">
+            <p className="text-xs font-medium text-[var(--text-muted)]">Track Aktif</p>
+            <p className="text-base font-semibold text-[var(--text-strong)] mt-1 truncate">
+              {trackName || 'Belum dipilih'}
+            </p>
           </CardContent>
         </Card>
         <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Dosen Pembimbing</p>
-            <p className="text-base font-semibold text-[hsl(var(--ctp-text))] mt-1">
+          <CardContent className="p-5 min-w-0">
+            <p className="text-xs font-medium text-[var(--text-muted)]">Dosen Pembimbing</p>
+            <p className="text-base font-semibold text-[var(--text-strong)] mt-1 truncate" title={dosenNama}>
               {hasPembimbing ? dosenNama : <span className="text-[hsl(var(--ctp-peach))]">Belum ada</span>}
             </p>
           </CardContent>
         </Card>
         <Card variant="muted">
-          <CardContent className="pt-6">
+          <CardContent className="p-5">
             <div className="flex items-center justify-between">
-              <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Progress Bimbingan</p>
-              <span className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{approvedCount}/{MAX_SESSIONS}</span>
+              <p className="text-xs font-medium text-[var(--text-muted)]">Progres Sesi</p>
+              <span className="text-sm font-semibold font-mono tabular-nums text-[var(--text-strong)]">
+                {approvedCount}/{MAX_SESSIONS} Selesai
+              </span>
             </div>
-            <Progress value={progress} className="mt-2" />
+            <Progress value={progress} className="mt-2.5 h-2" />
             <div className="flex gap-1 mt-2">
               {Array.from({ length: MAX_SESSIONS }, (_, i) => (
-                <div key={i} className={`h-2 flex-1 rounded-full ${i < approvedCount ? 'bg-[hsl(var(--ctp-lavender))]' : 'bg-[hsl(var(--ctp-surface1))]'}`} />
+                <div
+                  key={i}
+                  className={`h-1.5 flex-1 rounded-full ${
+                    i < approvedCount
+                      ? 'bg-[hsl(var(--ctp-green))]'
+                      : i < activeSessionCount
+                      ? 'bg-[hsl(var(--ctp-peach))]'
+                      : 'bg-[var(--surface-sunken)] border border-[var(--line)]'
+                  }`}
+                />
               ))}
             </div>
           </CardContent>
@@ -218,112 +274,175 @@ export default function BimbinganPage() {
 
       {/* Sessions list */}
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
+        <CardHeader className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
               <MessageSquare className="h-4 w-4" /> Catatan Bimbingan
             </CardTitle>
-            <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Riwayat sesi bimbingan Anda.</CardDescription>
+            <CardDescription className="text-[var(--text-muted)]">
+              Riwayat konsultasi bimbingan proyek Anda.
+            </CardDescription>
           </div>
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button
                   type="button"
+                  variant="outline"
                   disabled={!canExport || exporting}
-                  className="rounded-2xl bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-blue)/0.30)] border border-[hsl(var(--ctp-blue)/0.35)] disabled:opacity-50"
+                  className="min-h-[44px]"
                   title={!canExport ? 'Perlu pembimbing, judul, dan minimal 1 bimbingan disetujui' : 'Export formulir bimbingan'}
                 >
-                  <Download className="h-4 w-4 mr-1" /> {exporting ? 'Mengunduh...' : 'Export'}
+                  <Download className="h-4 w-4 mr-1.5" />
+                  <span>{exporting ? 'Mengunduh...' : 'Export'}</span>
                 </Button>
               </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="bg-[hsl(var(--ctp-mantle))] border-[hsl(var(--ctp-overlay0)/0.45)]">
+              <DropdownMenuContent align="end" className="bg-[var(--surface-raised)] border-[var(--line)]">
                 <DropdownMenuItem
                   onClick={() => handleExport('pdf')}
                   disabled={!canExport || exporting}
-                  className="cursor-pointer text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)]"
+                  className="cursor-pointer text-[var(--text-strong)] focus:bg-[var(--surface-sunken)]"
                 >
                   <FileText className="h-4 w-4 mr-2" /> Export PDF
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
+
             <Button
               onClick={openAdd}
               disabled={!canAddBimbingan}
-              title={isScheduleCompleted ? 'Jadwal proyek sudah selesai' : isScheduleEnded ? `Jadwal proyek sudah berakhir pada ${bimbinganEndDate}` : undefined}
-              className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-green)/0.30)] border border-[hsl(var(--ctp-green)/0.35)]"
+              className="min-h-[44px]"
+              title={
+                isScheduleCompleted
+                  ? 'Jadwal proyek sudah selesai'
+                  : isScheduleEnded
+                  ? `Jadwal proyek sudah berakhir pada ${bimbinganEndDate}`
+                  : undefined
+              }
             >
-              <Plus className="h-4 w-4 mr-1" /> Tambah
+              <Plus className="h-4 w-4 mr-1.5" /> Tambah Sesi
             </Button>
           </div>
         </CardHeader>
         <CardContent>
           {sessions.length === 0 ? (
-            <div className="text-center py-12">
-              <MessageSquare className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada catatan bimbingan</p>
-            </div>
+            <EmptyState
+              icon={MessageSquare}
+              title="Belum ada catatan bimbingan"
+              description="Catatan bimbingan Anda bersama dosen pembimbing akan ditampilkan di sini."
+              action={
+                <Button onClick={openAdd} disabled={!canAddBimbingan} className="min-h-[44px]">
+                  <Plus className="h-4 w-4 mr-1.5" /> Catat bimbingan
+                </Button>
+              }
+            />
           ) : (
-            <div className="space-y-2">
-              {sessions.map((s, i) => {
-                const st = STATUS_MAP[s.status] || STATUS_MAP.pending;
-                return (
-                  <div key={s.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-3 p-3">
-                    <div className={`h-9 w-9 shrink-0 rounded-full bg-[hsl(var(--${st.color})/0.20)] text-[hsl(var(--${st.color}))] flex items-center justify-center text-sm font-bold`}>
-                      {i + 1}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        <span className="text-xs text-[hsl(var(--ctp-subtext0))]">{s.date || '-'}</span>
-                        <Badge className={`rounded-xl text-[10px] border border-[hsl(var(--${st.color})/0.35)] bg-[hsl(var(--${st.color})/0.12)] text-[hsl(var(--${st.color}))]`}>
-                          {st.label}
-                        </Badge>
-                      </div>
-                      <p className="text-sm font-semibold text-[hsl(var(--ctp-text))] truncate">{s.topic}</p>
-                      <p className="text-xs text-[hsl(var(--ctp-subtext0))] mt-1 line-clamp-2">{s.notes}</p>
-                    </div>
-                    <Button variant="ghost" size="icon" onClick={() => openEdit(i)} className="shrink-0 h-8 w-8 text-[hsl(var(--ctp-subtext0))] hover:text-[hsl(var(--ctp-lavender))]">
-                      <Edit className="h-4 w-4" />
-                    </Button>
+            <div className="space-y-3">
+              {sessions.map((s, i) => (
+                <div
+                  key={s.id || i}
+                  className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-3 p-3.5"
+                >
+                  <div className="h-9 w-9 shrink-0 rounded-lg bg-[var(--surface-raised)] border border-[var(--line)] text-[var(--text-strong)] flex items-center justify-center text-sm font-semibold font-mono tabular-nums">
+                    {i + 1}
                   </div>
-                );
-              })}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1 flex-wrap">
+                      <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                        {s.date || '-'}
+                      </span>
+                      <StatusBadge status={s.status} />
+                    </div>
+                    <p className="text-sm font-semibold text-[var(--text-strong)] break-words">
+                      {s.topic}
+                    </p>
+                    {s.notes && (
+                      <p className="text-xs text-[var(--text-body)] mt-1 whitespace-pre-line break-words line-clamp-3">
+                        {s.notes}
+                      </p>
+                    )}
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => openEdit(i)}
+                    aria-label={`Edit bimbingan ke-${i + 1}`}
+                    className="shrink-0 h-11 w-11 text-[var(--text-muted)] hover:text-[var(--text-strong)]"
+                  >
+                    <Edit className="h-4 w-4" />
+                  </Button>
+                </div>
+              ))}
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Modal */}
+      {/* Modal Dialog */}
       <DashboardDialog open={showModal} onOpenChange={setShowModal}>
-        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-4">
-          {editIdx >= 0 ? `Edit Bimbingan ke-${editIdx + 1}` : `Tambah Bimbingan ke-${nextSessionNumber}`}
-        </h3>
-        <div data-testid="bimbingan-form" className="space-y-3">
+        <div className="space-y-4">
           <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Tanggal</Label>
-            <Input type="date" min={bimbinganStartDate || undefined} max={bimbinganEndDate || undefined} value={form.date} onChange={(e) => setForm({ ...form, date: e.target.value })} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-            {(bimbinganStartDate || bimbinganEndDate) && (
-              <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">
-                Rentang tanggal bimbingan: {bimbinganStartDate || '-'} sampai {bimbinganEndDate || '-'}
-              </p>
-            )}
+            <h3 className="text-lg font-semibold text-[var(--text-strong)]">
+              {editIdx >= 0 ? `Edit Bimbingan ke-${editIdx + 1}` : `Tambah Bimbingan ke-${nextSessionNumber}`}
+            </h3>
+            <p className="text-xs text-[var(--text-muted)] mt-1">
+              Isi data konsultasi bimbingan yang telah disepakati bersama dosen pembimbing.
+            </p>
           </div>
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Topik / Kegiatan</Label>
-            <Input value={form.topic} onChange={(e) => setForm({ ...form, topic: e.target.value })} placeholder="Topik pembahasan" className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
+
+          <div data-testid="bimbingan-form" className="space-y-4">
+            <Field
+              label="Tanggal"
+              required
+              hint={
+                bimbinganStartDate || bimbinganEndDate
+                  ? `Rentang tanggal bimbingan: ${bimbinganStartDate || '-'} sampai ${bimbinganEndDate || '-'}`
+                  : undefined
+              }
+            >
+              <Input
+                type="date"
+                min={bimbinganStartDate || undefined}
+                max={bimbinganEndDate || undefined}
+                value={form.date}
+                onChange={(e) => setForm({ ...form, date: e.target.value })}
+                className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)] min-h-[44px]"
+              />
+            </Field>
+
+            <Field label="Topik / Kegiatan" required>
+              <Input
+                value={form.topic}
+                onChange={(e) => setForm({ ...form, topic: e.target.value })}
+                placeholder="Topik pembahasan bimbingan"
+                className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)] min-h-[44px]"
+              />
+            </Field>
+
+            <Field label="Catatan" required>
+              <Textarea
+                value={form.notes}
+                onChange={(e) => setForm({ ...form, notes: e.target.value })}
+                placeholder="Catatan hasil diskusi atau arahan revisi dari dosen"
+                rows={3}
+                className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+              />
+            </Field>
           </div>
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Catatan</Label>
-            <Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} placeholder="Catatan bimbingan" rows={3} className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
+
+          <div className="flex justify-end gap-3 pt-3 border-t border-[var(--line)]">
+            <Button
+              type="button"
+              variant="secondary"
+              onClick={() => setShowModal(false)}
+              className="min-h-[44px]"
+            >
+              Batal
+            </Button>
+            <Button onClick={handleSubmit} className="min-h-[44px]">
+              Simpan
+            </Button>
           </div>
-        </div>
-        <div className="flex justify-end gap-3 mt-5">
-          <Button variant="secondary" onClick={() => setShowModal(false)} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
-            Batal
-          </Button>
-          <Button onClick={handleSubmit} className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]">
-            Simpan
-          </Button>
         </div>
       </DashboardDialog>
     </motion.div>
