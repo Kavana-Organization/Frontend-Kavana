@@ -1,16 +1,23 @@
 'use client';
 
 import { useEffect, useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { AlertTriangle, CalendarClock, CheckCircle2, Clock3, MapPin, Plus, UserRound, Users } from 'lucide-react';
-import { Textarea } from '@/components/ui/textarea';
-import { motion } from 'framer-motion';
+import { usePathname, useRouter } from 'next/navigation';
+import {
+  AlertTriangle,
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  MapPin,
+  Plus,
+  UserRound,
+  Users,
+} from 'lucide-react';
 import { toast } from '@/lib/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { Field } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -18,9 +25,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
+import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { koordinatorAPI } from '@/lib/api';
-import { DashboardDialog } from '@/components/shared/dashboard-dialog';
+import { TITLE_MAP } from '@/lib/constants';
+import { cn } from '@/lib/utils';
 
 const INITIAL_FORM = { mahasiswa_id: '', penguji_id: '', tanggal: '', waktu: '', ruangan: '' };
 
@@ -87,15 +100,11 @@ function statusLabel(status) {
   return status || 'Terjadwal';
 }
 
-function statusClass(status) {
+function getStatusKey(status) {
   const raw = String(status || '').toLowerCase();
-  if (raw === 'completed') {
-    return 'bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-green))] border-[hsl(var(--ctp-green)/0.35)]';
-  }
-  if (raw === 'ongoing') {
-    return 'bg-[hsl(var(--ctp-peach)/0.20)] text-[hsl(var(--ctp-peach))] border-[hsl(var(--ctp-peach)/0.35)]';
-  }
-  return 'bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border-[hsl(var(--ctp-blue)/0.35)]';
+  if (raw === 'completed') return 'approved';
+  if (raw === 'ongoing') return 'pending';
+  return 'terjadwal';
 }
 
 function isProyekTrack(track) {
@@ -105,7 +114,6 @@ function isProyekTrack(track) {
 function normalizeWaktu(value) {
   if (!value) return '';
   const str = String(value);
-  // Accept "HH:MM" or "HH:MM:SS" → normalize to "HH:MM"
   return str.length >= 5 ? str.slice(0, 5) : str;
 }
 
@@ -113,6 +121,7 @@ const ACTIVE_STATUSES = new Set(['scheduled', 'ongoing']);
 
 export default function JadwalSidangPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [jadwal, setJadwal] = useState([]);
@@ -123,6 +132,12 @@ export default function JadwalSidangPage() {
   const [hasilTarget, setHasilTarget] = useState(null);
   const [hasilForm, setHasilForm] = useState({ hasil_sidang: 'lulus', catatan_sidang: '' });
   const [submittingHasil, setSubmittingHasil] = useState(false);
+
+  const pageTitle = useMemo(() => {
+    const segments = String(pathname || '').split('/').filter(Boolean);
+    const segment = segments[segments.length - 1];
+    return TITLE_MAP[segment] || TITLE_MAP['jadwal-sidang'] || 'Jadwal Sidang';
+  }, [pathname]);
 
   useEffect(() => {
     if (role && !['koordinator', 'kaprodi'].includes(role)) {
@@ -205,7 +220,6 @@ export default function JadwalSidangPage() {
     const unique = new Map();
     result.forEach((item) => {
       const existing = unique.get(item.value);
-      // Bila ada duplikat, prioritaskan yang eligible (tidak disabled)
       if (!existing || (existing.disabled && !item.disabled)) {
         unique.set(item.value, item);
       }
@@ -227,7 +241,6 @@ export default function JadwalSidangPage() {
   );
   const hasRemainingCandidate = eligibleOptions.length > 0;
 
-  // Lookup dosen pembimbing dari mahasiswa terpilih (untuk pre-check bentrok)
   const selectedDosenId = useMemo(() => {
     const ids = parseSelectedMahasiswaIds(form.mahasiswa_id);
     if (ids.length === 0) return null;
@@ -243,7 +256,6 @@ export default function JadwalSidangPage() {
     return null;
   }, [form.mahasiswa_id, mahasiswa]);
 
-  // Pre-check bentrok dari data jadwal yang sudah dimuat. Backend tetap sumber kebenaran.
   const conflictWarning = useMemo(() => {
     const pengujiId = normalizeId(form.penguji_id);
     const tanggal = form.tanggal;
@@ -400,11 +412,11 @@ export default function JadwalSidangPage() {
     }
   };
 
-  const openHasil = (jadwal) => {
-    setHasilTarget(jadwal);
+  const openHasil = (item) => {
+    setHasilTarget(item);
     setHasilForm({
-      hasil_sidang: jadwal?.hasil_sidang || 'lulus',
-      catatan_sidang: jadwal?.catatan_sidang || '',
+      hasil_sidang: item?.hasil_sidang || 'lulus',
+      catatan_sidang: item?.catatan_sidang || '',
     });
   };
 
@@ -432,94 +444,114 @@ export default function JadwalSidangPage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="table" label="Memuat jadwal sidang" />;
   }
 
-  const inputCls =
-    'bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]';
+  const inputCls = 'bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]';
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+    <div className="space-y-6">
+      <PageHeader
+        title={pageTitle}
+        subtitle="Atur jadwal presentasi sidang, ruang, penguji utama, dan tetapkan hasil sidang."
+      >
+        <Button
+          type="button"
+          onClick={() => {
+            setShowModal(true);
+            setForm(INITIAL_FORM);
+          }}
+          disabled={!hasRemainingCandidate}
+        >
+          <Plus className="h-4 w-4" />
+          <span>Jadwalkan</span>
+        </Button>
+      </PageHeader>
+
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <CalendarClock className="h-4 w-4" /> Jadwal Sidang
-          </CardTitle>
-          <Button
-            onClick={() => {
-              setShowModal(true);
-              setForm(INITIAL_FORM);
-            }}
-            disabled={!hasRemainingCandidate}
-            className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)] disabled:opacity-50"
-          >
-            <Plus className="h-4 w-4 mr-1" /> Jadwalkan
-          </Button>
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+              <CalendarClock className="h-4 w-4 shrink-0" />
+              <span>Daftar Jadwal Sidang</span>
+            </CardTitle>
+            <CardDescription className="text-[var(--text-muted)]">
+              Menampilkan seluruh sesi sidang terjadwal dan status penyelesaiannya.
+            </CardDescription>
+          </div>
+          <span className="w-fit rounded-md border border-[var(--line)] bg-[var(--surface-raised)] px-2.5 py-1 text-xs font-mono font-medium tabular-nums text-[var(--text-body)]">
+            {groupedJadwal.length} sesi
+          </span>
         </CardHeader>
         <CardContent>
           {groupedJadwal.length === 0 ? (
-            <div className="text-center py-12">
-              <CalendarClock className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada jadwal sidang</p>
-            </div>
+            <EmptyState
+              icon={CalendarClock}
+              title="Belum ada jadwal sidang"
+              description="Gunakan tombol Jadwalkan untuk menentukan tanggal, ruang, dan penguji mahasiswa yang layak sidang."
+            />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {groupedJadwal.map((j, i) => (
-                <div key={`${j.kelompok_id || 'mhs'}:${j.id || i}:${j.tanggal || ''}:${j.waktu || ''}`} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
-                  <div className="flex items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">
+                <div
+                  key={`${j.kelompok_id || 'mhs'}:${j.id || i}:${j.tanggal || ''}:${j.waktu || ''}`}
+                  className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4"
+                >
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="min-w-0 flex-1 space-y-1.5">
+                      <p className="text-sm font-semibold text-[var(--text-strong)] break-words">
                         {j.display_nama || '-'}
                       </p>
-                      <p className="text-xs text-[hsl(var(--ctp-subtext0))]">
-                        {j.display_npm || '-'} - {j.judul_proyek || '-'}
+                      <p className="text-xs text-[var(--text-muted)] break-words">
+                        <span className="font-mono tabular-nums">{j.display_npm || '-'}</span>
+                        {' · '}
+                        {j.judul_proyek || '-'}
                       </p>
                       {isProyekTrack(j?.track) && Array.isArray(j?.anggota_nama) && j.anggota_nama.length > 1 ? (
-                        <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext1))]">
+                        <p className="text-xs text-[var(--text-body)] break-words">
                           Anggota: {j.anggota_nama.join(', ')}
                         </p>
                       ) : null}
-                      <div className="mt-1 flex flex-wrap items-center gap-3 text-xs text-[hsl(var(--ctp-subtext1))]">
-                        <span className="inline-flex items-center gap-1">
-                          <CalendarClock className="h-3.5 w-3.5" />
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-1 pt-1 text-xs text-[var(--text-body)] font-mono tabular-nums">
+                        <span className="inline-flex items-center gap-1.5">
+                          <CalendarClock className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
                           {formatTanggal(j.tanggal)}
                         </span>
-                        <span className="inline-flex items-center gap-1">
-                          <Clock3 className="h-3.5 w-3.5" />
+                        <span className="inline-flex items-center gap-1.5">
+                          <Clock3 className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
                           {formatWaktu(j.waktu)}
                         </span>
-                        <span className="inline-flex items-center gap-1">
-                          <MapPin className="h-3.5 w-3.5" />
+                        <span className="inline-flex items-center gap-1.5 font-sans">
+                          <MapPin className="h-3.5 w-3.5 shrink-0 text-[var(--text-muted)]" />
                           {j.ruangan || '-'}
                         </span>
                       </div>
-                      <div className="mt-2 flex flex-wrap items-center gap-2">
-                        <Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
+                      <div className="flex flex-wrap items-center gap-2 pt-1 text-xs text-[var(--text-muted)]">
+                        <span className="rounded-md border border-[var(--line)] bg-[var(--surface-sunken)] px-2 py-0.5 text-[var(--text-body)] break-words">
                           Pembimbing: {j.dosen_nama || '-'}
-                        </Badge>
-                        <Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
+                        </span>
+                        <span className="rounded-md border border-[var(--line)] bg-[var(--surface-sunken)] px-2 py-0.5 text-[var(--text-body)] break-words">
                           Penguji: {j.penguji_nama || '-'}
-                        </Badge>
+                        </span>
                       </div>
                     </div>
-                    <div className="flex flex-col items-end gap-2 shrink-0">
-                      <Badge className={`rounded-xl border ${statusClass(j.status)}`}>{statusLabel(j.status)}</Badge>
+                    <div className="flex flex-wrap items-center gap-2 sm:flex-col sm:items-end shrink-0">
+                      <StatusBadge status={getStatusKey(j.status)} label={statusLabel(j.status)} />
                       {String(j.status || '').toLowerCase() !== 'completed' ? (
                         <Button
                           type="button"
+                          size="sm"
+                          variant="outline"
                           onClick={() => openHasil(j)}
-                          className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)] text-xs px-3 py-1 h-auto"
                         >
-                          <CheckCircle2 className="h-3.5 w-3.5 mr-1" /> Selesaikan
+                          <CheckCircle2 className="h-3.5 w-3.5" />
+                          <span>Selesaikan</span>
                         </Button>
                       ) : j.hasil_sidang ? (
-                        <Badge className="rounded-xl border bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))] border-[hsl(var(--ctp-blue)/0.35)]">
-                          {HASIL_OPTIONS.find((o) => o.value === j.hasil_sidang)?.label || j.hasil_sidang}
-                        </Badge>
+                        <StatusBadge
+                          status={j.hasil_sidang}
+                          label={HASIL_OPTIONS.find((o) => o.value === j.hasil_sidang)?.label || j.hasil_sidang}
+                        />
                       ) : null}
                     </div>
                   </div>
@@ -530,130 +562,175 @@ export default function JadwalSidangPage() {
         </CardContent>
       </Card>
 
-      <DashboardDialog open={showModal} onOpenChange={setShowModal} title="Jadwalkan Sidang">
-        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-4">Jadwalkan Sidang</h3>
-        <form data-testid="jadwal-sidang-form" onSubmit={handleSchedule} className="space-y-3">
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Mahasiswa / Kelompok</Label>
-            <Select
-              value={form.mahasiswa_id}
-              onValueChange={(value) => setForm({ ...form, mahasiswa_id: value })}
-            >
-              <SelectTrigger className={inputCls}>
-                <SelectValue placeholder="Pilih kelompok (proyek) / mahasiswa (internship)" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
-                {eligibleOptions.map((item) => (
-                  <SelectItem key={item.value} value={item.value}>
-                    {item.label}
-                  </SelectItem>
-                ))}
-                {ineligibleOptions.length > 0 ? (
-                  <div className="px-2 py-1 text-[10px] uppercase tracking-wide text-[hsl(var(--ctp-subtext0))]">
-                    Belum layak sidang
-                  </div>
-                ) : null}
-                {ineligibleOptions.map((item) => (
-                  <SelectItem
-                    key={item.value}
-                    value={item.value}
-                    disabled
-                    className="opacity-60"
+      <DashboardDialog
+        open={showModal}
+        onOpenChange={setShowModal}
+        title="Jadwalkan Sidang"
+        className="max-w-lg max-h-[90vh] overflow-y-auto"
+      >
+        <h3 className="mb-4 text-lg font-semibold text-[var(--text-strong)]">Jadwalkan Sidang</h3>
+        <form data-testid="jadwal-sidang-form" onSubmit={handleSchedule} className="space-y-4">
+          <fieldset className="space-y-3 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5">
+            <legend className="px-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+              Sidang
+            </legend>
+            <Field label="Mahasiswa / Kelompok" required>
+              {(a11y) => (
+                <Select
+                  name="mahasiswa_id"
+                  value={form.mahasiswa_id}
+                  onValueChange={(value) => setForm({ ...form, mahasiswa_id: value })}
+                >
+                  <SelectTrigger
+                    id={a11y.id}
+                    aria-describedby={a11y['aria-describedby']}
+                    className={cn(inputCls, 'w-full')}
                   >
-                    <span className="flex flex-col">
-                      <span>{item.label}</span>
-                      {item.reason ? (
-                        <span className="text-[10px] text-[hsl(var(--ctp-peach))]">
-                          {item.reason}
+                    <SelectValue placeholder="Pilih kelompok (proyek) / mahasiswa (internship)" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
+                    {eligibleOptions.map((item) => (
+                      <SelectItem key={item.value} value={item.value}>
+                        {item.label}
+                      </SelectItem>
+                    ))}
+                    {ineligibleOptions.length > 0 ? (
+                      <div className="px-2 py-1 text-xs uppercase tracking-wide text-[var(--text-muted)]">
+                        Belum layak sidang
+                      </div>
+                    ) : null}
+                    {ineligibleOptions.map((item) => (
+                      <SelectItem
+                        key={item.value}
+                        value={item.value}
+                        disabled
+                        className="opacity-60"
+                      >
+                        <span className="flex flex-col">
+                          <span>{item.label}</span>
+                          {item.reason ? (
+                            <span className="text-xs text-[hsl(var(--ctp-peach))]">
+                              {item.reason}
+                            </span>
+                          ) : null}
                         </span>
-                      ) : null}
-                    </span>
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Field>
+          </fieldset>
 
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Penguji Utama</Label>
-            <Select
-              value={form.penguji_id}
-              onValueChange={(value) => setForm({ ...form, penguji_id: value })}
-            >
-              <SelectTrigger className={inputCls}>
-                <SelectValue placeholder="Pilih penguji" />
-              </SelectTrigger>
-              <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
-                {penguji.map((dosen) => (
-                  <SelectItem key={dosen.id} value={String(dosen.id)}>
-                    {dosen.nama}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
-
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-            <div>
-              <Label className="text-[hsl(var(--ctp-subtext1))]">Tanggal</Label>
-              <Input
-                type="date"
-                value={form.tanggal}
-                onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
-                className={inputCls}
-              />
+          <fieldset className="space-y-3 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5">
+            <legend className="px-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+              Ruang dan Waktu
+            </legend>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <Field label="Tanggal" required>
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    name="tanggal"
+                    type="date"
+                    value={form.tanggal}
+                    onChange={(e) => setForm({ ...form, tanggal: e.target.value })}
+                    className={inputCls}
+                  />
+                )}
+              </Field>
+              <Field label="Waktu" required>
+                {(a11y) => (
+                  <Input
+                    {...a11y}
+                    name="waktu"
+                    type="time"
+                    value={form.waktu}
+                    onChange={(e) => setForm({ ...form, waktu: e.target.value })}
+                    className={inputCls}
+                  />
+                )}
+              </Field>
             </div>
-            <div>
-              <Label className="text-[hsl(var(--ctp-subtext1))]">Waktu</Label>
-              <Input
-                type="time"
-                value={form.waktu}
-                onChange={(e) => setForm({ ...form, waktu: e.target.value })}
-                className={inputCls}
-              />
-            </div>
-          </div>
+            <Field label="Ruangan" required>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="ruangan"
+                  value={form.ruangan}
+                  onChange={(e) => setForm({ ...form, ruangan: e.target.value })}
+                  placeholder="Contoh: Lab Informatika 301"
+                  className={inputCls}
+                />
+              )}
+            </Field>
+          </fieldset>
 
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Ruangan</Label>
-            <Input
-              value={form.ruangan}
-              onChange={(e) => setForm({ ...form, ruangan: e.target.value })}
-              placeholder="Contoh: Lab Informatika 301"
-              className={inputCls}
-            />
-          </div>
+          <fieldset className="space-y-3 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5">
+            <legend className="px-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+              Penguji
+            </legend>
+            <Field label="Penguji Utama" required>
+              {(a11y) => (
+                <Select
+                  name="penguji_id"
+                  value={form.penguji_id}
+                  onValueChange={(value) => setForm({ ...form, penguji_id: value })}
+                >
+                  <SelectTrigger
+                    id={a11y.id}
+                    aria-describedby={a11y['aria-describedby']}
+                    className={cn(inputCls, 'w-full')}
+                  >
+                    <SelectValue placeholder="Pilih penguji" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
+                    {penguji.map((dosen) => (
+                      <SelectItem key={dosen.id} value={String(dosen.id)}>
+                        {dosen.nama}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Field>
+          </fieldset>
 
-          {!hasRemainingCandidate ? (
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))] inline-flex items-center gap-2">
-              <Users className="h-3.5 w-3.5" />
-              {ineligibleOptions.length > 0
-                ? 'Belum ada mahasiswa/kelompok yang layak sidang. Pastikan bimbingan ≥ 8 dan laporan sidang sudah disetujui.'
-                : 'Semua mahasiswa eligible sudah memiliki jadwal sidang.'}
-            </div>
-          ) : null}
+          <fieldset className="space-y-2.5 rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5">
+            <legend className="px-1.5 text-xs font-semibold uppercase tracking-[0.06em] text-[var(--text-muted)]">
+              Catatan
+            </legend>
+            <p className="text-xs text-[var(--text-muted)] leading-relaxed">
+              Syarat kelayakan: bimbingan minimal 8 sesi disetujui dan laporan sidang disetujui. Penguji utama tidak boleh sama dengan dosen pembimbing atau bentrok pada tanggal dan waktu yang sama.
+            </p>
+            {!hasRemainingCandidate ? (
+              <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-muted)] flex items-start gap-2">
+                <Users className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>
+                  {ineligibleOptions.length > 0
+                    ? 'Belum ada mahasiswa/kelompok yang layak sidang. Pastikan bimbingan ≥ 8 dan laporan sidang sudah disetujui.'
+                    : 'Semua mahasiswa eligible sudah memiliki jadwal sidang.'}
+                </span>
+              </div>
+            ) : null}
+            {conflictWarning ? (
+              <div
+                role="alert"
+                className="rounded-lg border border-[hsl(var(--ctp-peach)/0.45)] bg-[hsl(var(--ctp-peach)/0.10)] px-3 py-2 text-xs text-[hsl(var(--ctp-peach))] flex items-start gap-2"
+              >
+                <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
+                <span>{conflictWarning}</span>
+              </div>
+            ) : null}
+          </fieldset>
 
-          {conflictWarning ? (
-            <div className="rounded-xl border border-[hsl(var(--ctp-peach)/0.45)] bg-[hsl(var(--ctp-peach)/0.10)] px-3 py-2 text-xs text-[hsl(var(--ctp-peach))] inline-flex items-start gap-2">
-              <AlertTriangle className="h-3.5 w-3.5 mt-0.5 shrink-0" />
-              <span>{conflictWarning}</span>
-            </div>
-          ) : null}
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              onClick={() => setShowModal(false)}
-              className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
-            >
+          <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-[var(--line)]">
+            <Button type="button" variant="outline" onClick={() => setShowModal(false)}>
               Batal
             </Button>
-            <Button
-              type="submit"
-              className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
-            >
-              <UserRound className="h-4 w-4 mr-1" />
-              Jadwalkan
+            <Button type="submit">
+              <UserRound className="h-4 w-4" />
+              <span>Jadwalkan</span>
             </Button>
           </div>
         </form>
@@ -661,62 +738,74 @@ export default function JadwalSidangPage() {
 
       <DashboardDialog
         open={!!hasilTarget}
-        onOpenChange={(open) => { if (!open) setHasilTarget(null); }}
+        onOpenChange={(open) => {
+          if (!open) setHasilTarget(null);
+        }}
         title="Selesaikan Sidang"
+        className="max-w-md max-h-[90vh] overflow-y-auto"
       >
-        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-3">Tandai Hasil Sidang</h3>
+        <h3 className="mb-3 text-lg font-semibold text-[var(--text-strong)]">Tandai Hasil Sidang</h3>
         {hasilTarget ? (
-          <form onSubmit={handleSubmitHasil} className="space-y-3">
-            <p className="text-sm text-[hsl(var(--ctp-subtext1))]">
-              {hasilTarget.display_nama || hasilTarget.mahasiswa_nama || '-'} · {formatTanggal(hasilTarget.tanggal)} {formatWaktu(hasilTarget.waktu)}
+          <form onSubmit={handleSubmitHasil} className="space-y-4">
+            <p className="text-sm text-[var(--text-body)] break-words">
+              {hasilTarget.display_nama || hasilTarget.mahasiswa_nama || '-'} ·{' '}
+              <span className="font-mono text-xs tabular-nums">
+                {formatTanggal(hasilTarget.tanggal)} {formatWaktu(hasilTarget.waktu)}
+              </span>
             </p>
-            <div>
-              <Label className="text-[hsl(var(--ctp-subtext1))]">Hasil Sidang</Label>
-              <Select value={hasilForm.hasil_sidang} onValueChange={(v) => setHasilForm({ ...hasilForm, hasil_sidang: v })}>
-                <SelectTrigger className={inputCls}>
-                  <SelectValue placeholder="Pilih hasil" />
-                </SelectTrigger>
-                <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
-                  {HASIL_OPTIONS.map((opt) => (
-                    <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div>
-              <Label className="text-[hsl(var(--ctp-subtext1))]">Catatan Sidang (Opsional)</Label>
-              <Textarea
-                rows={3}
-                value={hasilForm.catatan_sidang}
-                onChange={(e) => setHasilForm({ ...hasilForm, catatan_sidang: e.target.value })}
-                placeholder="Catatan untuk mahasiswa, mis. poin revisi"
-                className={inputCls}
-              />
-            </div>
-            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[hsl(var(--ctp-subtext0))]">
+            <Field label="Hasil Sidang" required>
+              {(a11y) => (
+                <Select
+                  name="hasil_sidang"
+                  value={hasilForm.hasil_sidang}
+                  onValueChange={(v) => setHasilForm({ ...hasilForm, hasil_sidang: v })}
+                >
+                  <SelectTrigger
+                    id={a11y.id}
+                    aria-describedby={a11y['aria-describedby']}
+                    className={cn(inputCls, 'w-full')}
+                  >
+                    <SelectValue placeholder="Pilih hasil" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
+                    {HASIL_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Field>
+            <Field label="Catatan Sidang (Opsional)">
+              {(a11y) => (
+                <Textarea
+                  {...a11y}
+                  name="catatan_sidang"
+                  rows={3}
+                  value={hasilForm.catatan_sidang}
+                  onChange={(e) => setHasilForm({ ...hasilForm, catatan_sidang: e.target.value })}
+                  placeholder="Catatan untuk mahasiswa, mis. poin revisi"
+                  className={inputCls}
+                />
+              )}
+            </Field>
+            <div className="rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-muted)]">
               {hasilForm.hasil_sidang === 'lulus_revisi'
                 ? 'Mahasiswa akan menerima email dan menu revisi sidang akan terbuka.'
                 : 'Hasil ini akan langsung men-set sidang ke status completed.'}
             </div>
-            <div className="flex justify-end gap-2 pt-2">
-              <Button
-                type="button"
-                onClick={() => setHasilTarget(null)}
-                className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
-              >
+            <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-[var(--line)]">
+              <Button type="button" variant="outline" onClick={() => setHasilTarget(null)}>
                 Batal
               </Button>
-              <Button
-                type="submit"
-                disabled={submittingHasil}
-                className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
-              >
+              <Button type="submit" disabled={submittingHasil}>
                 {submittingHasil ? 'Menyimpan...' : 'Simpan Hasil'}
               </Button>
             </div>
           </form>
         ) : null}
       </DashboardDialog>
-    </motion.div>
+    </div>
   );
 }

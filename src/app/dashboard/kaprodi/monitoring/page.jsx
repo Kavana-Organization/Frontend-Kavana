@@ -2,11 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { BarChart3, Users, TrendingUp } from 'lucide-react';
-import { motion } from 'framer-motion';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
+import { BarChart3 } from 'lucide-react';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { PageHeader } from '@/components/layout/page-header';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { kaprodiAPI } from '@/lib/api';
 
@@ -17,19 +18,27 @@ export default function MonitoringPage() {
   const [stats, setStats] = useState({});
 
   useEffect(() => {
-    if (role && !['kaprodi','koordinator'].includes(role)) { router.replace(`/dashboard/${role}`); return; }
+    if (role && !['kaprodi', 'koordinator'].includes(role)) {
+      router.replace(`/dashboard/${role}`);
+      return;
+    }
     loadData();
   }, [role, router]);
 
   const loadData = async () => {
     try {
-      const res = await kaprodiAPI.getStats?.() || { ok: true, data: {} };
+      const res = (await kaprodiAPI.getStats?.()) || { ok: true, data: {} };
       if (res.ok) setStats(res.data || {});
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" /></div>;
+  if (loading) {
+    return <LoadingState variant="dashboard" label="Memuat data monitoring program studi" />;
+  }
 
   const byStatus = stats?.by_status || {};
   const totalMahasiswa = Number(stats?.total_mahasiswa) || 0;
@@ -43,38 +52,86 @@ export default function MonitoringPage() {
   const kelulusan = totalMahasiswa ? Math.round((lulus / totalMahasiswa) * 100) : 0;
 
   const stages = [
-    { name: 'Belum Track', count: belumTrack, total: totalMahasiswa || 1, color: 'ctp-overlay1' },
-    { name: 'Memilih Track', count: sudahTrack, total: totalMahasiswa || 1, color: 'ctp-blue' },
-    { name: 'Proposal Pending', count: proposalPending, total: totalMahasiswa || 1, color: 'ctp-teal' },
-    { name: 'Sedang Bimbingan', count: dalamBimbingan, total: totalMahasiswa || 1, color: 'ctp-lavender' },
-    { name: 'Siap Sidang', count: siapSidang, total: totalMahasiswa || 1, color: 'ctp-green' },
-    { name: 'Lulus', count: lulus, total: totalMahasiswa || 1, color: 'ctp-mauve' },
+    { name: 'Belum Track', count: belumTrack, total: totalMahasiswa || 1 },
+    { name: 'Memilih Track', count: sudahTrack, total: totalMahasiswa || 1 },
+    { name: 'Proposal Pending', count: proposalPending, total: totalMahasiswa || 1 },
+    { name: 'Sedang Bimbingan', count: dalamBimbingan, total: totalMahasiswa || 1 },
+    { name: 'Siap Sidang', count: siapSidang, total: totalMahasiswa || 1 },
+    { name: 'Lulus', count: lulus, total: totalMahasiswa || 1 },
   ];
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Mahasiswa</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{totalMahasiswa}</p></CardContent></Card>
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total Dosen</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{totalDosen}</p></CardContent></Card>
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Tingkat Kelulusan</p><p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{kelulusan}%</p></CardContent></Card>
+    <div className="space-y-6">
+      <PageHeader
+        title="Monitoring Progres Mahasiswa Prodi"
+        subtitle="Pantau sebaran tahap akademik mahasiswa program studi dari pemilihan track hingga kelulusan."
+      />
+
+      {/* Metric Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total Mahasiswa</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {totalMahasiswa}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total Dosen</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-blue))] font-mono tabular-nums">
+            {totalDosen}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Tingkat Kelulusan</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+            {kelulusan}%
+          </p>
+        </div>
       </div>
 
       <Card variant="muted">
-        <CardHeader><CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><BarChart3 className="h-4 w-4" /> Progress Mahasiswa</CardTitle></CardHeader>
-        <CardContent className="space-y-4">
-          {stages.map(s => (
-            <div key={s.name}>
-              <div className="flex items-center justify-between mb-1">
-                <span className="text-sm text-[hsl(var(--ctp-text))]">{s.name}</span>
-                <span className="text-sm font-medium text-[hsl(var(--ctp-subtext1))]">{s.count}</span>
-              </div>
-              <div className="h-3 rounded-full bg-[hsl(var(--ctp-surface1))]">
-                <div className={`h-full rounded-full bg-[hsl(var(--${s.color}))] transition-all`} style={{ width: `${Math.max(2, (s.count / s.total) * 100)}%` }} />
-              </div>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <BarChart3 className="h-4 w-4 shrink-0" />
+            <span>Rekap Progres Tahap Mahasiswa</span>
+          </CardTitle>
+          <CardDescription className="text-[var(--text-muted)]">
+            Persentase mahasiswa pada setiap tahap alur proyek dan internship.
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          {totalMahasiswa === 0 ? (
+            <EmptyState
+              icon={BarChart3}
+              title="Belum ada data monitoring mahasiswa untuk dipantau"
+              description="Rekap progres tahap akademik akan tampil setelah terdapat mahasiswa aktif di program studi."
+            />
+          ) : (
+            <div className="space-y-4">
+              {stages.map((s) => {
+                const pct = Math.min(100, Math.max(0, Math.round((s.count / s.total) * 100)));
+                return (
+                  <div key={s.name} className="space-y-1.5">
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <span className="text-sm font-medium text-[var(--text-strong)]">{s.name}</span>
+                      <span className="text-xs font-mono tabular-nums text-[var(--text-muted)]">
+                        {s.count} mahasiswa ({pct}%)
+                      </span>
+                    </div>
+                    <Progress
+                      value={pct}
+                      aria-label={`Progres ${s.name}`}
+                      aria-valuenow={pct}
+                      aria-valuemin={0}
+                      aria-valuemax={100}
+                    />
+                  </div>
+                );
+              })}
             </div>
-          ))}
+          )}
         </CardContent>
       </Card>
-    </motion.div>
+    </div>
   );
 }

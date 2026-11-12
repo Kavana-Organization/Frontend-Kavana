@@ -1,19 +1,31 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { CalendarDays, CheckCircle2, Pencil, Plus } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { useAuthStore } from '@/store/auth-store';
-import { koordinatorAPI } from '@/lib/api';
+import { Field } from '@/components/ui/field';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
+import { useAuthStore } from '@/store/auth-store';
+import { koordinatorAPI } from '@/lib/api';
+import { TITLE_MAP } from '@/lib/constants';
 
 const TIPE_OPTIONS = [
   { value: 'proyek', label: 'Proyek' },
@@ -81,6 +93,7 @@ function getJalurScopeLabel(jalurScope) {
 
 export default function KelolaPeriodePage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [periodes, setPeriodes] = useState([]);
@@ -91,6 +104,12 @@ export default function KelolaPeriodePage() {
   const [mySemesters, setMySemesters] = useState([]);
   const [confirmCompleteOpen, setConfirmCompleteOpen] = useState(false);
   const [targetPeriode, setTargetPeriode] = useState(null);
+
+  const pageTitle = useMemo(() => {
+    const segments = String(pathname || '').split('/').filter(Boolean);
+    const segment = segments[segments.length - 1];
+    return TITLE_MAP[segment] || TITLE_MAP['kelola-periode'] || 'Kelola Periode';
+  }, [pathname]);
 
   const isEditMode = form.id !== null;
   const assignedSemesterOptions = mySemesters
@@ -264,126 +283,139 @@ export default function KelolaPeriodePage() {
   };
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))]" />
-      </div>
-    );
+    return <LoadingState variant="table" label="Memuat data periode" />;
   }
 
-  const inputCls = 'bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]';
+  const inputCls = 'bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]';
+  const selectCls = `${inputCls} h-10 [@media(pointer:coarse)]:min-h-11 w-full rounded-lg border px-3 text-sm disabled:opacity-60`;
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+    <div className="space-y-6">
+      <PageHeader
+        title={pageTitle}
+        subtitle="Kelola jadwal pembukaan periode proyek dan internship sesuai semester yang ditugaskan."
+      >
+        <Button type="button" onClick={openCreateModal} disabled={!hasAssignments}>
+          <Plus className="h-4 w-4" />
+          <span>Buat Periode</span>
+        </Button>
+      </PageHeader>
+
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <CalendarDays className="h-4 w-4" /> Kelola Periode
-          </CardTitle>
-          <Button
-            onClick={openCreateModal}
-            disabled={!hasAssignments}
-            className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
-          >
-            <Plus className="mr-1 h-4 w-4" /> Buat Periode
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <div className="mb-4 flex flex-wrap gap-2">
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+              <CalendarDays className="h-4 w-4 shrink-0" />
+              <span>Daftar Periode Akademik</span>
+            </CardTitle>
+            <CardDescription className="text-[var(--text-muted)]">
+              Periode aktif menentukan semester dan jalur yang dapat diikuti mahasiswa.
+            </CardDescription>
+          </div>
+          <div className="flex flex-wrap gap-2">
             {hasAssignments ? (
               assignedSemesterOptions.map((semester) => (
-                <Badge
-                  key={`assignment-${semester}`}
-                  className="rounded-xl border border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]"
-                >
-                  Semester {semester} - {getTipeLabel(getTipeBySemester(semester))}
+                <Badge key={`assignment-${semester}`} variant="outline">
+                  Semester {semester} · {getTipeLabel(getTipeBySemester(semester))}
                 </Badge>
               ))
             ) : (
-              <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.25)] text-[hsl(var(--ctp-subtext0))]">
-                Belum ada assignment dari kaprodi
-              </Badge>
+              <Badge variant="secondary">Belum ada assignment dari kaprodi</Badge>
             )}
           </div>
+        </CardHeader>
+        <CardContent>
           {periodes.length === 0 ? (
-            <div className="py-12 text-center">
-              <CalendarDays className="mx-auto mb-3 h-10 w-10 text-[var(--text-muted)]" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Belum ada periode</p>
-            </div>
+            <EmptyState
+              icon={CalendarDays}
+              title="Belum ada periode"
+              description="Buat periode baru untuk membuka pendaftaran track dan pengajuan proposal mahasiswa."
+              action={
+                hasAssignments ? (
+                  <Button type="button" size="sm" onClick={openCreateModal}>
+                    <Plus className="h-4 w-4" />
+                    <span>Buat Periode</span>
+                  </Button>
+                ) : null
+              }
+            />
           ) : (
-            <div className="space-y-2">
-              {periodes.map((periode) => {
-                const active = isPeriodeActive(periode);
-                return (
-                  <div
-                    key={periode.id}
-                    className={`rounded-2xl border p-4 ${
-                      active
-                        ? 'border-[hsl(var(--ctp-green)/0.45)] bg-[hsl(var(--ctp-green)/0.06)]'
-                        : 'border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-mantle)/0.35)]'
-                    }`}
-                  >
-                    <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <h3 className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{periode.nama}</h3>
-                          <Badge className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
-                            {getTipeLabel(periode.tipe)}
-                          </Badge>
-                          {periode.semester ? (
-                            <Badge className="rounded-xl bg-[hsl(var(--ctp-blue)/0.15)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.35)]">
-                              Semester {periode.semester}
-                            </Badge>
-                          ) : null}
-                          <Badge className="rounded-xl bg-[hsl(var(--ctp-lavender)/0.15)] text-[hsl(var(--ctp-lavender))] border border-[hsl(var(--ctp-lavender)/0.35)]">
-                            {getJalurScopeLabel(periode.jalur_scope)}
-                          </Badge>
-                          <Badge
-                            className={`rounded-xl border ${
-                              active
-                                ? 'bg-[hsl(var(--ctp-green)/0.15)] text-[hsl(var(--ctp-green))] border-[hsl(var(--ctp-green)/0.35)]'
-                                : 'bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))] border-[hsl(var(--ctp-overlay0)/0.35)]'
-                            }`}
-                          >
-                            {active ? 'Aktif' : 'Selesai'}
-                          </Badge>
-                        </div>
-                        <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext0))]">
-                          {periode.start_date || '-'} - {periode.end_date || '-'}
-                        </p>
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nama Periode</TableHead>
+                  <TableHead className="w-[110px]">Tipe</TableHead>
+                  <TableHead className="w-[120px]">Semester</TableHead>
+                  <TableHead className="w-[140px]">Jalur</TableHead>
+                  <TableHead className="w-[190px]">Rentang Tanggal</TableHead>
+                  <TableHead className="w-[120px]">Status</TableHead>
+                  <TableHead className="w-[190px] text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {periodes.map((periode) => {
+                  const active = isPeriodeActive(periode);
+                  return (
+                    <TableRow key={periode.id}>
+                      <TableCell data-label="Nama Periode" className="whitespace-normal break-words">
+                        <div className="font-medium text-[var(--text-strong)]">{periode.nama}</div>
                         {periode.deskripsi ? (
-                          <p className="mt-2 text-xs text-[hsl(var(--ctp-subtext1))]">{periode.deskripsi}</p>
+                          <p className="mt-0.5 text-xs text-[var(--text-muted)] break-words">
+                            {periode.deskripsi}
+                          </p>
                         ) : null}
-                      </div>
-
-                      <div className="flex items-center gap-2">
-                        <Button
-                          type="button"
-                          onClick={() => openEditModal(periode)}
-                          className="rounded-xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
-                        >
-                          <Pencil className="mr-1 h-4 w-4" /> Edit
-                        </Button>
-                        {active ? (
+                      </TableCell>
+                      <TableCell data-label="Tipe" className="text-sm text-[var(--text-body)]">
+                        {getTipeLabel(periode.tipe)}
+                      </TableCell>
+                      <TableCell data-label="Semester" className="font-mono text-xs tabular-nums text-[var(--text-body)]">
+                        {periode.semester ? `Semester ${periode.semester}` : '-'}
+                      </TableCell>
+                      <TableCell data-label="Jalur" className="text-sm text-[var(--text-body)]">
+                        {getJalurScopeLabel(periode.jalur_scope)}
+                      </TableCell>
+                      <TableCell data-label="Rentang Tanggal" className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                        {periode.start_date || '-'} — {periode.end_date || '-'}
+                      </TableCell>
+                      <TableCell data-label="Status">
+                        <StatusBadge
+                          status={active ? 'active' : 'completed'}
+                          label={active ? 'Aktif' : 'Selesai'}
+                        />
+                      </TableCell>
+                      <TableCell data-label="Aksi">
+                        <div className="flex flex-wrap justify-end gap-2">
                           <Button
                             type="button"
-                            disabled={completingId === periode.id}
-                            onClick={() => {
-                              setTargetPeriode(periode);
-                              setConfirmCompleteOpen(true);
-                            }}
-                            className="rounded-xl bg-[hsl(var(--ctp-peach)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-peach)/0.35)]"
+                            size="sm"
+                            variant="outline"
+                            onClick={() => openEditModal(periode)}
                           >
-                            <CheckCircle2 className="mr-1 h-4 w-4" />
-                            {completingId === periode.id ? 'Memproses...' : 'Akhiri'}
+                            <Pencil className="h-3.5 w-3.5" />
+                            <span>Edit</span>
                           </Button>
-                        ) : null}
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                          {active ? (
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="outline"
+                              disabled={completingId === periode.id}
+                              onClick={() => {
+                                setTargetPeriode(periode);
+                                setConfirmCompleteOpen(true);
+                              }}
+                            >
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              <span>{completingId === periode.id ? 'Memproses...' : 'Akhiri'}</span>
+                            </Button>
+                          ) : null}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -392,118 +424,136 @@ export default function KelolaPeriodePage() {
         open={showModal}
         onOpenChange={handleCloseModal}
         title={isEditMode ? 'Edit Periode' : 'Buat Periode Baru'}
+        className="max-w-lg max-h-[90vh] overflow-y-auto"
       >
-        <h3 className="mb-4 text-lg font-semibold text-[hsl(var(--ctp-text))]">
+        <h3 className="mb-4 text-lg font-semibold text-[var(--text-strong)]">
           {isEditMode ? 'Edit Periode' : 'Buat Periode Baru'}
         </h3>
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Nama Periode</Label>
-            <Input
-              value={form.nama}
-              onChange={(e) => setForm((prev) => ({ ...prev, nama: e.target.value }))}
-              placeholder="Contoh: Proyek 1 Angkatan 24"
-              className={inputCls}
-            />
+        <form onSubmit={handleSubmit} className="space-y-3.5">
+          <Field label="Nama Periode" required>
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="nama"
+                value={form.nama}
+                onChange={(e) => setForm((prev) => ({ ...prev, nama: e.target.value }))}
+                placeholder="Contoh: Proyek 1 Angkatan 24"
+                className={inputCls}
+              />
+            )}
+          </Field>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Tipe">
+              {(a11y) => (
+                <select
+                  {...a11y}
+                  name="tipe"
+                  value={selectedTipe}
+                  disabled
+                  onChange={() => {}}
+                  className={selectCls}
+                >
+                  {TIPE_OPTIONS.filter((item) => item.value === selectedTipe).map((tipe) => (
+                    <option key={tipe.value} value={tipe.value}>
+                      {tipe.label}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Field>
+
+            <Field label="Semester" required>
+              {(a11y) => (
+                <select
+                  {...a11y}
+                  name="semester"
+                  value={form.semester}
+                  disabled={isEditMode}
+                  onChange={(e) =>
+                    setForm((prev) => ({
+                      ...prev,
+                      semester: e.target.value,
+                      tipe: getTipeBySemester(e.target.value),
+                    }))
+                  }
+                  className={selectCls}
+                >
+                  <option value="">Pilih semester</option>
+                  {assignedSemesterOptions.map((semester) => (
+                    <option key={semester} value={semester}>
+                      Semester {semester} - {getTipeLabel(getTipeBySemester(semester))}
+                    </option>
+                  ))}
+                </select>
+              )}
+            </Field>
           </div>
 
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Tipe</Label>
-            <select
-              value={selectedTipe}
-              disabled
-              onChange={() => {}}
-              className={`${inputCls} h-10 w-full rounded-md px-3 disabled:opacity-60`}
-            >
-              {TIPE_OPTIONS.filter((item) => item.value === selectedTipe).map((tipe) => (
-                <option key={tipe.value} value={tipe.value}>
-                  {tipe.label}
-                </option>
-              ))}
-            </select>
+          <Field label="Jalur">
+            {(a11y) => (
+              <select
+                {...a11y}
+                name="jalur_scope"
+                value={form.jalur_scope}
+                onChange={(e) => setForm((prev) => ({ ...prev, jalur_scope: e.target.value }))}
+                className={selectCls}
+              >
+                {JALUR_SCOPE_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>
+                    {option.label}
+                  </option>
+                ))}
+              </select>
+            )}
+          </Field>
+
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+            <Field label="Tanggal Mulai" required>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="start_date"
+                  type="date"
+                  value={form.start_date}
+                  onChange={(e) => setForm((prev) => ({ ...prev, start_date: e.target.value }))}
+                  className={inputCls}
+                />
+              )}
+            </Field>
+
+            <Field label="Tanggal Selesai" required>
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="end_date"
+                  type="date"
+                  value={form.end_date}
+                  onChange={(e) => setForm((prev) => ({ ...prev, end_date: e.target.value }))}
+                  className={inputCls}
+                />
+              )}
+            </Field>
           </div>
 
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Semester</Label>
-            <select
-              value={form.semester}
-              disabled={isEditMode}
-              onChange={(e) =>
-                setForm((prev) => ({
-                  ...prev,
-                  semester: e.target.value,
-                  tipe: getTipeBySemester(e.target.value),
-                }))
-              }
-              className={`${inputCls} h-10 w-full rounded-md px-3 disabled:opacity-60`}
-            >
-              <option value="">Pilih semester</option>
-              {assignedSemesterOptions.map((semester) => (
-                <option key={semester} value={semester}>
-                  Semester {semester} - {getTipeLabel(getTipeBySemester(semester))}
-                </option>
-              ))}
-            </select>
-          </div>
+          <Field label="Deskripsi (opsional)">
+            {(a11y) => (
+              <Input
+                {...a11y}
+                name="deskripsi"
+                value={form.deskripsi}
+                onChange={(e) => setForm((prev) => ({ ...prev, deskripsi: e.target.value }))}
+                placeholder="Keterangan periode"
+                className={inputCls}
+              />
+            )}
+          </Field>
 
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Jalur</Label>
-            <select
-              value={form.jalur_scope}
-              onChange={(e) => setForm((prev) => ({ ...prev, jalur_scope: e.target.value }))}
-              className={`${inputCls} h-10 w-full rounded-md px-3`}
-            >
-              {JALUR_SCOPE_OPTIONS.map((option) => (
-                <option key={option.value} value={option.value}>
-                  {option.label}
-                </option>
-              ))}
-            </select>
-          </div>
-
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Tanggal Mulai</Label>
-            <Input
-              type="date"
-              value={form.start_date}
-              onChange={(e) => setForm((prev) => ({ ...prev, start_date: e.target.value }))}
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Tanggal Selesai</Label>
-            <Input
-              type="date"
-              value={form.end_date}
-              onChange={(e) => setForm((prev) => ({ ...prev, end_date: e.target.value }))}
-              className={inputCls}
-            />
-          </div>
-
-          <div>
-            <Label className="text-[hsl(var(--ctp-subtext1))]">Deskripsi (opsional)</Label>
-            <Input
-              value={form.deskripsi}
-              onChange={(e) => setForm((prev) => ({ ...prev, deskripsi: e.target.value }))}
-              placeholder="Keterangan periode"
-              className={inputCls}
-            />
-          </div>
-
-          <div className="flex justify-end gap-3 pt-2">
-            <Button
-              type="button"
-              onClick={() => handleCloseModal(false)}
-              className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
-            >
+          <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-[var(--line)]">
+            <Button type="button" variant="outline" onClick={() => handleCloseModal(false)}>
               Batal
             </Button>
-            <Button
-              type="submit"
-              disabled={submitting}
-              className="rounded-2xl bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-green)/0.35)]"
-            >
+            <Button type="submit" disabled={submitting}>
               {submitting ? 'Menyimpan...' : isEditMode ? 'Simpan' : 'Buat'}
             </Button>
           </div>
@@ -524,6 +574,6 @@ export default function KelolaPeriodePage() {
         loading={completingId !== null}
         tone="warning"
       />
-    </motion.div>
+    </div>
   );
 }

@@ -1,29 +1,43 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { ClipboardCheck, CheckCircle2, XCircle, ExternalLink } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { CheckCircle2, ClipboardCheck, ExternalLink, XCircle } from 'lucide-react';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Textarea } from '@/components/ui/textarea';
+import { Field } from '@/components/ui/field';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
+import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { koordinatorAPI } from '@/lib/api';
-import { DashboardDialog } from '@/components/shared/dashboard-dialog';
-
-const STATUS_MAP = {
-  approved: { label: 'Disetujui', color: 'ctp-green' },
-  pending: { label: 'Pending', color: 'ctp-yellow' },
-  rejected: { label: 'Ditolak', color: 'ctp-red' },
-};
+import { TITLE_MAP } from '@/lib/constants';
 
 const ENROLLMENT_TYPE_MAP = {
-  regular: { label: 'Regular', color: 'ctp-blue' },
-  repeat: { label: 'Repeat', color: 'ctp-red' },
-  parallel_repeat: { label: 'Paralel', color: 'ctp-mauve' },
+  regular: { label: 'Regular', variant: 'outline' },
+  repeat: { label: 'Repeat', variant: 'destructive' },
+  parallel_repeat: { label: 'Paralel', variant: 'secondary' },
 };
+
+const FILTER_OPTIONS = [
+  { id: 'all', label: 'Semua' },
+  { id: 'pending', label: 'Pending' },
+  { id: 'approved', label: 'Approved' },
+  { id: 'rejected', label: 'Rejected' },
+];
 
 function getProposalStatus(item) {
   return String(item?.status_proposal || item?.status || 'pending').toLowerCase();
@@ -31,6 +45,7 @@ function getProposalStatus(item) {
 
 export default function ValidasiProposalPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState([]);
@@ -39,6 +54,12 @@ export default function ValidasiProposalPage() {
   const [actionType, setActionType] = useState('');
   const [actionEnrollmentId, setActionEnrollmentId] = useState(null);
   const [catatan, setCatatan] = useState('');
+
+  const pageTitle = useMemo(() => {
+    const segments = String(pathname || '').split('/').filter(Boolean);
+    const segment = segments[segments.length - 1];
+    return TITLE_MAP[segment] || TITLE_MAP['validasi-proposal'] || 'Validasi Proposal';
+  }, [pathname]);
 
   useEffect(() => {
     if (role && !['koordinator', 'kaprodi'].includes(role)) {
@@ -83,124 +104,157 @@ export default function ValidasiProposalPage() {
   };
 
   const filtered = list.filter((p) => filter === 'all' || getProposalStatus(p) === filter);
+  const pendingCount = list.filter((p) => getProposalStatus(p) === 'pending').length;
+  const approvedCount = list.filter((p) => getProposalStatus(p) === 'approved').length;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="table" label="Memuat daftar proposal" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p>
-            <p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{list.length}</p>
-          </CardContent>
-        </Card>
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Pending</p>
-            <p className="text-2xl font-bold text-[hsl(var(--ctp-yellow))]">{list.filter((p) => getProposalStatus(p) === 'pending').length}</p>
-          </CardContent>
-        </Card>
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Approved</p>
-            <p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{list.filter((p) => getProposalStatus(p) === 'approved').length}</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <PageHeader
+        title={pageTitle}
+        subtitle="Periksa kelayakan judul, dokumen proposal, dan jalur pengambilan mahasiswa sebelum penugasan pembimbing."
+      />
+
+      {/* Metric Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total Proposal</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {list.length}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Menunggu Validasi</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
+            {pendingCount}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Disetujui</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+            {approvedCount}
+          </p>
+        </div>
       </div>
 
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <ClipboardCheck className="h-4 w-4" /> Validasi Proposal
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <ClipboardCheck className="h-4 w-4 shrink-0" />
+            <span>Daftar Proposal Masuk</span>
           </CardTitle>
-          <div className="flex gap-2">
-            {['all', 'pending', 'approved', 'rejected'].map((f) => (
+          <div role="group" aria-label="Filter status proposal" className="flex flex-wrap gap-1.5">
+            {FILTER_OPTIONS.map((f) => (
               <Button
-                key={f}
+                key={f.id}
+                type="button"
                 size="sm"
-                onClick={() => setFilter(f)}
-                className={`rounded-xl text-xs ${filter === f ? 'bg-[hsl(var(--ctp-lavender)/0.25)] text-[hsl(var(--ctp-text))]' : 'bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext0))]'} border border-[hsl(var(--ctp-overlay0)/0.35)]`}
+                variant={filter === f.id ? 'default' : 'outline'}
+                aria-pressed={filter === f.id}
+                onClick={() => setFilter(f.id)}
               >
-                {f === 'all' ? 'Semua' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {f.label}
               </Button>
             ))}
           </div>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <ClipboardCheck className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada proposal</p>
-            </div>
+            <EmptyState
+              icon={ClipboardCheck}
+              title="Tidak ada proposal"
+              description="Belum ada proposal mahasiswa yang sesuai dengan filter status saat ini."
+            />
           ) : (
-            <div className="space-y-2">
-              {filtered.map((p) => {
-                const status = getProposalStatus(p);
-                const st = STATUS_MAP[status] || STATUS_MAP.pending;
-                const fileProposal = p.file_proposal || p.link;
-                return (
-                  <div key={p.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <span className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{p.kelompok_nama || p.nama || p.mahasiswa_nama || '-'}</span>
-                          <Badge className={`rounded-xl text-[10px] border border-[hsl(var(--${st.color})/0.35)] bg-[hsl(var(--${st.color})/0.12)] text-[hsl(var(--${st.color}))]`}>{st.label}</Badge>
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mahasiswa / Kelompok</TableHead>
+                  <TableHead>Judul Proposal</TableHead>
+                  <TableHead className="w-[150px]">Track</TableHead>
+                  <TableHead className="w-[130px]">Berkas</TableHead>
+                  <TableHead className="w-[130px]">Status</TableHead>
+                  <TableHead className="w-[190px] text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {filtered.map((p) => {
+                  const status = getProposalStatus(p);
+                  const fileProposal = p.file_proposal || p.link;
+                  const et = p.enrollment_type && p.enrollment_type !== 'regular'
+                    ? (ENROLLMENT_TYPE_MAP[p.enrollment_type] || ENROLLMENT_TYPE_MAP.regular)
+                    : null;
+
+                  return (
+                    <TableRow key={p.id}>
+                      <TableCell data-label="Mahasiswa / Kelompok" className="whitespace-normal break-words">
+                        <div className="font-medium text-[var(--text-strong)]">
+                          {p.kelompok_nama || p.nama || p.mahasiswa_nama || '-'}
                         </div>
-                        <p className="text-sm text-[hsl(var(--ctp-text))]">{p.judul_proyek || p.judul || '-'}</p>
-                        <div className="flex items-center gap-1.5 flex-wrap mt-0.5">
-                          <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{p.track || '-'} · {p.anggota?.length || 1} anggota</p>
-                          {p.enrollment_type && p.enrollment_type !== 'regular' && (() => {
-                            const et = ENROLLMENT_TYPE_MAP[p.enrollment_type] || ENROLLMENT_TYPE_MAP.regular;
-                            return (
-                              <Badge className={`rounded-xl text-[9px] border border-[hsl(var(--${et.color})/0.35)] bg-[hsl(var(--${et.color})/0.12)] text-[hsl(var(--${et.color}))]`}>
-                                {et.label}
-                              </Badge>
-                            );
-                          })()}
-                          {p.jalur_pengambilan && p.jalur_pengambilan !== 'regular' && (
-                            <Badge className="rounded-xl text-[9px] border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-                              {p.jalur_pengambilan.toUpperCase()}
-                            </Badge>
-                          )}
+                        <div className="mt-1 flex flex-wrap gap-1.5">
+                          {et ? <Badge variant={et.variant}>{et.label}</Badge> : null}
+                          {p.jalur_pengambilan && p.jalur_pengambilan !== 'regular' ? (
+                            <Badge variant="outline">{p.jalur_pengambilan.toUpperCase()}</Badge>
+                          ) : null}
                         </div>
-                        {fileProposal && (
-                          <a href={fileProposal} target="_blank" rel="noreferrer" className="text-xs text-[hsl(var(--ctp-blue))] hover:underline inline-flex items-center gap-1 mt-1">
-                            <ExternalLink className="h-3 w-3" /> File Proposal
+                      </TableCell>
+                      <TableCell data-label="Judul Proposal" className="whitespace-normal break-words text-[var(--text-body)]">
+                        {p.judul_proyek || p.judul || '-'}
+                      </TableCell>
+                      <TableCell data-label="Track" className="whitespace-normal text-xs text-[var(--text-muted)]">
+                        <div>{p.track || '-'}</div>
+                        <div className="font-mono tabular-nums">{p.anggota?.length || 1} anggota</div>
+                      </TableCell>
+                      <TableCell data-label="Berkas">
+                        {fileProposal ? (
+                          <a
+                            href={fileProposal}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="inline-flex items-center gap-1 text-xs font-medium text-[var(--accent)] hover:underline"
+                          >
+                            <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                            <span>File Proposal</span>
                           </a>
+                        ) : (
+                          <span className="text-xs text-[var(--text-muted)]">-</span>
                         )}
-                      </div>
-                      <div className="flex gap-2 shrink-0">
-                        <Button
-                          size="sm"
-                          disabled={status === 'approved'}
-                          onClick={() => openActionModal(p.id, 'approved', p.enrollment_id)}
-                          className="rounded-xl h-8 px-3 bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-green))] border border-[hsl(var(--ctp-green)/0.35)] disabled:opacity-40"
-                        >
-                          <CheckCircle2 className="h-4 w-4 mr-1" />
-                          Setujui
-                        </Button>
-                        <Button
-                          size="sm"
-                          disabled={status === 'rejected'}
-                          onClick={() => openActionModal(p.id, 'rejected', p.enrollment_id)}
-                          className="rounded-xl h-8 px-3 bg-[hsl(var(--ctp-red)/0.20)] text-[hsl(var(--ctp-red))] border border-[hsl(var(--ctp-red)/0.35)] disabled:opacity-40"
-                        >
-                          <XCircle className="h-4 w-4 mr-1" />
-                          Tolak
-                        </Button>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
+                      </TableCell>
+                      <TableCell data-label="Status">
+                        <StatusBadge status={status} />
+                      </TableCell>
+                      <TableCell data-label="Aksi">
+                        <div className="flex flex-wrap justify-end gap-2">
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={status === 'approved'}
+                            onClick={() => openActionModal(p.id, 'approved', p.enrollment_id)}
+                          >
+                            <CheckCircle2 className="h-3.5 w-3.5" />
+                            <span>Setujui</span>
+                          </Button>
+                          <Button
+                            type="button"
+                            size="sm"
+                            variant="outline"
+                            disabled={status === 'rejected'}
+                            onClick={() => openActionModal(p.id, 'rejected', p.enrollment_id)}
+                          >
+                            <XCircle className="h-3.5 w-3.5" />
+                            <span>Tolak</span>
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
@@ -214,14 +268,39 @@ export default function ValidasiProposalPage() {
             setActionType('');
           }
         }}
+        title={actionType === 'approved' ? 'Setujui Proposal?' : 'Tolak Proposal?'}
       >
-        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-3">{actionType === 'approved' ? 'Setujui Proposal?' : 'Tolak Proposal?'}</h3>
-        <Textarea value={catatan} onChange={(e) => setCatatan(e.target.value)} rows={3} placeholder="Catatan (opsional)..." className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]" />
-        <div className="flex justify-end gap-3 mt-4">
-          <Button variant="secondary" onClick={() => setActionModal(null)} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">Batal</Button>
-          <Button onClick={handleAction} className={`rounded-2xl ${actionType === 'approved' ? 'bg-[hsl(var(--ctp-green)/0.20)] text-[hsl(var(--ctp-green))] border border-[hsl(var(--ctp-green)/0.35)]' : 'bg-[hsl(var(--ctp-red)/0.20)] text-[hsl(var(--ctp-red))] border border-[hsl(var(--ctp-red)/0.35)]'}`}>{actionType === 'approved' ? 'Setujui' : 'Tolak'}</Button>
+        <h3 className="mb-3 text-lg font-semibold text-[var(--text-strong)]">
+          {actionType === 'approved' ? 'Setujui Proposal?' : 'Tolak Proposal?'}
+        </h3>
+        <div className="space-y-4">
+          <Field label="Catatan Validasi (Opsional)">
+            {(a11y) => (
+              <Textarea
+                {...a11y}
+                name="catatan"
+                value={catatan}
+                onChange={(e) => setCatatan(e.target.value)}
+                rows={3}
+                placeholder="Catatan (opsional)..."
+                className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+              />
+            )}
+          </Field>
+          <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-[var(--line)]">
+            <Button type="button" variant="outline" onClick={() => setActionModal(null)}>
+              Batal
+            </Button>
+            <Button
+              type="button"
+              variant={actionType === 'rejected' ? 'destructive' : 'default'}
+              onClick={handleAction}
+            >
+              {actionType === 'approved' ? 'Setujui' : 'Tolak'}
+            </Button>
+          </div>
         </div>
       </DashboardDialog>
-    </motion.div>
+    </div>
   );
 }

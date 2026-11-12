@@ -4,46 +4,35 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import {
-  ArrowUpRight, ArrowDownRight, Users, CalendarDays, FileText,
-  CheckCircle2, Clock, AlertTriangle, ClipboardList, Settings,
+  ArrowRight,
+  CalendarDays,
+  FileText,
+  Users,
 } from 'lucide-react';
-import { motion } from 'framer-motion';
 import {
-  BarChart, Bar, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
+  Bar,
+  BarChart,
+  CartesianGrid,
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis,
 } from 'recharts';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { PageHeader } from '@/components/layout/page-header';
+import { LoadingState } from '@/components/shared/loading-state';
 import { useAuthStore } from '@/store/auth-store';
 import { koordinatorAPI } from '@/lib/api';
+import { TITLE_MAP } from '@/lib/constants';
 
 const stageData = [
-  { name: 'Proposal', v: 12 }, { name: 'Validasi', v: 8 },
-  { name: 'Assign', v: 6 }, { name: 'Aktif', v: 15 }, { name: 'Selesai', v: 4 },
+  { name: 'Proposal', v: 12 },
+  { name: 'Validasi', v: 8 },
+  { name: 'Assign', v: 6 },
+  { name: 'Aktif', v: 15 },
+  { name: 'Selesai', v: 4 },
 ];
-
-function StatCard({ title, value, delta, dir, sub, icon: Icon }) {
-  const Arrow = dir === 'up' ? ArrowUpRight : ArrowDownRight;
-  const deltaCls = dir === 'down' ? 'text-[hsl(var(--ctp-green))]' : 'text-[hsl(var(--ctp-peach))]';
-  return (
-    <Card variant="muted">
-      <CardHeader className="pb-2">
-        <CardDescription className="text-[hsl(var(--ctp-subtext0))]">{title}</CardDescription>
-        <CardTitle className="text-[hsl(var(--ctp-text))] text-2xl tracking-tight">{value}</CardTitle>
-      </CardHeader>
-      <CardContent className="flex items-center justify-between">
-        <div className={`flex items-center gap-1 text-sm ${deltaCls}`}>
-          <Arrow className="h-4 w-4" />
-          <span className="font-medium">{delta}</span>
-          <span className="text-[hsl(var(--ctp-subtext0))] font-normal">{sub}</span>
-        </div>
-        <span className="grid h-8 w-8 place-items-center rounded-xl border border-[hsl(var(--ctp-overlay0)/0.5)] bg-[hsl(var(--ctp-surface1)/0.6)]">
-          {Icon && <Icon className="h-4 w-4 text-[hsl(var(--ctp-subtext1))]" />}
-        </span>
-      </CardContent>
-    </Card>
-  );
-}
 
 export default function KoordinatorDashboard() {
   const router = useRouter();
@@ -52,7 +41,10 @@ export default function KoordinatorDashboard() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (role && role !== 'koordinator') { router.replace(`/dashboard/${role}`); return; }
+    if (role && role !== 'koordinator') {
+      router.replace(`/dashboard/${role}`);
+      return;
+    }
     loadDashboard();
   }, [role, router]);
 
@@ -69,110 +61,166 @@ export default function KoordinatorDashboard() {
 
   const totalProposals = stats?.total_proposal || 0;
   const pendingProposals = stats?.pending_proposal || 0;
+  const validatedProposals = Math.max(0, totalProposals - pendingProposals);
+  const validatedPct = totalProposals > 0 ? Math.round((validatedProposals / totalProposals) * 100) : 0;
   const totalMahasiswa = stats?.total_mahasiswa || 0;
   const assignedDosen = stats?.assigned_dosen || 0;
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="dashboard" label="Memuat dashboard koordinator" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.35 }} className="space-y-5">
-      {/* KPI */}
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Total proposal" value={String(totalProposals)} delta={`+${totalProposals}`} dir="up" sub="disubmit" icon={FileText} />
-        <StatCard title="Proposal pending" value={String(pendingProposals)} delta={pendingProposals > 0 ? `+${pendingProposals}` : '0'} dir="up" sub="perlu validasi" icon={Clock} />
-        <StatCard title="Mahasiswa aktif" value={String(totalMahasiswa)} delta={`+${totalMahasiswa}`} dir="up" sub="terdaftar" icon={Users} />
-        <StatCard title="Dosen assigned" value={String(assignedDosen)} delta={`+${assignedDosen}`} dir="up" sub="pembimbing" icon={CheckCircle2} />
+    <div className="space-y-6">
+      <PageHeader
+        title={`Dashboard Koordinator · ${TITLE_MAP.dashboard || 'Ringkasan Kegiatan'}`}
+        subtitle="Pantau validasi proposal, penugasan pembimbing, dan penjadwalan sidang program studi."
+      />
+
+      {/* Metric Strip */}
+      <div
+        data-testid="koordinator-metric-strip"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden"
+      >
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total Proposal</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {totalProposals}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Proposal Menunggu</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
+            {pendingProposals}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Mahasiswa Aktif</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {totalMahasiswa}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Dosen Pembimbing</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+            {assignedDosen}
+          </p>
+        </div>
       </div>
 
-      {/* Chart + Progress */}
+      {/* Chart + Compliance */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        {/* Stage chart */}
-        <Card variant="muted" className="xl:col-span-2">
+        <Card variant="muted" className="xl:col-span-2 min-w-0">
           <CardHeader>
-            <CardTitle className="text-[hsl(var(--ctp-text))]">Distribusi tahap mahasiswa</CardTitle>
-            <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Sebaran status dari proposal hingga selesai.</CardDescription>
+            <CardTitle className="text-[var(--text-strong)]">Distribusi Tahap Mahasiswa</CardTitle>
+            <CardDescription className="text-[var(--text-muted)]">
+              Sebaran status dari proposal hingga selesai.
+            </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[280px] w-full">
+            <div className="h-[260px] w-full">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={stageData} margin={{ left: 4, right: 4, top: 10, bottom: 0 }}>
                   <CartesianGrid vertical={false} />
-                  <XAxis dataKey="name" tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }} />
-                  <YAxis tickLine={false} axisLine={false} tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }} />
+                  <XAxis
+                    dataKey="name"
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }}
+                  />
+                  <YAxis
+                    tickLine={false}
+                    axisLine={false}
+                    tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }}
+                  />
                   <Tooltip />
-                  <Bar dataKey="v" fill="hsl(var(--ctp-mauve)/0.55)" radius={[10, 10, 6, 6]} />
+                  <Bar dataKey="v" fill="hsl(var(--ctp-blue)/0.65)" radius={[8, 8, 4, 4]} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">Contoh data</p>
           </CardContent>
         </Card>
 
-        {/* Summary / compliance */}
-        <Card variant="muted">
+        <Card variant="muted" className="min-w-0">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-              <AlertTriangle className="h-4 w-4" /> Compliance
-            </CardTitle>
-            <CardDescription className="text-[hsl(var(--ctp-subtext0))]">Kepatuhan proses koordinasi.</CardDescription>
+            <CardTitle className="text-[var(--text-strong)]">Kepatuhan Validasi</CardTitle>
+            <CardDescription className="text-[var(--text-muted)]">
+              Progres pemeriksaan proposal yang sudah masuk.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3">
-            <div className="rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] p-3">
-              <div className="flex items-center justify-between text-sm text-[hsl(var(--ctp-text))]">
-                <span className="text-[hsl(var(--ctp-subtext0))]">Proposal validated</span>
-                <span className="font-medium">{totalProposals > 0 ? Math.round(((totalProposals - pendingProposals) / totalProposals) * 100) : 0}%</span>
+          <CardContent className="space-y-4">
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5">
+              <div className="flex items-center justify-between text-sm text-[var(--text-strong)]">
+                <span className="text-[var(--text-muted)]">Proposal tervalidasi</span>
+                <span className="font-mono font-semibold tabular-nums">{validatedPct}%</span>
               </div>
-              <Progress value={totalProposals > 0 ? Math.round(((totalProposals - pendingProposals) / totalProposals) * 100) : 0} className="mt-2" />
+              <Progress
+                value={validatedPct}
+                aria-label="Persentase proposal tervalidasi"
+                aria-valuenow={validatedPct}
+                aria-valuemin={0}
+                aria-valuemax={100}
+                className="mt-2"
+              />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
-                <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Perlu validasi</div>
-                <div className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-peach))]">{pendingProposals}</div>
+            <div className="grid grid-cols-2 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+              <div className="bg-[var(--surface-raised)] p-3">
+                <p className="text-xs text-[var(--text-muted)]">Perlu validasi</p>
+                <p className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
+                  {pendingProposals}
+                </p>
               </div>
-              <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-3">
-                <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Tervalidasi</div>
-                <div className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-green))]">{totalProposals - pendingProposals}</div>
+              <div className="bg-[var(--surface-raised)] p-3">
+                <p className="text-xs text-[var(--text-muted)]">Tervalidasi</p>
+                <p className="mt-1 text-lg font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+                  {validatedProposals}
+                </p>
               </div>
             </div>
           </CardContent>
         </Card>
       </div>
 
-      {/* Quick actions */}
+      {/* Quick Actions */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
         {[
-          { title: 'Validasi Proposal', desc: 'Review dan approve proposal masuk', href: '/dashboard/koordinator/validasi-proposal', icon: FileText, color: 'ctp-green' },
-          { title: 'Assign Pembimbing', desc: 'Tetapkan dosen untuk mahasiswa', href: '/dashboard/koordinator/approve-pembimbing', icon: Users, color: 'ctp-blue' },
-          { title: 'Jadwal Sidang', desc: 'Atur jadwal sidang proyek & TA', href: '/dashboard/koordinator/jadwal-sidang', icon: CalendarDays, color: 'ctp-mauve' },
+          {
+            title: 'Validasi Proposal',
+            desc: 'Tinjau dan setujui proposal masuk',
+            href: '/dashboard/koordinator/validasi-proposal',
+            icon: FileText,
+          },
+          {
+            title: 'Assign Pembimbing',
+            desc: 'Tetapkan dosen pembimbing mahasiswa',
+            href: '/dashboard/koordinator/approve-pembimbing',
+            icon: Users,
+          },
+          {
+            title: 'Jadwal Sidang',
+            desc: 'Atur jadwal dan penguji sidang',
+            href: '/dashboard/koordinator/jadwal-sidang',
+            icon: CalendarDays,
+          },
         ].map((action) => (
-          <Link key={action.title} href={action.href}>
-            <Card variant="muted" className="transition-colors cursor-pointer">
-              <CardContent className="flex items-center gap-3 pt-6">
-                <span className={`grid h-10 w-10 shrink-0 place-items-center rounded-2xl border border-[hsl(var(--${action.color})/0.35)] bg-[hsl(var(--${action.color})/0.12)]`}>
-                  <action.icon className={`h-5 w-5 text-[hsl(var(--${action.color}))]`} />
-                </span>
-                <div className="min-w-0">
-                  <div className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{action.title}</div>
-                  <div className="text-xs text-[hsl(var(--ctp-subtext0))]">{action.desc}</div>
+          <Link key={action.title} href={action.href} className="block min-w-0">
+            <Card variant="muted" className="h-full transition-colors hover:border-[var(--accent)]">
+              <CardContent className="flex items-center justify-between gap-3 pt-5">
+                <div className="min-w-0 space-y-1">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-[var(--text-strong)]">
+                    <action.icon className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
+                    <span className="truncate">{action.title}</span>
+                  </div>
+                  <p className="text-xs text-[var(--text-muted)] break-words">{action.desc}</p>
                 </div>
-                <ArrowUpRight className="h-4 w-4 ml-auto shrink-0 text-[hsl(var(--ctp-subtext0))]" />
+                <ArrowRight className="h-4 w-4 shrink-0 text-[var(--text-muted)]" />
               </CardContent>
             </Card>
           </Link>
         ))}
       </div>
-
-      {/* Footer */}
-      <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex flex-wrap items-center justify-between gap-3 px-4 py-3">
-        <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Kavana — Dashboard Koordinator</div>
-        <div className="text-xs text-[hsl(var(--ctp-subtext0))]">Theme: Catppuccin Mocha</div>
-      </div>
-    </motion.div>
+    </div>
   );
 }

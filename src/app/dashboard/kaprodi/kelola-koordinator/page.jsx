@@ -3,24 +3,19 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { UserCog } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
-import { useAuthStore } from '@/store/auth-store';
+import { Field } from '@/components/ui/field';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
+import { useAuthStore } from '@/store/auth-store';
 import { kaprodiAPI } from '@/lib/api';
-
-function getInitials(name) {
-  return (name || '?')
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
 
 const SEMESTER_OPTIONS = [
   { value: '2', label: 'Proyek 1 (Semester 2)' },
@@ -137,93 +132,117 @@ export default function KelolaKoordinatorPage() {
   const filtered = list.filter((m) => !search || (m.nama || '').toLowerCase().includes(search.toLowerCase()));
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="table" label="Memuat data penetapan koordinator" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
+    <div className="space-y-6">
+      <PageHeader
+        title="Kelola & Validasi Akhir Koordinator"
+        subtitle="Tetapkan dosen koordinator dan pantau distribusi kewenangan semester pada program studi."
+      />
+
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <UserCog className="h-4 w-4" /> Kelola Koordinator
-          </CardTitle>
-          <Input
-            placeholder="Cari..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="w-64 bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]"
-          />
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+              <UserCog className="h-4 w-4 shrink-0" />
+              <span>Penetapan Koordinator Semester</span>
+            </CardTitle>
+            <CardDescription className="text-[var(--text-muted)]">
+              Pilih satu atau lebih semester untuk menetapkan hak kelola koordinator.
+            </CardDescription>
+          </div>
+          <div className="w-full sm:w-64">
+            <Field label="Cari dosen">
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="search"
+                  placeholder="Nama dosen..."
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
+          </div>
         </CardHeader>
         <CardContent>
           {filtered.length === 0 ? (
-            <div className="text-center py-12">
-              <UserCog className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada data koordinator</p>
-            </div>
+            <EmptyState
+              icon={UserCog}
+              title="Belum ada data koordinator untuk dipantau"
+              description="Data dosen kandidat koordinator akan muncul setelah terdaftar atau sesuai pencarian Anda."
+            />
           ) : (
-            <div className="space-y-2">
+            <div className="space-y-3">
               {filtered.map((k, i) => (
-                <div key={k.id || i} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center gap-3 p-3">
-                  <div className="h-10 w-10 rounded-full bg-[hsl(var(--ctp-teal)/0.20)] text-[hsl(var(--ctp-teal))] flex items-center justify-center text-sm font-bold">
-                    {getInitials(k.nama)}
-                  </div>
-                  <div className="flex-1">
-                    <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{k.nama || '-'}</p>
-                    <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{k.email || '-'}</p>
-                    <div className="mt-2 flex flex-wrap gap-2">
-                      {(Array.isArray(k.assigned_semesters) && k.assigned_semesters.length > 0)
-                        ? k.assigned_semesters.map((semester) => {
-                            const option = SEMESTER_OPTIONS.find((item) => Number(item.value) === Number(semester));
-                            return (
-                              <Badge
-                                key={`${k.id}-assigned-${semester}`}
-                                className="rounded-xl border border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]"
-                              >
-                                {option?.label || `Semester ${semester}`}
-                              </Badge>
-                            );
-                          })
-                        : (
-                          <span className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum ada assignment</span>
-                        )}
+                <div
+                  key={k.id || i}
+                  className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between"
+                >
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="text-sm font-semibold text-[var(--text-strong)] break-words">
+                        {k.nama || '-'}
+                      </p>
+                      <StatusBadge
+                        status={k.is_koordinator ? 'active' : 'neutral'}
+                        label={k.is_koordinator ? 'Koordinator' : 'Dosen'}
+                      />
+                    </div>
+                    <p className="text-xs text-[var(--text-muted)] break-all">{k.email || '-'}</p>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {Array.isArray(k.assigned_semesters) && k.assigned_semesters.length > 0 ? (
+                        k.assigned_semesters.map((semester) => {
+                          const option = SEMESTER_OPTIONS.find((item) => Number(item.value) === Number(semester));
+                          return (
+                            <Badge key={`${k.id}-assigned-${semester}`} variant="outline">
+                              {option?.label || `Semester ${semester}`}
+                            </Badge>
+                          );
+                        })
+                      ) : (
+                        <span className="text-xs text-[var(--text-muted)]">Belum ada assignment</span>
+                      )}
                     </div>
                   </div>
-                  <div className="flex min-w-[320px] flex-col gap-2">
-                    <div className="flex flex-wrap gap-2">
+
+                  <div className="min-w-0 flex-1 space-y-2">
+                    <div
+                      role="group"
+                      aria-label={`Pilih semester koordinator untuk ${k.nama || 'dosen'}`}
+                      className="flex flex-wrap gap-2"
+                    >
                       {SEMESTER_OPTIONS.map((opt) => {
                         const selected = (selectedSemesterById[k.id] || []).includes(opt.value);
                         return (
-                          <button
+                          <Button
                             key={`${k.id}-${opt.value}`}
                             type="button"
+                            size="sm"
+                            variant={selected ? 'default' : 'outline'}
+                            aria-pressed={selected}
                             onClick={() => handleSemesterChange(k.id, opt.value)}
                             disabled={submittingId === k.id}
-                            className={`rounded-xl border px-3 py-2 text-xs transition-colors disabled:opacity-50 ${
-                              selected
-                                ? 'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.15)] text-[hsl(var(--ctp-green))]'
-                                : 'border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0)/0.45)] text-[hsl(var(--ctp-subtext1))]'
-                            }`}
                           >
                             {opt.label}
-                          </button>
+                          </Button>
                         );
                       })}
                     </div>
-                    <p className="text-[11px] text-[hsl(var(--ctp-subtext0))]">
+                    <p className="text-xs text-[var(--text-muted)]">
                       Pilih satu atau lebih track/semester untuk koordinator ini.
                     </p>
                   </div>
-                  <div className="flex items-center gap-2">
+
+                  <div className="flex flex-wrap items-center gap-2 shrink-0">
                     <Button
                       type="button"
                       size="sm"
                       onClick={() => handleAssign(k)}
                       disabled={submittingId === k.id}
-                      className="h-9 rounded-lg border border-[hsl(var(--ctp-blue)/0.4)] bg-[hsl(var(--ctp-blue)/0.16)] text-[hsl(var(--ctp-blue))] hover:bg-[hsl(var(--ctp-blue)/0.26)]"
                     >
                       {k.is_koordinator ? 'Update' : 'Assign'}
                     </Button>
@@ -231,27 +250,17 @@ export default function KelolaKoordinatorPage() {
                       <Button
                         type="button"
                         size="sm"
-                        variant="ghost"
+                        variant="outline"
                         onClick={() => {
                           setTargetKoordinator(k);
                           setConfirmUnassignOpen(true);
                         }}
                         disabled={submittingId === k.id}
-                        className="h-9 rounded-lg border border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.10)] text-[hsl(var(--ctp-red))] hover:bg-[hsl(var(--ctp-red)/0.18)]"
                       >
                         Cabut
                       </Button>
                     )}
                   </div>
-                  <Badge
-                    className={`rounded-xl border ${
-                      k.is_koordinator
-                        ? 'bg-[hsl(var(--ctp-green)/0.15)] text-[hsl(var(--ctp-green))] border-[hsl(var(--ctp-green)/0.3)]'
-                        : 'bg-[hsl(var(--ctp-overlay0)/0.20)] text-[hsl(var(--ctp-subtext0))] border-[hsl(var(--ctp-overlay0)/0.35)]'
-                    }`}
-                  >
-                    {k.is_koordinator ? 'Koordinator' : 'Dosen'}
-                  </Badge>
                 </div>
               ))}
             </div>
@@ -272,6 +281,6 @@ export default function KelolaKoordinatorPage() {
         onConfirm={handleUnassign}
         loading={submittingId !== null}
       />
-    </motion.div>
+    </div>
   );
 }

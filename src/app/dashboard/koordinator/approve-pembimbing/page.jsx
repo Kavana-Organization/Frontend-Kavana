@@ -1,13 +1,13 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 import { UserCheck, UserPlus, Users } from 'lucide-react';
-import { motion } from 'framer-motion';
 import { toast } from '@/lib/alert';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
+import { Field } from '@/components/ui/field';
 import {
   Select,
   SelectContent,
@@ -15,18 +15,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
+import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { koordinatorAPI } from '@/lib/api';
-import { DashboardDialog } from '@/components/shared/dashboard-dialog';
-
-function getInitials(n) {
-  return (n || '?')
-    .split(' ')
-    .map((w) => w[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2);
-}
+import { TITLE_MAP } from '@/lib/constants';
 
 function isProyekKelompok(item) {
   return String(item?.track || '').includes('proyek') && Array.isArray(item?.anggota) && item.anggota.length > 1;
@@ -34,12 +38,19 @@ function isProyekKelompok(item) {
 
 export default function ApprovePembimbingPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [mahasiswa, setMahasiswa] = useState([]);
   const [dosen, setDosen] = useState([]);
   const [modal, setModal] = useState(null);
   const [selectedDosen, setSelectedDosen] = useState('');
+
+  const pageTitle = useMemo(() => {
+    const segments = String(pathname || '').split('/').filter(Boolean);
+    const segment = segments[segments.length - 1];
+    return TITLE_MAP[segment] || TITLE_MAP['approve-pembimbing'] || 'Assign Pembimbing';
+  }, [pathname]);
 
   useEffect(() => {
     if (role && !['koordinator', 'kaprodi'].includes(role)) {
@@ -51,7 +62,10 @@ export default function ApprovePembimbingPage() {
 
   const loadData = async () => {
     try {
-      const [mRes, dRes] = await Promise.all([koordinatorAPI.getMahasiswaList(), koordinatorAPI.getDosenList()]);
+      const [mRes, dRes] = await Promise.all([
+        koordinatorAPI.getMahasiswaList(),
+        koordinatorAPI.getDosenList(),
+      ]);
       if (mRes.ok) setMahasiswa(Array.isArray(mRes.data) ? mRes.data : []);
       if (dRes.ok) setDosen(Array.isArray(dRes.data) ? dRes.data : []);
     } catch (err) {
@@ -85,142 +99,176 @@ export default function ApprovePembimbingPage() {
   const selectedMahasiswa = mahasiswa.find((item) => item.id === modal);
 
   if (loading) {
-    return (
-      <div className="flex items-center justify-center py-20">
-        <div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" />
-      </div>
-    );
+    return <LoadingState variant="table" label="Memuat data penugasan pembimbing" />;
   }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-3">
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p>
-            <p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{mahasiswa.length}</p>
-          </CardContent>
-        </Card>
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum Ditugaskan</p>
-            <p className="text-2xl font-bold text-[hsl(var(--ctp-peach))]">{needAssign.length}</p>
-          </CardContent>
-        </Card>
-        <Card variant="muted">
-          <CardContent className="pt-6">
-            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">Sudah Ditugaskan</p>
-            <p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{assigned.length}</p>
-          </CardContent>
-        </Card>
+    <div className="space-y-6">
+      <PageHeader
+        title={pageTitle}
+        subtitle="Tetapkan dosen pembimbing bagi mahasiswa atau kelompok yang proposalnya telah disetujui."
+      />
+
+      {/* Metric Strip */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {mahasiswa.length}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Belum Ditugaskan</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
+            {needAssign.length}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Sudah Ditugaskan</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+            {assigned.length}
+          </p>
+        </div>
       </div>
 
       <Card variant="muted">
         <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]">
-            <UserCheck className="h-4 w-4" /> Penugasan Pembimbing
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <UserCheck className="h-4 w-4 shrink-0" />
+            <span>Penugasan Pembimbing</span>
           </CardTitle>
+          <CardDescription className="text-[var(--text-muted)]">
+            Daftar mahasiswa dan kelompok proyek yang menunggu penetapan pembimbing.
+          </CardDescription>
         </CardHeader>
         <CardContent>
           {needAssign.length === 0 ? (
-            <div className="text-center py-12">
-              <UserCheck className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" />
-              <p className="text-sm text-[hsl(var(--ctp-subtext0))]">Semua mahasiswa sudah memiliki pembimbing</p>
-            </div>
+            <EmptyState
+              icon={UserCheck}
+              title="Semua mahasiswa sudah memiliki pembimbing"
+              description="Tidak ada mahasiswa dengan proposal disetujui yang belum memiliki dosen pembimbing."
+            />
           ) : (
-            <div className="space-y-2">
-              {needAssign.map((m) => {
-                const kelompok = isProyekKelompok(m);
-                const displayName = kelompok ? (m.kelompok_nama || 'Kelompok Proyek') : m.nama;
-                const anggotaNama = (m.anggota || []).map((anggota) => anggota.nama).join(' • ');
-                const anggotaNpm = (m.anggota || []).map((anggota) => anggota.npm).join(' • ');
+            <Table stackOnMobile>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mahasiswa / Kelompok</TableHead>
+                  <TableHead className="w-[150px]">NPM</TableHead>
+                  <TableHead className="w-[130px]">Track</TableHead>
+                  <TableHead>Usulan Pembimbing</TableHead>
+                  <TableHead className="w-[120px]">Status</TableHead>
+                  <TableHead className="w-[120px] text-right">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {needAssign.map((m) => {
+                  const kelompok = isProyekKelompok(m);
+                  const displayName = kelompok ? (m.kelompok_nama || 'Kelompok Proyek') : (m.nama || '-');
+                  const anggotaNama = (m.anggota || []).map((anggota) => anggota.nama).join(' • ');
+                  const anggotaNpm = (m.anggota || []).map((anggota) => anggota.npm).join(' • ');
 
-                return (
-                  <div key={m.id} className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-center justify-between gap-3 p-3">
-                    <div className="flex items-center gap-3">
-                      <div className="h-10 w-10 rounded-full bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] flex items-center justify-center text-sm font-bold">
-                        {getInitials(displayName)}
-                      </div>
-                      <div>
-                        {kelompok ? (
-                          <>
-                            <div className="flex items-center gap-2">
-                              <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{displayName}</p>
-                              <Badge className="rounded-xl border border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-[hsl(var(--ctp-blue))]">
-                                <Users className="mr-1 h-3.5 w-3.5" /> Kelompok
-                              </Badge>
-                            </div>
-                            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{m.track || '-'}</p>
-                            <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext1))]">{anggotaNama}</p>
-                            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{anggotaNpm}</p>
-                          </>
-                        ) : (
-                          <>
-                            <p className="text-sm font-semibold text-[hsl(var(--ctp-text))]">{m.nama}</p>
-                            <p className="text-xs text-[hsl(var(--ctp-subtext0))]">{m.npm} · {m.track || '-'}</p>
-                          </>
-                        )}
-                        {m.usulan_dosen_nama ? (
-                          <p className="mt-1 text-xs text-[hsl(var(--ctp-blue))]">
-                            Usulan pembimbing: <span className="font-medium">{m.usulan_dosen_nama}</span>
-                          </p>
+                  return (
+                    <TableRow key={m.id}>
+                      <TableCell data-label="Mahasiswa / Kelompok" className="whitespace-normal break-words">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="font-medium text-[var(--text-strong)]">{displayName}</span>
+                          {kelompok ? (
+                            <Badge variant="outline">
+                              <Users className="h-3 w-3" />
+                              <span>Kelompok</span>
+                            </Badge>
+                          ) : null}
+                        </div>
+                        {kelompok && anggotaNama ? (
+                          <p className="mt-1 text-xs text-[var(--text-muted)] break-words">{anggotaNama}</p>
                         ) : null}
-                      </div>
-                    </div>
-                    <Button
-                      size="sm"
-                      onClick={() => {
-                        setModal(m.id);
-                        setSelectedDosen('');
-                      }}
-                      className="rounded-xl bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.35)]"
-                    >
-                      <UserPlus className="h-4 w-4 mr-1" /> Assign
-                    </Button>
-                  </div>
-                );
-              })}
-            </div>
+                      </TableCell>
+                      <TableCell data-label="NPM" className="whitespace-normal break-words font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                        {kelompok ? (anggotaNpm || '-') : (m.npm || '-')}
+                      </TableCell>
+                      <TableCell data-label="Track" className="text-sm text-[var(--text-body)]">
+                        {m.track || '-'}
+                      </TableCell>
+                      <TableCell data-label="Usulan Pembimbing" className="whitespace-normal break-words text-sm text-[var(--text-body)]">
+                        {m.usulan_dosen_nama || '-'}
+                      </TableCell>
+                      <TableCell data-label="Status">
+                        <StatusBadge status="pending" label="Menunggu" />
+                      </TableCell>
+                      <TableCell data-label="Aksi" className="text-right">
+                        <Button
+                          type="button"
+                          size="sm"
+                          onClick={() => {
+                            setModal(m.id);
+                            setSelectedDosen('');
+                          }}
+                        >
+                          <UserPlus className="h-3.5 w-3.5" />
+                          <span>Assign</span>
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
           )}
         </CardContent>
       </Card>
 
-      <DashboardDialog open={!!modal} onOpenChange={(open) => !open && setModal(null)}>
-        <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))] mb-3">Pilih Dosen Pembimbing</h3>
-        {isProyekKelompok(selectedMahasiswa) ? (
-          <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] mb-3 px-3 py-2 text-sm text-[hsl(var(--ctp-text))]">
-            <p className="font-medium">{selectedMahasiswa?.kelompok_nama || 'Kelompok Proyek'}</p>
-            <p className="mt-1 text-xs text-[hsl(var(--ctp-subtext1))]">
-              {(selectedMahasiswa?.anggota || []).map((anggota) => `${anggota.nama} (${anggota.npm})`).join(' • ')}
-            </p>
+      <DashboardDialog
+        open={!!modal}
+        onOpenChange={(open) => !open && setModal(null)}
+        title="Pilih Dosen Pembimbing"
+      >
+        <h3 className="mb-3 text-lg font-semibold text-[var(--text-strong)]">Pilih Dosen Pembimbing</h3>
+        <div className="space-y-4">
+          {isProyekKelompok(selectedMahasiswa) ? (
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-sm text-[var(--text-strong)]">
+              <p className="font-medium break-words">{selectedMahasiswa?.kelompok_nama || 'Kelompok Proyek'}</p>
+              <p className="mt-1 text-xs text-[var(--text-muted)] break-words">
+                {(selectedMahasiswa?.anggota || []).map((anggota) => `${anggota.nama} (${anggota.npm})`).join(' • ')}
+              </p>
+            </div>
+          ) : null}
+          {selectedMahasiswa?.usulan_dosen_nama ? (
+            <div className="rounded-xl border border-[var(--line)] bg-[var(--accent-soft)] px-3.5 py-2 text-sm text-[var(--text-strong)] break-words">
+              Usulan mahasiswa: <span className="font-medium text-[var(--accent)]">{selectedMahasiswa?.usulan_dosen_nama}</span>
+            </div>
+          ) : null}
+
+          <Field label="Dosen Pembimbing" required>
+            {(a11y) => (
+              <Select name="dosen_id" value={selectedDosen} onValueChange={setSelectedDosen}>
+                <SelectTrigger
+                  id={a11y.id}
+                  aria-describedby={a11y['aria-describedby']}
+                  className="w-full bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                >
+                  <SelectValue placeholder="-- Pilih Dosen --" />
+                </SelectTrigger>
+                <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
+                  {dosen.map((d) => (
+                    <SelectItem key={d.id} value={String(d.id)}>
+                      {d.nama}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </Field>
+
+          <div className="flex flex-wrap justify-end gap-2 pt-2 border-t border-[var(--line)]">
+            <Button type="button" variant="outline" onClick={() => setModal(null)}>
+              Batal
+            </Button>
+            <Button type="button" onClick={handleAssign}>
+              Tugaskan
+            </Button>
           </div>
-        ) : null}
-        {selectedMahasiswa?.usulan_dosen_nama ? (
-          <div className="mb-3 rounded-xl border border-[hsl(var(--ctp-blue)/0.30)] bg-[hsl(var(--ctp-blue)/0.10)] px-3 py-2 text-sm text-[hsl(var(--ctp-text))]">
-            Usulan mahasiswa: <span className="font-medium text-[hsl(var(--ctp-blue))]">{selectedMahasiswa?.usulan_dosen_nama}</span>
-          </div>
-        ) : null}
-        <Select value={selectedDosen} onValueChange={setSelectedDosen}>
-          <SelectTrigger className="w-full h-10 px-3 rounded-md text-sm bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]">
-            <SelectValue placeholder="-- Pilih Dosen --" />
-          </SelectTrigger>
-          <SelectContent className="rounded-xl bg-[hsl(var(--ctp-surface0))] border-[hsl(var(--ctp-overlay0)/0.45)]">
-            {dosen.map((d) => (
-              <SelectItem key={d.id} value={String(d.id)} className="text-[hsl(var(--ctp-text))] focus:bg-[hsl(var(--ctp-surface1)/0.6)] focus:text-[hsl(var(--ctp-text))]">
-                {d.nama}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <div className="flex justify-end gap-3 mt-4">
-          <Button variant="secondary" onClick={() => setModal(null)} className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]">
-            Batal
-          </Button>
-          <Button onClick={handleAssign} className="rounded-2xl bg-[hsl(var(--ctp-blue)/0.20)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-blue)/0.35)]">
-            Tugaskan
-          </Button>
         </div>
       </DashboardDialog>
-    </motion.div>
+    </div>
   );
 }

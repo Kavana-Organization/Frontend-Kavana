@@ -1,9 +1,8 @@
 'use client';
 
-import { useCallback, useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Users, RotateCcw, ArrowRightCircle, ShieldCheck, BadgeCheck } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { ArrowRightCircle, BadgeCheck, RotateCcw, ShieldCheck, Users } from 'lucide-react';
 import { flexRender } from '@tanstack/react-table';
 import {
   getCoreRowModel,
@@ -15,19 +14,38 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Field } from '@/components/ui/field';
 import {
-  Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
 } from '@/components/ui/select';
 import {
-  Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
 } from '@/components/ui/table';
+import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
+import { LoadingState } from '@/components/shared/loading-state';
+import { EmptyState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { kaprodiAPI, koordinatorAPI } from '@/lib/api';
-
-function getInitials(n) { return (n||'?').split(' ').map(w=>w[0]).join('').toUpperCase().slice(0,2); }
+import { TITLE_MAP } from '@/lib/constants';
 
 const TRACK_OPTIONS = [
   { value: 'proyek1', label: 'Proyek 1' },
@@ -47,21 +65,21 @@ function formatTrack(track) {
 function getRepeatBadge(mahasiswa) {
   if (mahasiswa.repeat_required && mahasiswa.repeat_track) {
     return {
+      status: 'rejected',
       label: `Wajib Ulang ${formatTrack(mahasiswa.repeat_track)}`,
-      className: 'bg-[hsl(var(--ctp-red)/0.16)] text-[hsl(var(--ctp-red))] border border-[hsl(var(--ctp-red)/0.28)]',
     };
   }
 
   if (mahasiswa.next_allowed_track) {
     return {
+      status: 'terjadwal',
       label: `Izin Lanjut ${formatTrack(mahasiswa.next_allowed_track)}`,
-      className: 'bg-[hsl(var(--ctp-blue)/0.16)] text-[hsl(var(--ctp-blue))] border border-[hsl(var(--ctp-blue)/0.28)]',
     };
   }
 
   return {
+    status: 'approved',
     label: 'Normal',
-    className: 'bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] border border-[hsl(var(--ctp-green)/0.28)]',
   };
 }
 
@@ -70,54 +88,54 @@ const REKAP_COLUMNS = [
     id: 'mahasiswa',
     accessorFn: (mahasiswa) => mahasiswa.nama || '',
     header: 'Mahasiswa',
+    meta: { label: 'Mahasiswa' },
     cell: ({ row }) => (
-      <div className="flex items-center gap-2">
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[hsl(var(--ctp-lavender)/0.20)] text-xs font-bold text-[hsl(var(--ctp-text))]">
-          {getInitials(row.original.nama)}
-        </div>
-        <span className="font-medium text-[hsl(var(--ctp-text))]">{row.original.nama || '-'}</span>
-      </div>
+      <span className="font-medium text-[var(--text-strong)] whitespace-normal break-words">
+        {row.original.nama || '-'}
+      </span>
     ),
   },
   {
     accessorKey: 'npm',
     header: 'NPM',
-    cell: ({ row }) => <span className="text-[hsl(var(--ctp-subtext0))]">{row.original.npm || '-'}</span>,
+    meta: { label: 'NPM' },
+    cell: ({ row }) => (
+      <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+        {row.original.npm || '-'}
+      </span>
+    ),
   },
   {
     accessorKey: 'jalur',
     header: 'Jalur',
+    meta: { label: 'Jalur' },
     cell: ({ row }) => (
-      <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-        {JALUR_LABELS[row.original.jalur] || 'Regular'}
-      </Badge>
+      <Badge variant="outline">{JALUR_LABELS[row.original.jalur] || 'Regular'}</Badge>
     ),
   },
   {
     accessorKey: 'track',
     header: 'Track',
-    cell: ({ row }) => (
-      <Badge className="rounded-xl border border-[hsl(var(--ctp-overlay0)/0.35)] bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-subtext1))]">
-        {formatTrack(row.original.track)}
-      </Badge>
-    ),
+    meta: { label: 'Track' },
+    cell: ({ row }) => <Badge variant="secondary">{formatTrack(row.original.track)}</Badge>,
   },
   {
     id: 'status_akademik',
-    accessorFn: (mahasiswa) => `${mahasiswa.repeat_track || ''} ${mahasiswa.next_allowed_track || ''} ${(mahasiswa.converted_tracks || []).join(' ')}`,
+    accessorFn: (mahasiswa) =>
+      `${mahasiswa.repeat_track || ''} ${mahasiswa.next_allowed_track || ''} ${(mahasiswa.converted_tracks || []).join(' ')}`,
     header: 'Status Akademik',
+    meta: { label: 'Status Akademik' },
     cell: ({ row }) => {
       const repeatBadge = getRepeatBadge(row.original);
       return (
         <div className="flex flex-wrap gap-1.5">
-          <Badge className={`rounded-xl ${repeatBadge.className}`}>{repeatBadge.label}</Badge>
+          <StatusBadge status={repeatBadge.status} label={repeatBadge.label} />
           {(row.original.converted_tracks || []).map((track) => (
-            <Badge
+            <StatusBadge
               key={track}
-              className="rounded-xl border border-[hsl(var(--ctp-green)/0.28)] bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))]"
-            >
-              Konversi {formatTrack(track)}
-            </Badge>
+              status="approved"
+              label={`Konversi ${formatTrack(track)}`}
+            />
           ))}
         </div>
       );
@@ -126,60 +144,72 @@ const REKAP_COLUMNS = [
   {
     accessorKey: 'status_proposal',
     header: 'Proposal',
-    cell: ({ row }) => <span className="capitalize text-[hsl(var(--ctp-subtext0))]">{row.original.status_proposal || '-'}</span>,
+    meta: { label: 'Proposal' },
+    cell: ({ row }) =>
+      row.original.status_proposal ? (
+        <StatusBadge status={row.original.status_proposal} />
+      ) : (
+        <span className="text-xs text-[var(--text-muted)]">-</span>
+      ),
   },
   {
     accessorKey: 'dosen_nama',
     header: 'Pembimbing',
-    cell: ({ row }) => <span className="text-[hsl(var(--ctp-subtext0))]">{row.original.dosen_nama || '-'}</span>,
+    meta: { label: 'Pembimbing' },
+    cell: ({ row }) => (
+      <span className="text-sm text-[var(--text-body)] whitespace-normal break-words">
+        {row.original.dosen_nama || '-'}
+      </span>
+    ),
   },
   {
     id: 'actions',
     header: 'Aksi',
+    meta: { label: 'Aksi' },
     enableGlobalFilter: false,
     cell: ({ row, table }) => {
       const { clearRepeatStatus, isKaprodi, openDialog, saving } = table.options.meta;
       if (!isKaprodi) return null;
 
       return (
-        <div className="flex flex-wrap gap-2">
+        <div className="flex flex-wrap justify-end gap-2">
           <Button
             type="button"
             size="sm"
+            variant="outline"
             onClick={() => openDialog('repeat', row.original)}
-            className="rounded-xl border border-[hsl(var(--ctp-red)/0.28)] bg-[hsl(var(--ctp-red)/0.16)] text-[hsl(var(--ctp-red))] hover:bg-[hsl(var(--ctp-red)/0.24)]"
           >
             <RotateCcw className="h-3.5 w-3.5" />
-            Set Repeat
+            <span>Set Repeat</span>
           </Button>
           <Button
             type="button"
             size="sm"
+            variant="outline"
             onClick={() => openDialog('next', row.original)}
-            className="rounded-xl border border-[hsl(var(--ctp-blue)/0.28)] bg-[hsl(var(--ctp-blue)/0.16)] text-[hsl(var(--ctp-blue))] hover:bg-[hsl(var(--ctp-blue)/0.24)]"
           >
             <ArrowRightCircle className="h-3.5 w-3.5" />
-            Izin Lanjut
+            <span>Izin Lanjut</span>
           </Button>
           <Button
             type="button"
             size="sm"
+            variant="outline"
             disabled={saving}
             onClick={() => clearRepeatStatus(row.original)}
-            className="rounded-xl border border-[hsl(var(--ctp-green)/0.28)] bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] hover:bg-[hsl(var(--ctp-green)/0.24)]"
           >
             <ShieldCheck className="h-3.5 w-3.5" />
-            Clear
+            <span>Clear</span>
           </Button>
           {row.original.jalur === 'rpl' ? (
             <Button
               type="button"
               size="sm"
+              variant="outline"
               onClick={() => openDialog('conversion', row.original)}
-              className="rounded-xl border border-[hsl(var(--ctp-green)/0.28)] bg-[hsl(var(--ctp-green)/0.16)] text-[hsl(var(--ctp-green))] hover:bg-[hsl(var(--ctp-green)/0.24)]"
             >
               <BadgeCheck className="h-3.5 w-3.5" />
-              Konversi
+              <span>Konversi</span>
             </Button>
           ) : null}
         </div>
@@ -190,6 +220,7 @@ const REKAP_COLUMNS = [
 
 export default function RekapMahasiswaPage() {
   const router = useRouter();
+  const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
   const [list, setList] = useState([]);
@@ -203,28 +234,41 @@ export default function RekapMahasiswaPage() {
 
   const isKaprodi = role === 'kaprodi';
 
+  const pageTitle = useMemo(() => {
+    if (isKaprodi) return 'Rekap & Validasi Akhir Mahasiswa';
+    const segments = String(pathname || '').split('/').filter(Boolean);
+    const segment = segments[segments.length - 1];
+    return TITLE_MAP[segment] || 'Rekap Mahasiswa';
+  }, [isKaprodi, pathname]);
+
   const loadData = useCallback(async () => {
     try {
       const res = role === 'kaprodi'
         ? await kaprodiAPI.getMahasiswaList({ grouped: false })
         : await koordinatorAPI.getMahasiswaList({ grouped: false });
       if (res.ok) setList(Array.isArray(res.data) ? res.data : []);
-    } catch (err) { console.error(err); }
-    finally { setLoading(false); }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
   }, [role]);
 
   useEffect(() => {
     if (!role) return;
-    if (role && !['koordinator','kaprodi'].includes(role)) { router.replace(`/dashboard/${role}`); return; }
+    if (role && !['koordinator', 'kaprodi'].includes(role)) {
+      router.replace(`/dashboard/${role}`);
+      return;
+    }
     loadData();
   }, [loadData, role, router]);
 
   const stats = {
-    proyek: list.filter(m => m.track?.includes('proyek')).length,
-    internship: list.filter(m => m.track?.includes('internship')).length,
-    noTrack: list.filter(m => !m.track).length,
-    repeat: list.filter(m => m.repeat_required).length,
-    converted: list.filter(m => Array.isArray(m.converted_tracks) && m.converted_tracks.length > 0).length,
+    proyek: list.filter((m) => m.track?.includes('proyek')).length,
+    internship: list.filter((m) => m.track?.includes('internship')).length,
+    noTrack: list.filter((m) => !m.track).length,
+    repeat: list.filter((m) => m.repeat_required).length,
+    converted: list.filter((m) => Array.isArray(m.converted_tracks) && m.converted_tracks.length > 0).length,
   };
 
   const openDialog = (mode, mahasiswa) => {
@@ -345,40 +389,96 @@ export default function RekapMahasiswaPage() {
     meta: { clearRepeatStatus, isKaprodi, openDialog, saving },
   });
 
-  if (loading) return <div className="flex items-center justify-center py-20"><div className="w-8 h-8 border-4 border-[hsl(var(--ctp-lavender)/0.3)] border-t-[hsl(var(--ctp-lavender))] rounded-full animate-spin" /></div>;
+  if (loading) {
+    return <LoadingState variant="table" label="Memuat rekap mahasiswa" />;
+  }
 
   return (
-    <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-5">
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-4 xl:grid-cols-6">
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Total</p><p className="text-2xl font-bold text-[hsl(var(--ctp-text))]">{list.length}</p></CardContent></Card>
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Proyek</p><p className="text-2xl font-bold text-[hsl(var(--ctp-blue))]">{stats.proyek}</p></CardContent></Card>
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Internship</p><p className="text-2xl font-bold text-[hsl(var(--ctp-mauve))]">{stats.internship}</p></CardContent></Card>
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Belum Pilih</p><p className="text-2xl font-bold text-[hsl(var(--ctp-peach))]">{stats.noTrack}</p></CardContent></Card>
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Wajib Ulang</p><p className="text-2xl font-bold text-[hsl(var(--ctp-red))]">{stats.repeat}</p></CardContent></Card>
-        <Card variant="muted"><CardContent className="pt-6"><p className="text-xs text-[hsl(var(--ctp-subtext0))]">Konversi RPL</p><p className="text-2xl font-bold text-[hsl(var(--ctp-green))]">{stats.converted}</p></CardContent></Card>
+    <div className="space-y-6">
+      <PageHeader
+        title={pageTitle}
+        subtitle={
+          isKaprodi
+            ? 'Pantau rekapitulasi track, validasi akhir status ulang, dan konversi jalur RPL mahasiswa prodi.'
+            : 'Rekapitulasi track, status proposal, dan dosen pembimbing mahasiswa.'
+        }
+      />
+
+      {/* Metric Strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Total</p>
+          <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
+            {list.length}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Proyek</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-blue))] font-mono tabular-nums">
+            {stats.proyek}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Internship</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-mauve))] font-mono tabular-nums">
+            {stats.internship}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Belum Pilih</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-peach))] font-mono tabular-nums">
+            {stats.noTrack}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Wajib Ulang</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-red))] font-mono tabular-nums">
+            {stats.repeat}
+          </p>
+        </div>
+        <div className="bg-[var(--surface-raised)] p-4">
+          <p className="text-xs font-medium text-[var(--text-muted)]">Konversi RPL</p>
+          <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
+            {stats.converted}
+          </p>
+        </div>
       </div>
 
       <Card variant="muted">
-        <CardHeader className="flex flex-row items-start justify-between gap-3">
-          <CardTitle className="flex items-center gap-2 text-[hsl(var(--ctp-text))]"><Users className="h-4 w-4" /> Rekap Mahasiswa</CardTitle>
-          <Input
-            aria-label="Cari mahasiswa berdasarkan nama, NPM, track, atau pembimbing"
-            placeholder="Cari mahasiswa..."
-            value={search}
-            onChange={(event) => setSearch(event.target.value)}
-            className="w-64 border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-mantle)/0.5)] text-[hsl(var(--ctp-text))]"
-          />
+        <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+          <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+            <Users className="h-4 w-4 shrink-0" />
+            <span>Rekap Mahasiswa</span>
+          </CardTitle>
+          <div className="w-full sm:w-72">
+            <Field label="Cari mahasiswa">
+              {(a11y) => (
+                <Input
+                  {...a11y}
+                  name="search"
+                  placeholder="Nama, NPM, track, atau pembimbing..."
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                />
+              )}
+            </Field>
+          </div>
         </CardHeader>
         <CardContent>
           {table.getRowModel().rows.length === 0 ? (
-            <div className="text-center py-12"><Users className="h-10 w-10 mx-auto text-[var(--text-muted)] mb-3" /><p className="text-sm text-[hsl(var(--ctp-subtext0))]">Tidak ada data</p></div>
+            <EmptyState
+              icon={Users}
+              title={isKaprodi ? 'Belum ada data rekap mahasiswa untuk dipantau' : 'Tidak ada data mahasiswa'}
+              description="Data mahasiswa akan tampil di sini atau coba sesuaikan kata kunci pencarian Anda."
+            />
           ) : (
-            <Table>
+            <Table stackOnMobile>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow key={headerGroup.id} className="border-[hsl(var(--ctp-overlay0)/0.35)]">
+                  <TableRow key={headerGroup.id}>
                     {headerGroup.headers.map((header) => (
-                      <TableHead key={header.id} className="text-xs text-[hsl(var(--ctp-subtext0))]">
+                      <TableHead key={header.id}>
                         {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
                       </TableHead>
                     ))}
@@ -387,9 +487,14 @@ export default function RekapMahasiswaPage() {
               </TableHeader>
               <TableBody>
                 {table.getRowModel().rows.map((row) => (
-                  <TableRow key={row.id} className="border-[hsl(var(--ctp-surface1)/0.35)]">
+                  <TableRow key={row.id}>
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                      <TableCell
+                        key={cell.id}
+                        data-label={cell.column.columnDef.meta?.label || String(cell.column.columnDef.header || '')}
+                      >
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </TableCell>
                     ))}
                   </TableRow>
                 ))}
@@ -400,7 +505,7 @@ export default function RekapMahasiswaPage() {
       </Card>
 
       <Dialog open={dialogOpen} onOpenChange={(open) => { if (!open) closeDialog(); }}>
-        <DialogContent className="border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0))] text-[hsl(var(--ctp-text))]">
+        <DialogContent className="bg-[var(--surface-raised)] border-[var(--line)] text-[var(--text-strong)]">
           <DialogHeader>
             <DialogTitle>
               {dialogMode === 'repeat'
@@ -409,65 +514,68 @@ export default function RekapMahasiswaPage() {
                   ? 'Konversi Track RPL'
                   : 'Set Izin Lanjut'}
             </DialogTitle>
-            <DialogDescription className="text-[hsl(var(--ctp-subtext0))]">
+            <DialogDescription className="text-[var(--text-muted)]">
               {selectedMahasiswa
                 ? `${selectedMahasiswa.nama} (${selectedMahasiswa.npm})`
                 : 'Pilih track yang akan diterapkan ke mahasiswa.'}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-3">
-            <p className="text-sm text-[hsl(var(--ctp-subtext0))]">
+          <div className="space-y-4">
+            <p className="text-sm text-[var(--text-muted)]">
               {dialogMode === 'repeat'
                 ? 'Mahasiswa akan dikunci hanya ke track ulang ini sampai dinyatakan selesai.'
                 : dialogMode === 'conversion'
                   ? 'Track yang dikonversi akan dicatat sebagai selesai, sehingga mahasiswa RPL bisa mengambil track berikutnya dan tidak bisa memilih track ini lagi.'
                   : 'Mahasiswa akan diizinkan mengambil track ini setelah repeat selesai, tetapi tetap harus menunggu periodenya aktif.'}
             </p>
-            <Select value={selectedTrack} onValueChange={setSelectedTrack}>
-              <SelectTrigger className="bg-[hsl(var(--ctp-mantle)/0.5)] border-[hsl(var(--ctp-overlay0)/0.45)] text-[hsl(var(--ctp-text))]">
-                <SelectValue placeholder="Pilih track" />
-              </SelectTrigger>
-              <SelectContent className="border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-surface0))] text-[hsl(var(--ctp-text))]">
-                {TRACK_OPTIONS.map((track) => (
-                  <SelectItem key={track.value} value={track.value}>
-                    {track.label}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Field label="Track Akademik" required>
+              {(a11y) => (
+                <Select name="track" value={selectedTrack} onValueChange={setSelectedTrack}>
+                  <SelectTrigger
+                    id={a11y.id}
+                    aria-describedby={a11y['aria-describedby']}
+                    className="w-full bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                  >
+                    <SelectValue placeholder="Pilih track" />
+                  </SelectTrigger>
+                  <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)] text-[var(--text-strong)]">
+                    {TRACK_OPTIONS.map((track) => (
+                      <SelectItem key={track.value} value={track.value}>
+                        {track.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
+            </Field>
             {dialogMode === 'conversion' ? (
-              <textarea
-                value={conversionNote}
-                onChange={(event) => setConversionNote(event.target.value)}
-                placeholder="Catatan konversi, contoh: Konversi berdasarkan portofolio/rekognisi Proyek 1"
-                rows={3}
-                className="w-full rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-mantle)/0.5)] px-3 py-2 text-sm text-[hsl(var(--ctp-text))] outline-none placeholder:text-[hsl(var(--ctp-subtext0))]"
-              />
+              <Field label="Catatan Konversi (Opsional)">
+                {(a11y) => (
+                  <Textarea
+                    {...a11y}
+                    name="conversion_note"
+                    value={conversionNote}
+                    onChange={(event) => setConversionNote(event.target.value)}
+                    placeholder="Catatan konversi, contoh: Konversi berdasarkan portofolio/rekognisi Proyek 1"
+                    rows={3}
+                    className="bg-[var(--surface-sunken)] border-[var(--line)] text-[var(--text-strong)]"
+                  />
+                )}
+              </Field>
             ) : null}
           </div>
 
           <DialogFooter>
-            <Button
-              type="button"
-              variant="secondary"
-              onClick={closeDialog}
-              disabled={saving}
-              className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
-            >
+            <Button type="button" variant="outline" onClick={closeDialog} disabled={saving}>
               Batal
             </Button>
-            <Button
-              type="button"
-              onClick={submitRepeatAction}
-              disabled={saving}
-              className="rounded-2xl bg-[hsl(var(--ctp-lavender)/0.20)] text-[hsl(var(--ctp-text))] hover:bg-[hsl(var(--ctp-lavender)/0.30)] border border-[hsl(var(--ctp-lavender)/0.35)]"
-            >
+            <Button type="button" onClick={submitRepeatAction} disabled={saving}>
               {saving ? 'Menyimpan...' : 'Simpan'}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </motion.div>
+    </div>
   );
 }
