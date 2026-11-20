@@ -27,7 +27,8 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { useAuthStore } from '@/store/auth-store';
 import { pengujiAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
@@ -69,10 +70,7 @@ function isMySidang(item, profile) {
 }
 
 function formatTanggal(value) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(date);
+  return formatAcademicDate(value);
 }
 
 function formatWaktu(value) {
@@ -134,10 +132,12 @@ export default function PengujiSidangPage() {
   const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [profile, setProfile] = useState(null);
   const [sidang, setSidang] = useState([]);
   const [hasilTarget, setHasilTarget] = useState(null);
   const [hasilForm, setHasilForm] = useState({ hasil_sidang: 'lulus', catatan_sidang: '' });
+  const [autoSaveAt, setAutoSaveAt] = useState(null);
   const [submitting, setSubmitting] = useState(false);
 
   const pageTitle = useMemo(() => {
@@ -156,18 +156,41 @@ export default function PengujiSidangPage() {
 
   const selectSidang = (item) => {
     setHasilTarget(item || null);
+    setAutoSaveAt(null);
     setHasilForm({
       hasil_sidang: item?.hasil_sidang || 'lulus',
       catatan_sidang: item?.catatan_sidang || '',
     });
   };
 
+  const updateHasilForm = (patch) => {
+    setHasilForm((prev) => {
+      const next = { ...prev, ...patch };
+      if (hasilTarget?.id) {
+        try {
+          window.localStorage.setItem(
+            `kavana-sidang-draft:${hasilTarget.id}`,
+            JSON.stringify(next)
+          );
+          setAutoSaveAt(new Date());
+        } catch {
+          // Ignore storage errors
+        }
+      }
+      return next;
+    });
+  };
+
   const loadData = async (preferredId = null) => {
+    setLoadError(null);
     try {
       const [profileRes, sidangRes] = await Promise.all([
         pengujiAPI.getProfile(),
         pengujiAPI.getSidangList(),
       ]);
+      if (!sidangRes.ok) {
+        setLoadError(sidangRes.error || 'Gagal memuat data sidang penguji.');
+      }
       const nextProfile = profileRes.ok ? profileRes.data : null;
       const rows = sidangRes.ok
         ? (Array.isArray(sidangRes.data) ? sidangRes.data : sidangRes.data?.data || [])
@@ -187,6 +210,7 @@ export default function PengujiSidangPage() {
       }
     } catch (error) {
       console.error(error);
+      setLoadError('Gagal memuat data sidang penguji.');
       toast.error('Gagal memuat data sidang penguji');
     } finally {
       setLoading(false);
@@ -212,6 +236,11 @@ export default function PengujiSidangPage() {
         catatan_sidang: hasilForm.catatan_sidang.trim() || undefined,
       });
       if (result.ok) {
+        try {
+          window.localStorage.removeItem(`kavana-sidang-draft:${targetId}`);
+        } catch {
+          // Ignore storage error
+        }
         toast.success(result.data?.message || 'Hasil sidang berhasil disimpan');
         await loadData(targetId);
       } else {
@@ -254,6 +283,14 @@ export default function PengujiSidangPage() {
           </div>
         ))}
       </div>
+
+      {loadError ? (
+        <ErrorState
+          title="Gagal memuat data sidang penguji"
+          description={loadError}
+          onRetry={() => loadData()}
+        />
+      ) : null}
 
       {sidang.length === 0 ? (
         <EmptyState
@@ -465,53 +502,82 @@ export default function PengujiSidangPage() {
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmitHasil} className="space-y-4">
-                    <Field label="Hasil Sidang" required>
-                      {(a11y) => (
-                        <Select
-                          name="hasil_sidang"
-                          value={hasilForm.hasil_sidang}
-                          onValueChange={(value) => setHasilForm({ ...hasilForm, hasil_sidang: value })}
-                        >
-                          <SelectTrigger
-                            id={a11y.id}
-                            aria-describedby={a11y['aria-describedby']}
-                            className={cn(inputCls, 'w-full')}
-                          >
-                            <SelectValue placeholder="Pilih hasil" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
-                            {HASIL_OPTIONS.map((option) => (
-                              <SelectItem key={option.value} value={option.value}>
-                                {option.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      )}
-                    </Field>
-
-                    <Field
-                      label="Catatan Sidang"
-                      hint="Tuliskan catatan keputusan, poin revisi, atau alasan ketidaklulusan."
+                  <form
+                    onSubmit={handleSubmitHasil}
+                    data-testid="sidang-segmented-form"
+                    className="space-y-4"
+                  >
+                    <div
+                      data-testid="sidang-autosave-indicator"
+                      className="flex items-center justify-between gap-2 rounded-lg border border-[var(--line)] bg-[var(--surface-sunken)] px-3 py-2 text-xs text-[var(--text-muted)]"
                     >
-                      {(a11y) => (
-                        <Textarea
-                          {...a11y}
-                          name="catatan_sidang"
-                          rows={5}
-                          value={hasilForm.catatan_sidang}
-                          onChange={(event) => setHasilForm({ ...hasilForm, catatan_sidang: event.target.value })}
-                          placeholder="Isi catatan keputusan, poin revisi, atau alasan tidak lulus"
-                          className={inputCls}
-                        />
-                      )}
-                    </Field>
+                      <span>Formulir tersegmen · penyimpanan draf otomatis aktif</span>
+                      <span className="font-mono tabular-nums text-[var(--text-strong)]">
+                        {autoSaveAt ? 'Draf tersimpan otomatis' : 'Siap diisi'}
+                      </span>
+                    </div>
 
-                    <div className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-muted)]">
+                    <fieldset className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5 space-y-3">
+                      <legend className="px-1 text-xs font-semibold text-[var(--text-strong)]">
+                        Segmen 1 · Keputusan Hasil Sidang
+                      </legend>
+                      <Field label="Hasil Sidang" required>
+                        {(a11y) => (
+                          <Select
+                            name="hasil_sidang"
+                            value={hasilForm.hasil_sidang}
+                            onValueChange={(value) => updateHasilForm({ hasil_sidang: value })}
+                          >
+                            <SelectTrigger
+                              id={a11y.id}
+                              aria-describedby={a11y['aria-describedby']}
+                              className={cn(inputCls, 'w-full')}
+                            >
+                              <SelectValue placeholder="Pilih hasil" />
+                            </SelectTrigger>
+                            <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
+                              {HASIL_OPTIONS.map((option) => (
+                                <SelectItem key={option.value} value={option.value}>
+                                  {option.label}
+                                </SelectItem>
+                              ))}
+                            </SelectContent>
+                          </Select>
+                        )}
+                      </Field>
+                    </fieldset>
+
+                    <fieldset className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-3.5 space-y-3">
+                      <legend className="px-1 text-xs font-semibold text-[var(--text-strong)]">
+                        Segmen 2 · Catatan & Evaluasi Penguji
+                      </legend>
+                      <Field
+                        label="Catatan Sidang"
+                        hint="Tuliskan catatan keputusan, poin revisi, atau alasan ketidaklulusan."
+                      >
+                        {(a11y) => (
+                          <Textarea
+                            {...a11y}
+                            name="catatan_sidang"
+                            rows={5}
+                            value={hasilForm.catatan_sidang}
+                            onChange={(event) => updateHasilForm({ catatan_sidang: event.target.value })}
+                            placeholder="Isi catatan keputusan, poin revisi, atau alasan tidak lulus"
+                            className={inputCls}
+                          />
+                        )}
+                      </Field>
+                    </fieldset>
+
+                    <div
+                      data-testid="sidang-inline-validation"
+                      className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] px-3.5 py-2.5 text-xs text-[var(--text-muted)]"
+                    >
                       {hasilForm.hasil_sidang === 'lulus_revisi'
-                        ? 'Jika dipilih lulus dengan revisi, mahasiswa akan masuk ke alur revisi sidang.'
-                        : 'Keputusan ini akan menyimpan hasil sidang mahasiswa.'}
+                        ? 'Jika dipilih lulus dengan revisi, mahasiswa akan masuk ke alur revisi sidang. Disarankan mencantumkan poin revisi pada catatan sidang.'
+                        : hasilForm.hasil_sidang === 'tidak_lulus' && !hasilForm.catatan_sidang.trim()
+                          ? 'Disarankan mengisi alasan ketidaklulusan pada catatan sidang sebelum menyimpan.'
+                          : 'Keputusan ini akan menyimpan hasil sidang mahasiswa.'}
                     </div>
 
                     <div className="flex justify-end pt-2 border-t border-[var(--line)]">

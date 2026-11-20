@@ -38,8 +38,9 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
 import { developerAPI } from '@/lib/api';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { toast } from '@/lib/alert';
 
 const MODE_LABELS = {
@@ -66,12 +67,7 @@ const MODE_DESCRIPTIONS = {
 
 function formatDateTime(value) {
   if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-  }).format(date);
+  return formatAcademicDate(value, { withTime: true });
 }
 
 function normalizeLabel(value) {
@@ -840,10 +836,12 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
   const [data, setData] = useState(null);
   const [health, setHealth] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState('');
   const [cachePrefix, setCachePrefix] = useState('kavana:');
 
   const load = useCallback(async () => {
     setLoading(true);
+    setLoadError('');
     const apiByMode = {
       dashboard: developerAPI.getHealth,
       health: developerAPI.getHealth,
@@ -855,14 +853,20 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
       'permission-matrix': developerAPI.getPermissionMatrix,
     };
 
-    const result = await (apiByMode[mode] || developerAPI.getHealth)();
-    if (result.ok) {
-      setData(result.data);
-      if (mode === 'dashboard' || mode === 'health') setHealth(result.data);
-    } else {
-      toast.error(result.error || 'Gagal memuat data developer');
+    try {
+      const result = await (apiByMode[mode] || developerAPI.getHealth)();
+      if (result.ok) {
+        setData(result.data);
+        if (mode === 'dashboard' || mode === 'health') setHealth(result.data);
+      } else {
+        setLoadError(result.error || 'Gagal memuat data developer');
+        toast.error(result.error || 'Gagal memuat data developer');
+      }
+    } catch {
+      setLoadError('Kesalahan jaringan saat mengambil data developer');
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [mode]);
 
   useEffect(() => {
@@ -987,6 +991,14 @@ export default function DeveloperClient({ mode = 'dashboard' }) {
             icon={Activity}
           />
         </div>
+      ) : null}
+
+      {loadError ? (
+        <ErrorState
+          title="Gagal memuat data observabilitas"
+          description={loadError}
+          onRetry={load}
+        />
       ) : null}
 
       {renderedContent}

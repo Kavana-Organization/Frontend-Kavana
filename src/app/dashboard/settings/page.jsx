@@ -13,6 +13,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Field } from '@/components/ui/field';
 import { PageHeader } from '@/components/layout/page-header';
+import { LoadingState } from '@/components/shared/loading-state';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { useAuthStore } from '@/store/auth-store';
 import { authAPI } from '@/lib/api';
@@ -104,6 +105,18 @@ export default function SettingsPage() {
 
   const roleDisplay = ROLE_LABEL[role] || role || '-';
   const identifier = user?.npm || user?.nidn || null;
+
+  if (!mounted) {
+    return (
+      <div className="space-y-6">
+        <PageHeader
+          title="Pengaturan"
+          subtitle="Kelola preferensi tampilan, keamanan, dan sesi akun Anda."
+        />
+        <LoadingState variant="form" label="Memuat pengaturan" />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

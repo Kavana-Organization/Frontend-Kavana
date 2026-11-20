@@ -26,9 +26,10 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
 const MAX_SESSIONS = 8;
@@ -74,6 +75,7 @@ export default function BimbinganPage() {
   const [editIdx, setEditIdx] = useState(-1);
   const [form, setForm] = useState({ date: '', topic: '', notes: '' });
   const [exporting, setExporting] = useState(false);
+  const [loadError, setLoadError] = useState(false);
 
   useEffect(() => {
     if (role && role !== 'mahasiswa') {
@@ -116,9 +118,13 @@ export default function BimbinganPage() {
           mingguKe: b.minggu_ke,
           status: b.status || 'pending',
         })));
+        setLoadError(false);
+      } else {
+        setLoadError(true);
       }
     } catch (err) {
       console.error(err);
+      setLoadError(true);
     } finally {
       setLoading(false);
     }
@@ -325,7 +331,13 @@ export default function BimbinganPage() {
           </div>
         </CardHeader>
         <CardContent>
-          {sessions.length === 0 ? (
+          {loadError ? (
+            <ErrorState
+              title="Gagal memuat logbook bimbingan"
+              description="Terjadi kendala saat mengambil riwayat logbook bimbingan Anda."
+              onRetry={loadAll}
+            />
+          ) : sessions.length === 0 ? (
             <EmptyState
               icon={MessageSquare}
               title="Belum ada catatan bimbingan"
@@ -337,43 +349,55 @@ export default function BimbinganPage() {
               }
             />
           ) : (
-            <div className="space-y-3">
+            /* PG-3: Vertical Logbook Timeline */
+            <ol
+              data-testid="bimbingan-logbook-timeline"
+              className="relative ml-3 space-y-4 border-l-2 border-[var(--line)] pl-5"
+            >
               {sessions.map((s, i) => (
-                <div
+                <li
                   key={s.id || i}
-                  className="rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] flex items-start gap-3 p-3.5"
+                  className="relative rounded-xl border border-[var(--line)] bg-[var(--surface-sunken)] p-4"
                 >
-                  <div className="h-9 w-9 shrink-0 rounded-lg bg-[var(--surface-raised)] border border-[var(--line)] text-[var(--text-strong)] flex items-center justify-center text-sm font-semibold font-mono tabular-nums">
-                    {i + 1}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
-                        {s.date || '-'}
-                      </span>
-                      <StatusBadge status={s.status} />
-                    </div>
-                    <p className="text-sm font-semibold text-[var(--text-strong)] break-words">
-                      {s.topic}
-                    </p>
-                    {s.notes && (
-                      <p className="text-xs text-[var(--text-body)] mt-1 whitespace-pre-line break-words line-clamp-3">
-                        {s.notes}
-                      </p>
-                    )}
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => openEdit(i)}
-                    aria-label={`Edit bimbingan ke-${i + 1}`}
-                    className="shrink-0 h-11 w-11 text-[var(--text-muted)] hover:text-[var(--text-strong)]"
+                  <span
+                    aria-hidden="true"
+                    className="absolute -left-[33px] top-4 grid h-6 w-6 place-items-center rounded-full border border-[var(--line)] bg-[var(--surface-raised)] font-mono text-xs font-semibold tabular-nums text-[var(--text-strong)]"
                   >
-                    <Edit className="h-4 w-4" />
-                  </Button>
-                </div>
+                    {i + 1}
+                  </span>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 flex-wrap">
+                        <span className="text-xs font-semibold text-[var(--text-strong)]">
+                          Bimbingan ke-{s.mingguKe || i + 1}
+                        </span>
+                        <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                          {s.date ? `${formatAcademicDate(s.date)} (${s.date})` : '-'}
+                        </span>
+                        <StatusBadge status={s.status} />
+                      </div>
+                      <p className="text-sm font-semibold text-[var(--text-strong)] break-words">
+                        {s.topic}
+                      </p>
+                      {s.notes && (
+                        <p className="text-xs text-[var(--text-body)] mt-1 whitespace-pre-line break-words line-clamp-3">
+                          {s.notes}
+                        </p>
+                      )}
+                    </div>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => openEdit(i)}
+                      aria-label={`Edit bimbingan ke-${i + 1}`}
+                      className="shrink-0 h-11 w-11 text-[var(--text-muted)] hover:text-[var(--text-strong)]"
+                    >
+                      <Edit className="h-4 w-4" />
+                    </Button>
+                  </div>
+                </li>
               ))}
-            </div>
+            </ol>
           )}
         </CardContent>
       </Card>

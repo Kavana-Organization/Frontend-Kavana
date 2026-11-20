@@ -53,6 +53,8 @@
   --radius-xl: calc(var(--radius) + 4px);
   --radius-2xl: calc(var(--radius) + 10px);
   --radius-3xl: calc(var(--radius) + 16px);
+  --radius-control: var(--radius-control);
+  --radius-container: var(--radius-container);
   --shadow-overlay: 0 8px 24px hsl(222 47% 11% / 0.12);
 }
 
@@ -60,12 +62,30 @@
   --font-ui: "Segoe UI", "Helvetica Neue", Arial, sans-serif;
   --font-sans: "Public Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, monospace;
-  /* Corporate-clean palette (slate + blue), mapped onto the legacy ctp-* tokens
-     so the whole token-driven UI shifts to the landing-page look at once. */
+  /* PRD v1.2 Typographic Scale (12, 14, 16, 20, 28, 36px) */
+  --font-size-12: 0.75rem;
+  --font-size-14: 0.875rem;
+  --font-size-16: 1rem;
+  --font-size-20: 1.25rem;
+  --font-size-28: 1.75rem;
+  --font-size-36: 2.25rem;
+  /* PRD v1.2 Spacing Scale (4/8px: 4, 8, 12, 16, 24, 32, 48, 64px) */
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  /* PRD v1.2 2-Value Radius Scale (Control 8px, Container 12px) */
+  --radius-control: 0.5rem;
+  --radius-container: 0.75rem;
+  /* Corporate-clean academic palette (warm slate + ULBI blue + teal, zero purple/violet) */
   --ctp-rosewater: 24 95% 63%;
   --ctp-flamingo: 20 90% 60%;
   --ctp-pink: 330 81% 60%;
-  --ctp-mauve: 258 72% 48%;
+  --ctp-mauve: 195 75% 32%;
   --ctp-red: 0 74% 40%;
   --ctp-maroon: 349 75% 44%;
   --ctp-peach: 24 94% 32%;
@@ -75,7 +95,7 @@
   --ctp-sky: 201 89% 32%;
   --ctp-sapphire: 221 83% 45%;
   --ctp-blue: 221 83% 45%;
-  --ctp-lavender: 217 91% 60%;
+  --ctp-lavender: 205 82% 45%;
 
   --ctp-text: 222 47% 11%;
   --ctp-subtext1: 215 19% 35%;
@@ -91,6 +111,7 @@
   --ctp-crust: 210 40% 96%;
 
   --radius: 1rem;
+  --brand: hsl(var(--ctp-blue));
   --surface-page: hsl(var(--ctp-mantle));
   --surface-raised: hsl(var(--ctp-base));
   --surface-sunken: hsl(var(--ctp-surface0));
@@ -101,6 +122,10 @@
   --accent: hsl(var(--ctp-blue));
   --accent-soft: hsl(var(--ctp-blue) / 0.08);
   --accent-foreground: hsl(0 0% 100%);
+  --status-success: hsl(var(--ctp-green));
+  --status-warning: hsl(var(--ctp-peach));
+  --status-danger: hsl(var(--ctp-red));
+  --status-info: hsl(var(--ctp-blue));
   --background: hsl(var(--ctp-base));
   --foreground: hsl(var(--ctp-text));
   --card: hsl(var(--ctp-base));
@@ -137,7 +162,7 @@
   --ctp-rosewater: 24 95% 63%;
   --ctp-flamingo: 20 90% 60%;
   --ctp-pink: 330 81% 70%;
-  --ctp-mauve: 258 90% 76%;
+  --ctp-mauve: 195 80% 70%;
   --ctp-red: 0 90% 78%;
   --ctp-maroon: 349 75% 65%;
   --ctp-peach: 25 95% 63%;
@@ -147,7 +172,7 @@
   --ctp-sky: 199 89% 60%;
   --ctp-sapphire: 213 96% 74%;
   --ctp-blue: 213 96% 74%;
-  --ctp-lavender: 217 91% 72%;
+  --ctp-lavender: 205 88% 72%;
 
   --ctp-text: 210 40% 98%;
   --ctp-subtext1: 214 32% 82%;
@@ -162,6 +187,7 @@
   --ctp-mantle: 222 47% 9%;
   --ctp-crust: 222 47% 7%;
 
+  --brand: hsl(var(--ctp-blue));
   --surface-page: hsl(var(--ctp-mantle));
   --surface-raised: hsl(var(--ctp-base));
   --surface-sunken: hsl(var(--ctp-surface0));
@@ -172,6 +198,10 @@
   --accent: hsl(var(--ctp-blue));
   --accent-soft: hsl(var(--ctp-blue) / 0.14);
   --accent-foreground: hsl(222 47% 11%);
+  --status-success: hsl(var(--ctp-green));
+  --status-warning: hsl(var(--ctp-peach));
+  --status-danger: hsl(var(--ctp-red));
+  --status-info: hsl(var(--ctp-blue));
   --background: hsl(var(--ctp-base));
   --foreground: hsl(var(--ctp-text));
   --card: hsl(var(--ctp-mantle));
@@ -220,6 +250,7 @@
   body {
     @apply bg-background text-foreground;
     min-height: 100vh;
+    min-height: 100dvh;
     font-family: var(--font-sans), sans-serif;
     line-height: 1.5;
     font-feature-settings: "ss01", "cv02", "cv03";
@@ -284,6 +315,18 @@
 
 .shadow-overlay {
   box-shadow: var(--shadow-overlay, 0 8px 24px hsl(222 47% 11% / 0.12));
+}
+
+.table-scroll-container {
+  background-image:
+    linear-gradient(to right, var(--surface-raised) 30%, transparent),
+    linear-gradient(to left, var(--surface-raised) 30%, transparent),
+    linear-gradient(to right, hsl(var(--ctp-text) / 0.08), transparent 12px),
+    linear-gradient(to left, hsl(var(--ctp-text) / 0.08), transparent 12px);
+  background-position: left center, right center, left center, right center;
+  background-repeat: no-repeat;
+  background-size: 20px 100%, 20px 100%, 12px 100%, 12px 100%;
+  background-attachment: local, local, scroll, scroll;
 }
 
 @media (max-width: 639px) {

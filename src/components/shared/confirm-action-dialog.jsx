@@ -34,12 +34,12 @@ export function ConfirmActionDialog({
       className="max-w-md"
     >
       <div className="space-y-4">
-        <div className={`grid h-12 w-12 place-items-center rounded-2xl border ${toneClass}`}>
+        <div className={`grid h-12 w-12 place-items-center rounded-xl border ${toneClass}`}>
           <AlertTriangle className="h-6 w-6" />
         </div>
         <div className="space-y-2">
-          <h3 className="text-lg font-semibold text-[hsl(var(--ctp-text))]">{title}</h3>
-          <p className="text-sm text-[hsl(var(--ctp-subtext0))]">{description}</p>
+          <h3 className="text-lg font-semibold text-[var(--text-strong)]">{title}</h3>
+          <p className="text-sm text-[var(--text-muted)]">{description}</p>
         </div>
         <div className="flex justify-end gap-3 pt-2">
           <Button
@@ -47,7 +47,7 @@ export function ConfirmActionDialog({
             variant="secondary"
             disabled={loading}
             onClick={() => onOpenChange(false)}
-            className="rounded-2xl bg-[hsl(var(--ctp-surface1)/0.35)] text-[hsl(var(--ctp-text))] border border-[hsl(var(--ctp-overlay0)/0.35)]"
+            className="rounded-lg bg-[var(--surface-sunken)] text-[var(--text-strong)] border border-[var(--line)]"
           >
             {cancelLabel}
           </Button>
@@ -55,7 +55,7 @@ export function ConfirmActionDialog({
             type="button"
             disabled={loading}
             onClick={onConfirm}
-            className={`rounded-2xl border text-[hsl(var(--ctp-text))] ${actionClass}`}
+            className={`rounded-lg border text-[var(--text-strong)] ${actionClass}`}
           >
             {loading ? 'Memproses...' : confirmLabel}
           </Button>

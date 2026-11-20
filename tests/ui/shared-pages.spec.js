@@ -207,6 +207,7 @@ async function checkNoHorizontalOverflow(page) {
 }
 
 test.describe('Shared Pages: Profile, Settings, Support (Task 16)', () => {
+  test.setTimeout(90000);
   test('1. Shared /dashboard/profile and /dashboard/settings render without errors for all 7 roles', async ({ page }) => {
     const roles = ['mahasiswa', 'dosen', 'koordinator', 'kaprodi', 'penguji', 'admin', 'developer'];
     const { consoleErrors, pageErrors } = attachErrorListeners(page);

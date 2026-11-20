@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { ArrowRight, BarChart3, Shield, Users } from 'lucide-react';
+import { AlertTriangle, ArrowRight, BarChart3, Shield, Users } from 'lucide-react';
 import {
   Bar,
   BarChart,
@@ -14,10 +14,20 @@ import {
   YAxis,
 } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
 import { Progress } from '@/components/ui/progress';
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table';
 import { PageHeader } from '@/components/layout/page-header';
+import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { kaprodiAPI } from '@/lib/api';
 
@@ -26,7 +36,46 @@ export default function KaprodiDashboard() {
   const { role } = useAuthStore();
   const [stats, setStats] = useState(null);
   const [totalKoordinator, setTotalKoordinator] = useState(0);
+  const [mahasiswaList, setMahasiswaList] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [widgetErrors, setWidgetErrors] = useState({
+    stats: false,
+    mahasiswa: false,
+  });
+
+  const loadDashboard = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [statsRes, koordinatorRes, mhsRes] = await Promise.all([
+        kaprodiAPI.getStats().catch(() => ({ ok: false })),
+        kaprodiAPI.getKoordinatorList().catch(() => ({ ok: false })),
+        kaprodiAPI.getMahasiswaList?.({ grouped: false }).catch(() => ({ ok: false })) ??
+          Promise.resolve({ ok: false }),
+      ]);
+
+      if (statsRes?.ok) {
+        setStats(statsRes.data);
+        setWidgetErrors((prev) => ({ ...prev, stats: false }));
+      } else {
+        setWidgetErrors((prev) => ({ ...prev, stats: true }));
+      }
+
+      if (koordinatorRes?.ok) {
+        const koordinatorList = Array.isArray(koordinatorRes.data) ? koordinatorRes.data : [];
+        const activeKoordinator = koordinatorList.filter((k) => Boolean(k?.is_koordinator)).length;
+        setTotalKoordinator(activeKoordinator);
+      }
+
+      if (mhsRes?.ok) {
+        setMahasiswaList(Array.isArray(mhsRes.data) ? mhsRes.data : []);
+        setWidgetErrors((prev) => ({ ...prev, mahasiswa: false }));
+      }
+    } catch (err) {
+      console.error('Error:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (role && role !== 'kaprodi') {
@@ -34,27 +83,7 @@ export default function KaprodiDashboard() {
       return;
     }
     loadDashboard();
-  }, [role, router]);
-
-  const loadDashboard = async () => {
-    try {
-      const [statsRes, koordinatorRes] = await Promise.all([
-        kaprodiAPI.getStats(),
-        kaprodiAPI.getKoordinatorList(),
-      ]);
-
-      if (statsRes.ok) setStats(statsRes.data);
-      if (koordinatorRes.ok) {
-        const koordinatorList = Array.isArray(koordinatorRes.data) ? koordinatorRes.data : [];
-        const activeKoordinator = koordinatorList.filter((k) => Boolean(k?.is_koordinator)).length;
-        setTotalKoordinator(activeKoordinator);
-      }
-    } catch (err) {
-      console.error('Error:', err);
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadDashboard, role, router]);
 
   const totalMahasiswa = stats?.total_mahasiswa || 0;
   const totalDosen = stats?.total_dosen || 0;
@@ -68,6 +97,17 @@ export default function KaprodiDashboard() {
       .sort((a, b) => Number(a.name) - Number(b.name));
   }, [stats]);
 
+  // DD-1 & DD-2: Raw-data degradation for students needing attention / pending approval
+  const attentionList = useMemo(() => {
+    return (Array.isArray(mahasiswaList) ? mahasiswaList : []).filter(
+      (m) =>
+        m?.repeat_required ||
+        !m?.track ||
+        m?.status_proposal === 'pending' ||
+        (m?.status_proposal === 'approved' && !m?.dosen_id && !m?.dosen_nama)
+    );
+  }, [mahasiswaList]);
+
   if (loading) {
     return <LoadingState variant="dashboard" label="Memuat dashboard kepala prodi" />;
   }
@@ -76,12 +116,13 @@ export default function KaprodiDashboard() {
     <div className="space-y-6">
       <PageHeader
         title="Dashboard Kepala Prodi · Monitoring & Rekap Prodi"
-        subtitle="Pantau capaian kelulusan, sebaran angkatan, dan penugasan koordinator program studi."
+        subtitle="Ringkasan analitik: pantau capaian kelulusan, sebaran angkatan, mahasiswa perlu perhatian, dan wewenang koordinator."
       />
 
       {/* Metric Strip */}
       <div
         data-testid="kaprodi-metric-strip"
+        data-source="kaprodiAPI.getStats + kaprodiAPI.getKoordinatorList"
         className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden"
       >
         <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
@@ -110,48 +151,78 @@ export default function KaprodiDashboard() {
         </div>
       </div>
 
-      {/* Chart + Overview */}
+      {/* Chart + Companion Data Table (DV-1..3) + Program Overview */}
       <div className="grid grid-cols-1 gap-4 xl:grid-cols-3">
-        <Card variant="muted" className="xl:col-span-2 min-w-0">
+        <Card variant="muted" className="xl:col-span-2 min-w-0" data-source="kaprodiAPI.getStats (by_angkatan)">
           <CardHeader>
             <CardTitle className="text-[var(--text-strong)]">Rekap Distribusi Angkatan</CardTitle>
             <CardDescription className="text-[var(--text-muted)]">
-              Jumlah mahasiswa aktif per angkatan yang tercatat pada sistem prodi.
+              Jumlah mahasiswa aktif per angkatan (satuan: Mahasiswa) beserta tabel data pendamping.
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            {trendData.length === 0 ? (
+          <CardContent className="space-y-4">
+            {widgetErrors.stats ? (
+              <ErrorState
+                title="Data statistik angkatan gagal dimuat"
+                description="Gagal mengambil statistik angkatan dari server."
+                onRetry={loadDashboard}
+              />
+            ) : trendData.length === 0 ? (
               <EmptyState
                 icon={BarChart3}
                 title="Belum ada data sebaran angkatan untuk dipantau"
                 description="Grafik distribusi angkatan akan tampil otomatis setelah data mahasiswa termuat."
               />
             ) : (
-              <div className="h-[260px] w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={trendData} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
-                    <CartesianGrid vertical={false} />
-                    <XAxis
-                      dataKey="name"
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }}
-                    />
-                    <YAxis
-                      tickLine={false}
-                      axisLine={false}
-                      tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }}
-                    />
-                    <Tooltip />
-                    <Bar dataKey="v" fill="hsl(var(--ctp-sapphire)/0.65)" radius={[8, 8, 4, 4]} maxBarSize={96} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
+              <>
+                <div className="h-[240px] w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={trendData} margin={{ left: 8, right: 8, top: 10, bottom: 0 }}>
+                      <CartesianGrid vertical={false} />
+                      <XAxis
+                        dataKey="name"
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }}
+                      />
+                      <YAxis
+                        tickLine={false}
+                        axisLine={false}
+                        tick={{ fill: 'hsl(var(--ctp-subtext0))', fontSize: 12 }}
+                      />
+                      <Tooltip />
+                      <Bar dataKey="v" name="Mahasiswa" fill="hsl(var(--ctp-sapphire)/0.75)" radius={[6, 6, 2, 2]} maxBarSize={96} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* DV-2: Companion Data Table for Accessibility & Colorblind Safety */}
+                <Table density="compact" data-testid="kaprodi-cohort-companion-table">
+                  <TableHeader>
+                    <TableRow>
+                      <TableHead>Angkatan</TableHead>
+                      <TableHead className="text-right">Jumlah Mahasiswa</TableHead>
+                    </TableRow>
+                  </TableHeader>
+                  <TableBody>
+                    {trendData.map((row) => (
+                      <TableRow key={row.name}>
+                        <TableCell className="font-mono text-xs tabular-nums text-[var(--text-strong)]">
+                          Angkatan {row.name}
+                        </TableCell>
+                        <TableCell className="text-right font-mono text-xs tabular-nums text-[var(--text-body)]">
+                          {row.v} mahasiswa
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </>
             )}
           </CardContent>
         </Card>
 
-        <Card variant="muted" className="min-w-0">
+        <Card variant="muted" className="min-w-0" data-source="kaprodiAPI.getStats">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
               <BarChart3 className="h-4 w-4 shrink-0" />
@@ -194,6 +265,80 @@ export default function KaprodiDashboard() {
           </CardContent>
         </Card>
       </div>
+
+      {/* DB-3 & DD-2: Raw-Data Degradation Widget for Risk / Pending Approvals */}
+      <Card
+        variant="muted"
+        data-testid="kaprodi-degradation-card"
+        data-source="kaprodiAPI.getMahasiswaList"
+      >
+        <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
+            <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
+              <AlertTriangle className="h-4 w-4 shrink-0 text-[hsl(var(--ctp-peach))]" />
+              <span>Mahasiswa Perlu Perhatian & Persetujuan Tertunda</span>
+            </CardTitle>
+            <CardDescription className="text-[var(--text-muted)]">
+              Ringkasan belum tersedia untuk metrik durasi pasif bimbingan — menampilkan data mentah mahasiswa wajib ulang, belum memiliki pembimbing, atau menunggu validasi proposal.
+            </CardDescription>
+          </div>
+          <Button asChild variant="outline" size="sm" className="shrink-0">
+            <Link href="/dashboard/kaprodi/daftar-mahasiswa">
+              <span>Buka Rekap Mahasiswa</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          </Button>
+        </CardHeader>
+        <CardContent>
+          {attentionList.length === 0 ? (
+            <EmptyState
+              icon={Users}
+              title="Tidak ada mahasiswa dengan status tertunda"
+              description="Seluruh mahasiswa yang termuat sudah memiliki track, proposal tervalidasi, dan dosen pembimbing."
+            />
+          ) : (
+            <Table stackOnMobile density="compact">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Mahasiswa</TableHead>
+                  <TableHead className="w-[120px]">NPM</TableHead>
+                  <TableHead className="w-[140px]">Track</TableHead>
+                  <TableHead>Pembimbing</TableHead>
+                  <TableHead className="w-[160px] text-right">Kondisi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {attentionList.slice(0, 6).map((m, i) => {
+                  const statusInfo = m.repeat_required
+                    ? { status: 'rejected', label: 'Revisi / Ulang' }
+                    : !m.track || m.status_proposal === 'pending' || !m.dosen_nama
+                      ? { status: 'pending', label: 'Menunggu' }
+                      : { status: 'approved', label: 'ACC' };
+                  return (
+                    <TableRow key={m.id || i}>
+                      <TableCell data-label="Mahasiswa" className="font-medium text-[var(--text-strong)] whitespace-normal break-words">
+                        {m.nama || '-'}
+                      </TableCell>
+                      <TableCell data-label="NPM" className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                        {m.npm || '-'}
+                      </TableCell>
+                      <TableCell data-label="Track" className="text-sm text-[var(--text-body)]">
+                        {m.track || 'Belum pilih'}
+                      </TableCell>
+                      <TableCell data-label="Pembimbing" className="text-sm text-[var(--text-body)] whitespace-normal break-words">
+                        {m.dosen_nama || 'Belum ditetapkan'}
+                      </TableCell>
+                      <TableCell data-label="Kondisi" className="sm:text-right">
+                        <StatusBadge status={statusInfo.status} label={statusInfo.label} />
+                      </TableCell>
+                    </TableRow>
+                  );
+                })}
+              </TableBody>
+            </Table>
+          )}
+        </CardContent>
+      </Card>
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 gap-4 md:grid-cols-3">

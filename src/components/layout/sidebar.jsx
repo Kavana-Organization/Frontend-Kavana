@@ -13,17 +13,20 @@ import { kaprodiAPI } from '@/lib/api';
 import { removeAcademicTitles } from '@/lib/validators';
 import { Button } from '@/components/ui/button';
 import { Sheet, SheetContent, SheetTrigger, SheetTitle } from '@/components/ui/sheet';
+import { Tooltip, TooltipContent, TooltipTrigger } from '@/components/ui/tooltip';
 import { SidebarGroup } from '@/components/layout/sidebar-group';
 
 const ROLE_BADGE_STYLE = {
   mahasiswa: 'border-[hsl(var(--ctp-blue)/0.25)] bg-[hsl(var(--ctp-blue)/0.12)] text-blue-800 dark:text-blue-200',
   dosen: 'border-[hsl(var(--ctp-green)/0.25)] bg-[hsl(var(--ctp-green)/0.12)] text-emerald-800 dark:text-emerald-200',
   koordinator: 'border-[hsl(var(--ctp-teal)/0.25)] bg-[hsl(var(--ctp-teal)/0.12)] text-sky-800 dark:text-sky-200',
-  kaprodi: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-violet-800 dark:text-violet-200',
+  kaprodi: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-cyan-900 dark:text-cyan-200',
   penguji: 'border-[hsl(var(--ctp-peach)/0.25)] bg-[hsl(var(--ctp-peach)/0.12)] text-amber-900 dark:text-amber-200',
   admin: 'border-[hsl(var(--ctp-red)/0.25)] bg-[hsl(var(--ctp-red)/0.12)] text-red-800 dark:text-red-200',
-  developer: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-violet-800 dark:text-violet-200',
+  developer: 'border-[hsl(var(--ctp-mauve)/0.25)] bg-[hsl(var(--ctp-mauve)/0.12)] text-cyan-900 dark:text-cyan-200',
 };
+
+const SIDEBAR_COLLAPSED_STORAGE_KEY = 'kavana-sidebar-collapsed';
 
 function parseRoles(rawRoles) {
   if (!rawRoles) return [];
@@ -51,7 +54,7 @@ function resolveKaprodiHasKoordinatorRole(user) {
 }
 
 /**
- * Longest-prefix active href matching per §5.1:
+ * Longest-prefix active href matching:
  * - Standalone dashboard root matches pathname === href exactly.
  * - All other items match pathname === item.href || pathname.startsWith(item.href + '/').
  * - Longest matching href wins.
@@ -118,7 +121,6 @@ export function useSidebarGroups(role, groups = [], activeHref = '') {
     computeDefaultOpenIds(groups, activeGroupId)
   );
 
-  // When role or groups become available, initialize/sync state
   useEffect(() => {
     if (!role || !groups || groups.length === 0) return;
 
@@ -154,7 +156,6 @@ export function useSidebarGroups(role, groups = [], activeHref = '') {
     });
   }, [role, groups, activeGroupId]);
 
-  // When active group changes (navigation), auto-open it without closing others
   useEffect(() => {
     if (!activeGroupId) return;
 
@@ -275,7 +276,7 @@ export function SidebarContent({
   };
 
   /**
-   * Keyboard navigation per §5.1:
+   * Keyboard navigation:
    * ArrowDown/ArrowUp moves between visible interactive elements.
    * Home/End jump to first/last.
    */
@@ -321,7 +322,7 @@ export function SidebarContent({
       {/* Brand Header */}
       <div
         className={cn(
-          'flex items-center gap-2 border-b border-[var(--line)] px-3 py-4',
+          'flex h-14 items-center gap-2 border-b border-[var(--line)] px-3',
           collapsed ? 'justify-center' : 'justify-between'
         )}
       >
@@ -342,15 +343,16 @@ export function SidebarContent({
                 Kavana
               </div>
               <div className="text-[11px] text-[var(--text-muted)] truncate">
-                Dashboard Akademik
+                Portal Bimbingan ULBI
               </div>
             </div>
           )}
         </div>
       </div>
 
-      {/* Nav Items with §5.1 Keyboard Traversal */}
+      {/* Nav Items with Keyboard Traversal */}
       <nav
+        aria-label="Menu utama"
         onKeyDown={handleNavKeyDown}
         className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-2.5 py-3"
       >
@@ -363,22 +365,31 @@ export function SidebarContent({
             if (collapsed) {
               return (
                 <div key={item.id} className="flex justify-center py-0.5">
-                  <Link
-                    href={item.href}
-                    data-testid={`sidebar-link-${item.id}`}
-                    aria-current={isActive ? 'page' : undefined}
-                    aria-label={item.label}
-                    title={item.label}
-                    onClick={() => onItemClick?.()}
-                    className={cn(
-                      'ctp-focus grid h-10 w-10 place-items-center rounded-lg transition-colors',
-                      isActive
-                        ? 'bg-[var(--accent-soft)] font-medium text-[var(--accent)]'
-                        : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]'
-                    )}
-                  >
-                    {Icon && <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />}
-                  </Link>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Link
+                        href={item.href}
+                        data-testid={`sidebar-link-${item.id}`}
+                        aria-current={isActive ? 'page' : undefined}
+                        aria-label={item.label}
+                        onClick={() => onItemClick?.()}
+                        className={cn(
+                          'ctp-focus grid h-10 w-10 place-items-center rounded-lg transition-colors',
+                          isActive
+                            ? 'bg-[var(--accent-soft)] font-medium text-[var(--accent)]'
+                            : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]'
+                        )}
+                      >
+                        {Icon && <Icon className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+                      </Link>
+                    </TooltipTrigger>
+                    <TooltipContent
+                      side="right"
+                      className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] text-xs font-medium text-[var(--text-strong)] shadow-overlay"
+                    >
+                      {item.label}
+                    </TooltipContent>
+                  </Tooltip>
                 </div>
               );
             }
@@ -436,7 +447,7 @@ export function SidebarContent({
         </div>
       </nav>
 
-      {/* Footer: User Identity, Support, Logout, Collapse Toggle (§5.1) */}
+      {/* Footer: User Identity, Support, Logout, Collapse Toggle */}
       <div className="border-t border-[var(--line)] px-2.5 py-3 space-y-2">
         {/* User Identity Block */}
         <div
@@ -476,16 +487,25 @@ export function SidebarContent({
         <div className={cn('space-y-0.5', collapsed && 'flex flex-col items-center')}>
           {/* Support Link */}
           {collapsed ? (
-            <Link
-              href="/dashboard/support"
-              data-testid="sidebar-link-support"
-              title="Support"
-              aria-label="Support"
-              onClick={() => onItemClick?.()}
-              className="ctp-focus grid h-10 w-10 place-items-center rounded-lg text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]"
-            >
-              <LifeBuoy className="h-[18px] w-[18px]" strokeWidth={1.75} />
-            </Link>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Link
+                  href="/dashboard/support"
+                  data-testid="sidebar-link-support"
+                  aria-label="Support"
+                  onClick={() => onItemClick?.()}
+                  className="ctp-focus grid h-10 w-10 place-items-center rounded-lg text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]"
+                >
+                  <LifeBuoy className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </Link>
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] text-xs font-medium text-[var(--text-strong)] shadow-overlay"
+              >
+                Support
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <Link
               href="/dashboard/support"
@@ -500,16 +520,25 @@ export function SidebarContent({
 
           {/* Logout Button */}
           {collapsed ? (
-            <button
-              type="button"
-              onClick={handleLogout}
-              data-testid="sidebar-logout"
-              title="Logout"
-              aria-label="Logout"
-              className="ctp-focus grid h-10 w-10 place-items-center rounded-lg text-[hsl(var(--ctp-red))] transition-colors hover:bg-[hsl(var(--ctp-red)/0.12)]"
-            >
-              <LogOut className="h-[18px] w-[18px]" strokeWidth={1.75} />
-            </button>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  type="button"
+                  onClick={handleLogout}
+                  data-testid="sidebar-logout"
+                  aria-label="Logout"
+                  className="ctp-focus grid h-10 w-10 place-items-center rounded-lg text-[hsl(var(--ctp-red))] transition-colors hover:bg-[hsl(var(--ctp-red)/0.12)]"
+                >
+                  <LogOut className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent
+                side="right"
+                className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] text-xs font-medium text-[var(--text-strong)] shadow-overlay"
+              >
+                Logout
+              </TooltipContent>
+            </Tooltip>
           ) : (
             <button
               type="button"
@@ -522,28 +551,43 @@ export function SidebarContent({
             </button>
           )}
 
-          {/* Collapse Toggle with >= 44 px hit area */}
+          {/* Collapse Toggle with >= 44 px hit area & Ctrl+B shortcut hint */}
           {onToggle && (
             collapsed ? (
-              <button
-                type="button"
-                onClick={onToggle}
-                data-testid="sidebar-collapse-toggle"
-                aria-label="Perluas sidebar"
-                className="ctp-focus grid h-11 w-11 place-items-center rounded-lg text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]"
-              >
-                <ChevronRight className="h-[18px] w-[18px]" strokeWidth={1.75} />
-              </button>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    type="button"
+                    onClick={onToggle}
+                    data-testid="sidebar-collapse-toggle"
+                    aria-label="Perluas sidebar (Ctrl+B)"
+                    className="ctp-focus grid h-11 w-11 place-items-center rounded-lg text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]"
+                  >
+                    <ChevronRight className="h-[18px] w-[18px]" strokeWidth={1.75} />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent
+                  side="right"
+                  className="rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] text-xs font-medium text-[var(--text-strong)] shadow-overlay"
+                >
+                  Perluas sidebar (Ctrl+B)
+                </TooltipContent>
+              </Tooltip>
             ) : (
               <button
                 type="button"
                 onClick={onToggle}
                 data-testid="sidebar-collapse-toggle"
                 aria-label="Ciutkan sidebar"
-                className="ctp-focus flex h-11 w-full items-center gap-2.5 rounded-lg px-2.5 text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]"
+                className="ctp-focus flex h-11 w-full items-center justify-between gap-2 rounded-lg px-2.5 text-sm text-[var(--text-muted)] transition-colors hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]"
               >
-                <ChevronLeft className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
-                <span>Ciutkan sidebar</span>
+                <span className="flex items-center gap-2.5 truncate">
+                  <ChevronLeft className="h-[18px] w-[18px] shrink-0" strokeWidth={1.75} />
+                  <span className="truncate">Ciutkan sidebar</span>
+                </span>
+                <kbd className="rounded border border-[var(--line)] bg-[var(--surface-sunken)] px-1.5 py-0.5 font-mono text-[10px] text-[var(--text-muted)]">
+                  Ctrl+B
+                </kbd>
               </button>
             )
           )}
@@ -553,7 +597,7 @@ export function SidebarContent({
   );
 }
 
-// Mobile Sidebar (Sheet - 288 px / w-72)
+// Mobile Sidebar (Sheet - 264 px / w-[264px]) — NAV-5
 export function MobileSidebar({ role, notificationStats = {} }) {
   const [open, setOpen] = useState(false);
 
@@ -563,7 +607,7 @@ export function MobileSidebar({ role, notificationStats = {} }) {
         <Button
           variant="ghost"
           size="icon"
-          className="lg:hidden rounded-lg text-[var(--text-strong)] h-10 w-10"
+          className="lg:hidden rounded-lg text-[var(--text-strong)] h-11 w-11"
           aria-label="Buka menu sidebar"
         >
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -573,7 +617,7 @@ export function MobileSidebar({ role, notificationStats = {} }) {
       </SheetTrigger>
       <SheetContent
         side="left"
-        className="w-72 border-r border-[var(--line)] bg-[var(--surface-raised)] p-0"
+        className="w-[264px] border-r border-[var(--line)] bg-[var(--surface-raised)] p-0"
       >
         <SheetTitle className="sr-only">Navigation Menu</SheetTitle>
         <SidebarContent
@@ -587,21 +631,56 @@ export function MobileSidebar({ role, notificationStats = {} }) {
   );
 }
 
-// Desktop Sidebar (collapsible - w-16 / w-[272px])
+// Desktop Sidebar (collapsible - 72px collapsed / 264px expanded) — NAV-1 & §6.6
 export function DesktopSidebar({ role, notificationStats = {} }) {
   const [collapsed, setCollapsed] = useState(false);
 
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(SIDEBAR_COLLAPSED_STORAGE_KEY);
+      if (saved === 'true') {
+        setCollapsed(true);
+      }
+    } catch {
+      // Blocked storage fallback
+    }
+  }, []);
+
+  const toggleCollapsed = useCallback(() => {
+    setCollapsed((prev) => {
+      const next = !prev;
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_STORAGE_KEY, String(next));
+      } catch {
+        // Blocked storage fallback
+      }
+      return next;
+    });
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'b') {
+        e.preventDefault();
+        toggleCollapsed();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [toggleCollapsed]);
+
   return (
     <aside
+      data-collapsed={collapsed ? 'true' : 'false'}
       className={cn(
-        'relative sticky top-0 hidden h-screen flex-shrink-0 self-start border-r border-[var(--line)] bg-[var(--surface-raised)] transition-all duration-200 lg:flex',
-        collapsed ? 'w-16' : 'w-[272px]'
+        'relative sticky top-0 hidden h-screen h-[100dvh] flex-shrink-0 self-start border-r border-[var(--line)] bg-[var(--surface-raised)] transition-all duration-150 lg:flex',
+        collapsed ? 'w-[72px]' : 'w-[264px]'
       )}
     >
       <SidebarContent
         role={role}
         collapsed={collapsed}
-        onToggle={() => setCollapsed((v) => !v)}
+        onToggle={toggleCollapsed}
         notificationStats={notificationStats}
       />
     </aside>

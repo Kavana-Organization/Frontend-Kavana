@@ -230,7 +230,7 @@ test.describe('Sidebar Component & Grouping (§5.1)', () => {
     await expect(collapseToggle).toBeVisible();
     await collapseToggle.click();
 
-    await expect(sidebar).toHaveClass(/w-16|w-\[64px\]/);
+    await expect(sidebar).toHaveClass(/w-16|w-\[64px\]|w-\[72px\]/);
 
     const groupTrigger = sidebar.locator('[data-testid="sidebar-group-persiapan-akademik"]');
     await expect(groupTrigger).toBeVisible();

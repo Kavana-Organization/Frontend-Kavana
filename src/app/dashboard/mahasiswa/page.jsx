@@ -36,9 +36,10 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { mahasiswaAPI } from '@/lib/api';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { removeAcademicTitles } from '@/lib/validators';
 import { cn } from '@/lib/utils';
 
@@ -85,24 +86,16 @@ function getFirstRecord(value) {
 }
 
 function formatDate(value) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value).slice(0, 10);
-  return date.toLocaleDateString('id-ID', {
-    weekday: 'long',
-    day: 'numeric',
-    month: 'long',
-    year: 'numeric',
-  });
+  return formatAcademicDate(value);
 }
 
 function formatTime(value) {
   if (!value) return '-';
   const raw = String(value);
-  if (/^\d{2}:\d{2}/.test(raw)) return raw.slice(0, 5);
+  if (/^\d{2}:\d{2}/.test(raw)) return `${raw.slice(0, 5)} WIB`;
   const date = new Date(value);
   if (Number.isNaN(date.getTime())) return raw;
-  return date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' });
+  return `${date.toLocaleTimeString('id-ID', { hour: '2-digit', minute: '2-digit' })} WIB`;
 }
 
 function getSidangStatus({ sidang, laporanStatus, approvedCount }) {
@@ -143,27 +136,38 @@ export default function MahasiswaDashboard() {
   const [sidangData, setSidangData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [documentFilter, setDocumentFilter] = useState('all');
+  const [widgetErrors, setWidgetErrors] = useState({
+    bimbingan: false,
+    laporan: false,
+    sidang: false,
+  });
 
   const loadDashboard = useCallback(async () => {
+    setLoading(true);
     try {
       const [profileRes, bimbinganRes, laporanRes, sidangRes] = await Promise.all([
-        mahasiswaAPI.getProfile(),
-        mahasiswaAPI.getMyBimbingan(),
+        mahasiswaAPI.getProfile().catch(() => ({ ok: false })),
+        mahasiswaAPI.getMyBimbingan().catch(() => ({ ok: false })),
         mahasiswaAPI.getMyLaporan().catch(() => ({ ok: false })),
         mahasiswaAPI.getMySidang().catch(() => ({ ok: false })),
       ]);
-      if (profileRes.ok) {
+      if (profileRes?.ok) {
         setProfile(profileRes.data);
         setUser(profileRes.data);
       }
-      if (bimbinganRes.ok) {
+      if (bimbinganRes?.ok) {
         setBimbinganList(Array.isArray(bimbinganRes.data) ? bimbinganRes.data : bimbinganRes.data?.data || []);
+        setWidgetErrors((prev) => ({ ...prev, bimbingan: false }));
+      } else {
+        setWidgetErrors((prev) => ({ ...prev, bimbingan: true }));
       }
-      if (laporanRes.ok) {
+      if (laporanRes?.ok) {
         setLaporanData(getFirstRecord(laporanRes.data));
+        setWidgetErrors((prev) => ({ ...prev, laporan: false }));
       }
-      if (sidangRes.ok) {
+      if (sidangRes?.ok) {
         setSidangData(getFirstRecord(sidangRes.data));
+        setWidgetErrors((prev) => ({ ...prev, sidang: false }));
       }
     } catch (err) {
       console.error('Error loading dashboard:', err);
@@ -447,9 +451,9 @@ export default function MahasiswaDashboard() {
       id: b.id || `B-${i + 1}`,
       actor: displayName,
       status: b.status || 'pending',
-      action: isApprovedStatus(b.status) ? 'Disetujui' : isWaitingStatus(b.status) ? 'Menunggu review' : 'Revisi',
+      action: isApprovedStatus(b.status) ? 'ACC' : isWaitingStatus(b.status) ? 'Menunggu' : 'Revisi',
       target: b.topik || b.catatan || `Bimbingan ke-${i + 1}`,
-      when: b.tanggal ? b.tanggal.slice(0, 10) : '-',
+      when: b.tanggal ? formatAcademicDate(b.tanggal) : '-',
     }));
   }, [bimbinganList, displayName]);
 
@@ -642,15 +646,15 @@ export default function MahasiswaDashboard() {
           <div className="flex flex-wrap items-center gap-4 text-xs text-[var(--text-muted)] pt-3 border-t border-[var(--line)]">
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-[hsl(var(--ctp-green))]" />
-              <span>Disetujui ({approvedCount})</span>
+              <span>ACC / Disetujui ({approvedCount})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-[hsl(var(--ctp-peach))]" />
-              <span>Menunggu review ({pendingCount})</span>
+              <span>Menunggu ({pendingCount})</span>
             </div>
             <div className="flex items-center gap-1.5">
               <span className="h-2.5 w-2.5 rounded-sm bg-[var(--surface-sunken)] border border-[var(--line)]" />
-              <span>Belum diambil ({Math.max(0, 8 - approvedCount - pendingCount)})</span>
+              <span>Logbook belum diisi ({Math.max(0, 8 - approvedCount - pendingCount)})</span>
             </div>
           </div>
         </CardContent>
@@ -768,7 +772,13 @@ export default function MahasiswaDashboard() {
             </Link>
           </CardHeader>
           <CardContent className="space-y-2">
-            {bimbinganList.length === 0 ? (
+            {widgetErrors.bimbingan ? (
+              <ErrorState
+                title="Gagal memuat logbook bimbingan"
+                description="Riwayat bimbingan belum dapat diambil. Silakan muat ulang."
+                onRetry={loadDashboard}
+              />
+            ) : bimbinganList.length === 0 ? (
               <EmptyState
                 icon={CalendarDays}
                 title="Belum ada sesi bimbingan"
@@ -787,10 +797,10 @@ export default function MahasiswaDashboard() {
                 >
                   <div className="min-w-0">
                     <span className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
-                      {s.tanggal ? s.tanggal.slice(0, 10) : '-'}
+                      {s.tanggal ? formatAcademicDate(s.tanggal) : '-'}
                     </span>
                     <p className="mt-0.5 truncate text-sm font-semibold text-[var(--text-strong)]">
-                      {s.topik || s.catatan || `Sesi ke-${i + 1}`}
+                      {s.topik || s.catatan || `Bimbingan ke-${i + 1}`}
                     </p>
                   </div>
                   <StatusBadge status={s.status} />

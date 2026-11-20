@@ -4,6 +4,9 @@ import path from 'node:path';
 const BANNED_PATTERNS = [
   { id: 'backdrop-blur', regex: /backdrop-blur/g, label: 'backdrop-blur' },
   { id: 'rounded-[', regex: /rounded-\[/g, label: 'rounded-[' },
+  { id: 'rounded-2xl', regex: /\brounded-2xl\b/g, label: 'rounded-2xl' },
+  { id: 'rounded-3xl', regex: /\brounded-3xl\b/g, label: 'rounded-3xl' },
+  { id: 'raw-hex', regex: /#[0-9a-fA-F]{3,8}\b/g, label: 'raw-hex' },
   { id: 'font-black', regex: /font-black/g, label: 'font-black' },
   { id: 'bg-gradient-to-', regex: /bg-gradient-to-/g, label: 'bg-gradient-to-' },
   { id: 'ctp-grid', regex: /ctp-grid/g, label: 'ctp-grid' },

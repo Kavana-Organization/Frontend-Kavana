@@ -22,7 +22,7 @@ export function DashboardDialog({
       <DialogContent
         showCloseButton={false}
         className={cn(
-          'w-full max-w-md rounded-2xl border border-[hsl(var(--ctp-overlay0)/0.45)] bg-[hsl(var(--ctp-base))] p-6',
+          'w-full max-w-md rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-6',
           className
         )}
       >

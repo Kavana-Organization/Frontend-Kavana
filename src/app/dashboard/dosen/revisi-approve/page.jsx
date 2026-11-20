@@ -26,24 +26,22 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { useAuthStore } from '@/store/auth-store';
 import { dosenAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
 const STATUS_LABEL = {
-  pending: { label: 'Menunggu Review', statusKey: 'pending' },
-  approved: { label: 'Disetujui', statusKey: 'approved' },
+  pending: { label: 'Menunggu', statusKey: 'pending' },
+  approved: { label: 'ACC', statusKey: 'approved' },
   rejected: { label: 'Ditolak', statusKey: 'rejected' },
-  needs_revision: { label: 'Perlu Diperbaiki', statusKey: 'pending' },
+  needs_revision: { label: 'Revisi', statusKey: 'revisi' },
 };
 
 function formatDateTime(value) {
-  if (!value) return '-';
-  const d = new Date(value);
-  if (Number.isNaN(d.getTime())) return String(value);
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium', timeStyle: 'short' }).format(d);
+  return formatAcademicDate(value, { withTime: true });
 }
 
 export default function DosenRevisiApprovePage() {
@@ -51,6 +49,7 @@ export default function DosenRevisiApprovePage() {
   const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [list, setList] = useState([]);
   const [selected, setSelected] = useState(null);
   const [reviewStatus, setReviewStatus] = useState('approved');
@@ -73,11 +72,17 @@ export default function DosenRevisiApprovePage() {
 
   const loadData = async () => {
     setLoading(true);
+    setLoadError(null);
     try {
       const res = await dosenAPI.getRevisiList();
-      if (res.ok) setList(Array.isArray(res.data) ? res.data : []);
+      if (res.ok) {
+        setList(Array.isArray(res.data) ? res.data : []);
+      } else {
+        setLoadError(res.error || 'Gagal memuat daftar revisi sidang.');
+      }
     } catch (err) {
       console.error(err);
+      setLoadError('Gagal memuat daftar revisi sidang.');
     } finally {
       setLoading(false);
     }
@@ -121,6 +126,14 @@ export default function DosenRevisiApprovePage() {
         title={pageTitle}
         subtitle="Review revisi pasca sidang dari mahasiswa bimbingan Anda."
       />
+
+      {loadError ? (
+        <ErrorState
+          title="Gagal memuat daftar revisi sidang"
+          description={loadError}
+          onRetry={loadData}
+        />
+      ) : null}
 
       <Card variant="muted">
         <CardHeader>
@@ -246,9 +259,9 @@ export default function DosenRevisiApprovePage() {
                     <SelectValue placeholder="Pilih status" />
                   </SelectTrigger>
                   <SelectContent className="bg-[var(--surface-raised)] border-[var(--line)]">
-                    <SelectItem value="approved">Approved</SelectItem>
-                    <SelectItem value="needs_revision">Needs Revision</SelectItem>
-                    <SelectItem value="rejected">Rejected</SelectItem>
+                    <SelectItem value="approved">ACC (Disetujui)</SelectItem>
+                    <SelectItem value="needs_revision">Revisi (Perlu Perbaikan)</SelectItem>
+                    <SelectItem value="rejected">Ditolak</SelectItem>
                   </SelectContent>
                 </Select>
               )}

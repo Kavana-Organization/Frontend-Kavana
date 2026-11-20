@@ -42,16 +42,24 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { useAuthStore } from '@/store/auth-store';
 import { dosenAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
 const STATUS_LABEL = {
-  approved: 'Disetujui',
+  approved: 'ACC',
   pending: 'Menunggu',
   waiting: 'Menunggu',
+  rejected: 'Revisi',
+};
+
+const FILTER_LABEL = {
+  all: 'Semua',
+  waiting: 'Menunggu',
+  approved: 'ACC',
   rejected: 'Revisi',
 };
 
@@ -128,6 +136,7 @@ export default function BimbinganApprovePage() {
   const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [list, setList] = useState([]);
   const [filter, setFilter] = useState('all');
   const [detailRow, setDetailRow] = useState(null);
@@ -151,11 +160,17 @@ export default function BimbinganApprovePage() {
   }, [role, router]);
 
   const loadData = async () => {
+    setLoadError(null);
     try {
       const res = await dosenAPI.getBimbinganList();
-      if (res.ok) setList(Array.isArray(res.data) ? res.data : []);
+      if (res.ok) {
+        setList(Array.isArray(res.data) ? res.data : []);
+      } else {
+        setLoadError(res.error || 'Gagal memuat daftar bimbingan.');
+      }
     } catch (err) {
       console.error(err);
+      setLoadError('Gagal memuat daftar bimbingan.');
     } finally {
       setLoading(false);
     }
@@ -262,12 +277,20 @@ export default function BimbinganApprovePage() {
           </p>
         </div>
         <div className="p-4">
-          <p className="text-xs font-medium text-[var(--text-muted)]">Approved</p>
+          <p className="text-xs font-medium text-[var(--text-muted)]">ACC</p>
           <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
             {approvedCount}
           </p>
         </div>
       </div>
+
+      {loadError ? (
+        <ErrorState
+          title="Gagal memuat daftar bimbingan"
+          description={loadError}
+          onRetry={loadData}
+        />
+      ) : null}
 
       <Card variant="muted">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -285,7 +308,7 @@ export default function BimbinganApprovePage() {
                 aria-pressed={filter === f}
                 onClick={() => setFilter(f)}
               >
-                {f === 'all' ? 'Semua' : f === 'waiting' ? 'Menunggu' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {FILTER_LABEL[f] || f}
               </Button>
             ))}
           </div>
@@ -330,7 +353,7 @@ export default function BimbinganApprovePage() {
                       </TableCell>
                       <TableCell data-label="Sesi" className="whitespace-normal font-mono text-xs tabular-nums text-[var(--text-body)]">
                         <div>Minggu {b.minggu_ke || '-'}</div>
-                        <div className="text-[var(--text-muted)]">{b.tanggal || '-'}</div>
+                        <div className="text-[var(--text-muted)]">{formatAcademicDate(b.tanggal)}</div>
                       </TableCell>
                       <TableCell data-label="Topik" className="whitespace-normal break-words text-sm text-[var(--text-body)] max-w-md">
                         {b.topik || b.kegiatan || '-'}
@@ -440,7 +463,7 @@ export default function BimbinganApprovePage() {
                 </div>
                 <SheetTitle className="break-words">{detailRow.display_name || '-'}</SheetTitle>
                 <SheetDescription className="break-words">
-                  {detailRow.display_sub || '-'} · {detailRow.tanggal || '-'}
+                  {detailRow.display_sub || '-'} · {formatAcademicDate(detailRow.tanggal)}
                 </SheetDescription>
               </SheetHeader>
 

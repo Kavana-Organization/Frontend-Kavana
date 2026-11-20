@@ -32,18 +32,26 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { useAuthStore } from '@/store/auth-store';
 import { dosenAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 
 const STATUS_LABEL = {
-  approved: 'Disetujui',
+  approved: 'ACC',
   rejected: 'Revisi',
   submitted: 'Menunggu',
   pending: 'Menunggu',
   waiting: 'Menunggu',
+};
+
+const FILTER_LABEL = {
+  all: 'Semua',
+  submitted: 'Menunggu',
+  approved: 'ACC',
+  rejected: 'Revisi',
 };
 
 const REVIEWABLE_STATUSES = new Set(['submitted', 'pending', 'waiting']);
@@ -101,6 +109,7 @@ export default function LaporanApprovePage() {
   const pathname = usePathname();
   const { role } = useAuthStore();
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(null);
   const [list, setList] = useState([]);
   const [filter, setFilter] = useState('all');
   const [detailRow, setDetailRow] = useState(null);
@@ -122,11 +131,17 @@ export default function LaporanApprovePage() {
   }, [role, router]);
 
   const loadData = async () => {
+    setLoadError(null);
     try {
       const res = await dosenAPI.getLaporanList();
-      if (res.ok) setList(Array.isArray(res.data) ? res.data : []);
+      if (res.ok) {
+        setList(Array.isArray(res.data) ? res.data : []);
+      } else {
+        setLoadError(res.error || 'Gagal memuat daftar laporan sidang.');
+      }
     } catch (err) {
       console.error(err);
+      setLoadError('Gagal memuat daftar laporan sidang.');
     } finally {
       setLoading(false);
     }
@@ -185,12 +200,20 @@ export default function LaporanApprovePage() {
           </p>
         </div>
         <div className="p-4">
-          <p className="text-xs font-medium text-[var(--text-muted)]">Approved</p>
+          <p className="text-xs font-medium text-[var(--text-muted)]">ACC</p>
           <p className="mt-1 text-2xl font-semibold text-[hsl(var(--ctp-green))] font-mono tabular-nums">
             {approvedCount}
           </p>
         </div>
       </div>
+
+      {loadError ? (
+        <ErrorState
+          title="Gagal memuat daftar laporan sidang"
+          description={loadError}
+          onRetry={loadData}
+        />
+      ) : null}
 
       <Card variant="muted">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -208,7 +231,7 @@ export default function LaporanApprovePage() {
                 aria-pressed={filter === f}
                 onClick={() => setFilter(f)}
               >
-                {f === 'all' ? 'Semua' : f === 'submitted' ? 'Menunggu' : f.charAt(0).toUpperCase() + f.slice(1)}
+                {FILTER_LABEL[f] || f}
               </Button>
             ))}
           </div>
@@ -252,6 +275,11 @@ export default function LaporanApprovePage() {
                           {display.subtitle ? (
                             <div className="text-xs text-[var(--text-muted)] break-words">
                               {display.subtitle}
+                            </div>
+                          ) : null}
+                          {l.submitted_at ? (
+                            <div className="text-[11px] font-mono tabular-nums text-[var(--text-muted)]">
+                              Diunggah: {formatAcademicDate(l.submitted_at)}
                             </div>
                           ) : null}
                         </button>

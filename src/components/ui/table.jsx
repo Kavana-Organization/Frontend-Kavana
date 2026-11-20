@@ -7,13 +7,24 @@ import { cn } from "@/lib/utils"
 function Table({
   className,
   stackOnMobile = false,
+  density = "comfortable",
   ...props
 }) {
   return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
+    <div
+      data-slot="table-container"
+      data-density={density}
+      className="table-scroll-container relative w-full overflow-x-auto"
+    >
       <table
         data-slot="table"
-        className={cn("w-full caption-bottom text-sm", stackOnMobile && "table-stack", className)}
+        className={cn(
+          "w-full caption-bottom text-sm",
+          density === "compact" && "[&_tbody_tr]:h-11 [&_tbody_tr]:min-h-11 [&_td]:py-2",
+          density === "comfortable" && "[&_tbody_tr]:h-[52px]",
+          stackOnMobile && "table-stack",
+          className
+        )}
         {...props} />
     </div>
   );
@@ -26,7 +37,10 @@ function TableHeader({
   return (
     <thead
       data-slot="table-header"
-      className={cn("bg-[var(--surface-sunken)] border-b border-[var(--line)] [&_tr]:border-b [&_tr]:border-[var(--line)]", className)}
+      className={cn(
+        "sticky top-0 z-10 bg-[var(--surface-sunken)] border-b border-[var(--line)] [&_tr]:border-b [&_tr]:border-[var(--line)]",
+        className
+      )}
       {...props} />
   );
 }

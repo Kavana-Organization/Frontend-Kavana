@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { ArrowRight, CalendarClock, GraduationCap, Users } from 'lucide-react';
+import { ArrowRight, CalendarClock, Clock3, GraduationCap, MapPin, Users } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import {
@@ -17,10 +17,11 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
 import { useAuthStore } from '@/store/auth-store';
 import { pengujiAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
+import { formatAcademicDate } from '@/lib/status-tone';
 
 function normalizeText(value) {
   return String(value || '').trim().toLowerCase();
@@ -53,11 +54,17 @@ function isMySidang(item, profile) {
 
 function getSidangBadgeProps(item) {
   if (item?.hasil_sidang) {
-    return { status: item.hasil_sidang };
+    if (item.hasil_sidang === 'lulus_revisi') {
+      return { status: 'lulus_revisi', label: 'Revisi' };
+    }
+    if (item.hasil_sidang === 'tidak_lulus') {
+      return { status: 'tidak_lulus', label: 'Ditolak' };
+    }
+    return { status: 'completed', label: 'Selesai' };
   }
   const raw = normalizeText(item?.status);
-  if (raw === 'completed') return { status: 'approved', label: 'Selesai' };
-  if (raw === 'ongoing') return { status: 'pending', label: 'Berlangsung' };
+  if (raw === 'completed') return { status: 'completed', label: 'Selesai' };
+  if (raw === 'ongoing') return { status: 'pending', label: 'Menunggu' };
   return { status: 'terjadwal', label: 'Terjadwal' };
 }
 
@@ -67,6 +74,28 @@ export default function PengujiDashboardPage() {
   const [loading, setLoading] = useState(true);
   const [sidang, setSidang] = useState([]);
   const [, setProfile] = useState(null);
+  const [sidangError, setSidangError] = useState(false);
+
+  const loadData = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [profileRes, sidangRes] = await Promise.all([
+        pengujiAPI.getProfile().catch(() => ({ ok: false })),
+        pengujiAPI.getSidangList().catch(() => ({ ok: false })),
+      ]);
+      const nextProfile = profileRes?.ok ? profileRes.data : null;
+      setProfile(nextProfile);
+      if (sidangRes?.ok) {
+        const rows = Array.isArray(sidangRes.data) ? sidangRes.data : sidangRes.data?.data || [];
+        setSidang(rows.filter((item) => isMySidang(item, nextProfile)));
+        setSidangError(false);
+      } else {
+        setSidangError(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
     if (role && role !== 'penguji') {
@@ -74,24 +103,7 @@ export default function PengujiDashboardPage() {
       return;
     }
     loadData();
-  }, [role, router]);
-
-  const loadData = async () => {
-    try {
-      const [profileRes, sidangRes] = await Promise.all([
-        pengujiAPI.getProfile(),
-        pengujiAPI.getSidangList(),
-      ]);
-      const nextProfile = profileRes.ok ? profileRes.data : null;
-      setProfile(nextProfile);
-      if (sidangRes.ok) {
-        const rows = Array.isArray(sidangRes.data) ? sidangRes.data : sidangRes.data?.data || [];
-        setSidang(rows.filter((item) => isMySidang(item, nextProfile)));
-      }
-    } finally {
-      setLoading(false);
-    }
-  };
+  }, [loadData, role, router]);
 
   const stats = useMemo(() => {
     const total = sidang.length;
@@ -110,6 +122,11 @@ export default function PengujiDashboardPage() {
     });
   }, [sidang]);
 
+  const nextActiveSidang = useMemo(
+    () => orderedSidang.find((item) => normalizeText(item?.status) !== 'completed') || orderedSidang[0] || null,
+    [orderedSidang]
+  );
+
   if (loading) {
     return <LoadingState variant="dashboard" label="Memuat dashboard penguji" />;
   }
@@ -118,7 +135,7 @@ export default function PengujiDashboardPage() {
     <div className="space-y-6">
       <PageHeader
         title={`Dashboard Penguji · ${TITLE_MAP.dashboard || 'Ringkasan Kegiatan'}`}
-        subtitle="Pantau jadwal sidang yang ditugaskan dan tetapkan keputusan hasil sidang."
+        subtitle="Layar fokus penguji: jadwal sidang hari ini/terdekat dan akses langsung ke form penilaian sidang."
       >
         <Button asChild size="sm">
           <Link href="/dashboard/penguji/sidang">
@@ -128,8 +145,76 @@ export default function PengujiDashboardPage() {
         </Button>
       </PageHeader>
 
+      {/* DB-5: Focus Spotlight Card — Jadwal Sidang Hari Ini / Terdekat & Direct Form Entry */}
+      <Card
+        data-testid="penguji-focus-spotlight"
+        data-source="pengujiAPI.getSidangList"
+        className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-5 sm:p-6"
+      >
+        {nextActiveSidang ? (
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="min-w-0 space-y-1.5">
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="font-mono text-xs font-semibold uppercase tracking-wider text-[var(--accent)]">
+                  Fokus Penilaian Sidang Terdekat
+                </span>
+                <StatusBadge {...getSidangBadgeProps(nextActiveSidang)} />
+              </div>
+              <h2 className="text-lg font-semibold text-[var(--text-strong)] break-words">
+                {nextActiveSidang.display_nama || nextActiveSidang.mahasiswa_nama || '-'}
+              </h2>
+              <p className="text-sm text-[var(--text-body)] break-words">
+                {nextActiveSidang.judul_proyek || 'Judul proyek belum tercantum'}
+              </p>
+              <div className="flex flex-wrap items-center gap-3 pt-1 font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                <span className="inline-flex items-center gap-1">
+                  <CalendarClock className="h-3.5 w-3.5 shrink-0" />
+                  {formatAcademicDate(nextActiveSidang.tanggal)}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Clock3 className="h-3.5 w-3.5 shrink-0" />
+                  {nextActiveSidang.waktu ? `${String(nextActiveSidang.waktu).slice(0, 5)} WIB` : '-'}
+                </span>
+                <span className="inline-flex items-center gap-1 font-sans">
+                  <MapPin className="h-3.5 w-3.5 shrink-0" />
+                  {nextActiveSidang.ruangan || '-'}
+                </span>
+              </div>
+            </div>
+            <div className="shrink-0">
+              <Button asChild className="w-full sm:w-auto">
+                <Link href="/dashboard/penguji/sidang">
+                  <span>Isi Form Penilaian</span>
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="font-mono text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
+                Jadwal Sidang Hari Ini
+              </p>
+              <h2 className="mt-1 text-base font-semibold text-[var(--text-strong)]">
+                Belum ada sesi sidang aktif yang menunggu penilaian
+              </h2>
+              <p className="mt-0.5 text-sm text-[var(--text-muted)]">
+                Sesi sidang baru akan langsung tampil di sini begitu dijadwalkan oleh koordinator prodi.
+              </p>
+            </div>
+            <Button asChild variant="outline" size="sm" className="shrink-0">
+              <Link href="/dashboard/penguji/sidang">Buka Halaman Sidang</Link>
+            </Button>
+          </div>
+        )}
+      </Card>
+
       {/* Bordered Metric Strip (no icon tiles, tabular-nums) */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden">
+      <div
+        data-source="pengujiAPI.getSidangList"
+        className="grid grid-cols-2 lg:grid-cols-4 gap-px bg-[var(--line)] border border-[var(--line)] rounded-xl overflow-hidden"
+      >
         <div className="bg-[var(--surface-raised)] p-4 sm:p-5">
           <p className="text-xs font-medium text-[var(--text-muted)]">Total sidang</p>
           <p className="mt-1 text-2xl font-semibold text-[var(--text-strong)] font-mono tabular-nums">
@@ -160,7 +245,7 @@ export default function PengujiDashboardPage() {
         </div>
       </div>
 
-      <Card variant="muted">
+      <Card variant="muted" data-source="pengujiAPI.getSidangList">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
             <CardTitle className="flex items-center gap-2 text-[var(--text-strong)]">
@@ -168,7 +253,7 @@ export default function PengujiDashboardPage() {
               <span>Sidang Penguji</span>
             </CardTitle>
             <CardDescription className="text-[var(--text-muted)]">
-              Tentukan hasil sidang: lulus, lulus dengan revisi, atau tidak lulus.
+              Tentukan hasil sidang: lulus (Selesai), lulus dengan revisi (Revisi), atau tidak lulus (Ditolak).
             </CardDescription>
           </div>
           <Button asChild variant="outline" size="sm" className="w-full sm:w-auto shrink-0">
@@ -179,7 +264,13 @@ export default function PengujiDashboardPage() {
           </Button>
         </CardHeader>
         <CardContent>
-          {orderedSidang.length === 0 ? (
+          {sidangError ? (
+            <ErrorState
+              title="Jadwal sidang penguji gagal dimuat"
+              description="Gagal mengambil daftar jadwal sidang dari server."
+              onRetry={loadData}
+            />
+          ) : orderedSidang.length === 0 ? (
             <EmptyState
               icon={Users}
               title="Belum ada sidang untuk akun penguji ini"
@@ -192,7 +283,9 @@ export default function PengujiDashboardPage() {
                   <TableHead>Mahasiswa / Kelompok</TableHead>
                   <TableHead className="w-[120px]">NPM</TableHead>
                   <TableHead>Judul Proyek</TableHead>
-                  <TableHead className="w-[150px]">Status</TableHead>
+                  <TableHead className="w-[150px]">Jadwal</TableHead>
+                  <TableHead className="w-[140px]">Status</TableHead>
+                  <TableHead className="w-[120px] text-right">Aksi</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -209,8 +302,16 @@ export default function PengujiDashboardPage() {
                       <TableCell data-label="Judul Proyek" className="whitespace-normal break-words text-sm text-[var(--text-body)] max-w-md">
                         {item.judul_proyek || '-'}
                       </TableCell>
+                      <TableCell data-label="Jadwal" className="font-mono text-xs tabular-nums text-[var(--text-muted)]">
+                        {formatAcademicDate(item.tanggal)}
+                      </TableCell>
                       <TableCell data-label="Status">
                         <StatusBadge {...badgeProps} />
+                      </TableCell>
+                      <TableCell data-label="Aksi" className="sm:text-right">
+                        <Button asChild variant="outline" size="xs">
+                          <Link href="/dashboard/penguji/sidang">Nilai Sidang</Link>
+                        </Button>
                       </TableCell>
                     </TableRow>
                   );

@@ -7,18 +7,9 @@ import { ChevronDown } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 /**
- * SidebarGroup component implementing §5.1 specification:
- * - Collapsible accordion in expanded mode with 1 px left guide line.
- * - Radix Popover flyout in 64 px rail mode with 120 ms hover-intent.
- *
- * @param {Object} props
- * @param {Object} props.group - Group definition { id, label, defaultOpen, pendingKeys, items }
- * @param {Object} [props.openIds] - Open state map { [groupId]: boolean }
- * @param {(groupId: string) => void} [props.onToggle] - Callback when group header is toggled
- * @param {boolean} [props.collapsed] - True when desktop sidebar is in 64 px rail mode
- * @param {string} [props.activeHref] - Currently active link href
- * @param {number} [props.badgeCount] - Pending counter badge
- * @param {() => void} [props.onItemClick] - Navigation click handler (e.g. closes mobile sheet)
+ * SidebarGroup component implementing PRD v1.2 §6.2 (NAV-2, NAV-3, NAV-4) & §6.7 (A11Y-2, A11Y-5):
+ * - Collapsible accordion in expanded mode with 1 px left guide line and active child indicator on parent group.
+ * - Radix Popover flyout in 72 px rail mode with 120 ms hover-intent AND keyboard-focusable tooltip label (A11Y-5).
  */
 export function SidebarGroup({
   group,
@@ -35,6 +26,7 @@ export function SidebarGroup({
   // Collapsed rail Popover state & hover-intent timer
   const [flyoutOpen, setFlyoutOpen] = useState(false);
   const hoverTimeoutRef = useRef(null);
+  const triggerRef = useRef(null);
 
   const handleMouseEnter = () => {
     if (typeof window !== 'undefined' && window.matchMedia('(pointer: fine)').matches) {
@@ -61,7 +53,7 @@ export function SidebarGroup({
   }, []);
 
   /* -------------------------------------------------------------
-   * COLLAPSED RAIL MODE (64 px)
+   * COLLAPSED RAIL MODE (72 px) — NAV-3 & A11Y-5
    * ------------------------------------------------------------- */
   if (collapsed) {
     const GroupIcon = group.items?.[0]?.icon;
@@ -75,19 +67,30 @@ export function SidebarGroup({
         <Popover.Root open={flyoutOpen} onOpenChange={setFlyoutOpen}>
           <Popover.Trigger asChild>
             <button
+              ref={triggerRef}
               type="button"
               data-testid={`sidebar-group-${group.id}`}
               aria-label={group.label}
               aria-expanded={flyoutOpen}
-              onClick={() => setFlyoutOpen((prev) => !prev)}
+              onClick={() => {
+                if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                setFlyoutOpen((prev) => !prev);
+              }}
               className={cn(
-                'ctp-focus relative grid h-10 w-10 place-items-center rounded-lg transition-colors',
+                'peer ctp-focus relative grid h-10 w-10 place-items-center rounded-lg transition-colors',
                 groupHasActive
                   ? 'bg-[var(--accent-soft)] font-medium text-[var(--accent)]'
                   : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]'
               )}
             >
               {GroupIcon && <GroupIcon className="h-[18px] w-[18px]" strokeWidth={1.75} />}
+              {groupHasActive && (
+                <span
+                  data-testid={`sidebar-group-active-dot-${group.id}`}
+                  aria-hidden="true"
+                  className="absolute bottom-1 right-1 h-1.5 w-1.5 rounded-full bg-[var(--accent)]"
+                />
+              )}
               {badgeCount > 0 && (
                 <span
                   data-testid={`sidebar-group-badge-${group.id}`}
@@ -98,6 +101,16 @@ export function SidebarGroup({
               )}
             </button>
           </Popover.Trigger>
+          {/* Keyboard focus tooltip when flyout is closed (A11Y-5) */}
+          {!flyoutOpen && (
+            <div
+              role="tooltip"
+              data-testid={`sidebar-tooltip-${group.id}`}
+              className="pointer-events-none absolute left-full top-1/2 z-50 ml-2 -translate-y-1/2 whitespace-nowrap rounded-lg border border-[var(--line)] bg-[var(--surface-raised)] px-2.5 py-1 text-xs font-medium text-[var(--text-strong)] opacity-0 shadow-overlay transition-opacity peer-focus-visible:opacity-100"
+            >
+              {group.label}
+            </div>
+          )}
           <Popover.Portal>
             <Popover.Content
               side="right"
@@ -105,6 +118,15 @@ export function SidebarGroup({
               sideOffset={8}
               onMouseEnter={handleMouseEnter}
               onMouseLeave={handleMouseLeave}
+              onEscapeKeyDown={() => {
+                if (hoverTimeoutRef.current) clearTimeout(hoverTimeoutRef.current);
+                setFlyoutOpen(false);
+                triggerRef.current?.focus();
+              }}
+              onCloseAutoFocus={(e) => {
+                e.preventDefault();
+                triggerRef.current?.focus();
+              }}
               className="z-50 min-w-[200px] rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-2 shadow-overlay outline-none"
             >
               <div className="flex items-center justify-between px-2.5 py-1 text-xs font-semibold uppercase tracking-wider text-[var(--text-muted)]">
@@ -161,7 +183,7 @@ export function SidebarGroup({
   }
 
   /* -------------------------------------------------------------
-   * EXPANDED ACCORDION MODE
+   * EXPANDED ACCORDION MODE (264 px) — NAV-2 & NAV-4
    * ------------------------------------------------------------- */
   return (
     <Collapsible.Root
@@ -173,16 +195,28 @@ export function SidebarGroup({
         <button
           type="button"
           data-testid={`sidebar-group-${group.id}`}
+          data-has-active={groupHasActive ? 'true' : 'false'}
           aria-expanded={isOpen}
           aria-controls={`sidebar-group-content-${group.id}`}
           className={cn(
             'ctp-focus group flex w-full items-center justify-between rounded-lg px-2.5 py-2 text-xs font-semibold uppercase tracking-wider transition-colors',
             groupHasActive && !isOpen
-              ? 'bg-[var(--accent-soft)] font-medium text-[var(--accent)]'
-              : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]'
+              ? 'bg-[var(--accent-soft)] font-semibold text-[var(--accent)]'
+              : groupHasActive
+                ? 'text-[var(--accent)] hover:bg-[var(--surface-sunken)]'
+                : 'text-[var(--text-muted)] hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)]'
           )}
         >
-          <span className="truncate text-left">{group.label}</span>
+          <span className="flex min-w-0 items-center gap-2 truncate text-left">
+            {groupHasActive && (
+              <span
+                data-testid={`sidebar-group-active-dot-${group.id}`}
+                aria-hidden="true"
+                className="h-1.5 w-1.5 shrink-0 rounded-full bg-[var(--accent)]"
+              />
+            )}
+            <span className="truncate">{group.label}</span>
+          </span>
           <div className="ml-2 flex shrink-0 items-center gap-1.5">
             {badgeCount > 0 && (
               <span

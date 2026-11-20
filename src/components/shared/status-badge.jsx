@@ -6,6 +6,7 @@ import {
   Calendar,
   Info,
   CircleDot,
+  RotateCcw,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -27,9 +28,15 @@ const TONE_STYLES = {
     'border-[var(--line)] bg-[var(--surface-sunken)] text-[var(--text-muted)]',
 };
 
-function renderToneIcon(tone, normalizedStatus, CustomIcon) {
+const REVISI_STATUS_KEYS = new Set(['revisi', 'needs_revision', 'lulus_revisi']);
+
+function renderToneIcon(tone, normalizedStatus, resolvedLabel, CustomIcon) {
   if (CustomIcon) {
     return <CustomIcon className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
+  }
+  const normalizedLabel = String(resolvedLabel || '').trim().toLowerCase();
+  if (REVISI_STATUS_KEYS.has(normalizedStatus) || normalizedLabel.includes('revisi')) {
+    return <RotateCcw className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />;
   }
   switch (tone) {
     case 'success':
@@ -75,7 +82,7 @@ export function StatusBadge({
       )}
       {...props}
     >
-      {renderToneIcon(tone, normalized, CustomIcon)}
+      {renderToneIcon(tone, normalized, text, CustomIcon)}
       <span>{text}</span>
     </span>
   );

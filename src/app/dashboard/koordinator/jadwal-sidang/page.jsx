@@ -28,11 +28,12 @@ import {
 import { PageHeader } from '@/components/layout/page-header';
 import { StatusBadge } from '@/components/shared/status-badge';
 import { LoadingState } from '@/components/shared/loading-state';
-import { EmptyState } from '@/components/shared/empty-state';
+import { EmptyState, ErrorState } from '@/components/shared/empty-state';
 import { DashboardDialog } from '@/components/shared/dashboard-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { koordinatorAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
+import { formatAcademicDate } from '@/lib/status-tone';
 import { cn } from '@/lib/utils';
 
 const INITIAL_FORM = { mahasiswa_id: '', penguji_id: '', tanggal: '', waktu: '', ruangan: '' };
@@ -81,10 +82,7 @@ function parseSelectedMahasiswaIds(value) {
 }
 
 function formatTanggal(value) {
-  if (!value) return '-';
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return String(value);
-  return new Intl.DateTimeFormat('id-ID', { dateStyle: 'medium' }).format(date);
+  return formatAcademicDate(value);
 }
 
 function formatWaktu(value) {
@@ -132,6 +130,8 @@ export default function JadwalSidangPage() {
   const [hasilTarget, setHasilTarget] = useState(null);
   const [hasilForm, setHasilForm] = useState({ hasil_sidang: 'lulus', catatan_sidang: '' });
   const [submittingHasil, setSubmittingHasil] = useState(false);
+  const [selectedDateFilter, setSelectedDateFilter] = useState('all');
+  const [loadError, setLoadError] = useState(false);
 
   const pageTitle = useMemo(() => {
     const segments = String(pathname || '').split('/').filter(Boolean);
@@ -155,11 +155,17 @@ export default function JadwalSidangPage() {
         koordinatorAPI.getPengujiList(),
       ]);
 
-      if (sidangRes.ok) setJadwal(Array.isArray(sidangRes.data) ? sidangRes.data : []);
+      if (sidangRes.ok) {
+        setJadwal(Array.isArray(sidangRes.data) ? sidangRes.data : []);
+        setLoadError(false);
+      } else {
+        setLoadError(true);
+      }
       if (mahasiswaRes.ok) setMahasiswa(Array.isArray(mahasiswaRes.data) ? mahasiswaRes.data : []);
       if (pengujiRes.ok) setPenguji(Array.isArray(pengujiRes.data) ? pengujiRes.data : []);
     } catch (err) {
       console.error(err);
+      setLoadError(true);
       toast.error('Gagal memuat data sidang');
     } finally {
       setLoading(false);
@@ -350,6 +356,33 @@ export default function JadwalSidangPage() {
     return result;
   }, [jadwal]);
 
+  // PG-4 & DIM-1: Responsive Calendar / Date-Grouped Strip without horizontal overflow at 390x844
+  const calendarDates = useMemo(() => {
+    const map = new Map();
+    for (const item of groupedJadwal) {
+      const dateKey = String(item?.tanggal || '').slice(0, 10) || 'tanpa-tanggal';
+      if (!map.has(dateKey)) {
+        map.set(dateKey, {
+          dateKey,
+          label: item?.tanggal ? formatTanggal(item.tanggal) : 'Belum Terjadwal',
+          count: 0,
+          rooms: new Set(),
+        });
+      }
+      const entry = map.get(dateKey);
+      entry.count += 1;
+      if (item?.ruangan) entry.rooms.add(item.ruangan);
+    }
+    return Array.from(map.values()).sort((a, b) => a.dateKey.localeCompare(b.dateKey));
+  }, [groupedJadwal]);
+
+  const visibleJadwal = useMemo(() => {
+    if (selectedDateFilter === 'all') return groupedJadwal;
+    return groupedJadwal.filter(
+      (j) => (String(j?.tanggal || '').slice(0, 10) || 'tanpa-tanggal') === selectedDateFilter
+    );
+  }, [groupedJadwal, selectedDateFilter]);
+
   const handleSchedule = async (e) => {
     e.preventDefault();
 
@@ -468,6 +501,63 @@ export default function JadwalSidangPage() {
         </Button>
       </PageHeader>
 
+      {/* PG-4 & DIM-1: Responsive Calendar Strip (zero horizontal scroll at 390x844) */}
+      {calendarDates.length > 0 && (
+        <Card variant="muted" data-testid="jadwal-kalender-strip">
+          <CardHeader className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <CardTitle className="flex items-center gap-2 text-base text-[var(--text-strong)]">
+                <CalendarClock className="h-4 w-4 shrink-0" />
+                <span>Kalender Pelaksanaan Sidang</span>
+              </CardTitle>
+              <CardDescription className="text-[var(--text-muted)]">
+                Pilih tanggal pada kalender sidang untuk memfilter sesi per hari.
+              </CardDescription>
+            </div>
+            {selectedDateFilter !== 'all' && (
+              <Button
+                type="button"
+                variant="outline"
+                size="xs"
+                onClick={() => setSelectedDateFilter('all')}
+              >
+                Semua Tanggal
+              </Button>
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
+              {calendarDates.map((d) => {
+                const isSelected = selectedDateFilter === d.dateKey;
+                return (
+                  <button
+                    key={d.dateKey}
+                    type="button"
+                    aria-pressed={isSelected}
+                    onClick={() =>
+                      setSelectedDateFilter((prev) => (prev === d.dateKey ? 'all' : d.dateKey))
+                    }
+                    className={cn(
+                      'flex flex-col items-start justify-between rounded-xl border p-3 text-left transition-colors min-w-0',
+                      isSelected
+                        ? 'border-[var(--accent)] bg-[var(--accent-soft)]'
+                        : 'border-[var(--line)] bg-[var(--surface-raised)] hover:bg-[var(--surface-sunken)]'
+                    )}
+                  >
+                    <span className="font-mono text-xs font-semibold tabular-nums text-[var(--text-strong)]">
+                      {d.label}
+                    </span>
+                    <span className="mt-1 text-xs text-[var(--text-muted)]">
+                      {d.count} sesi · {Array.from(d.rooms).slice(0, 2).join(', ') || 'Ruang belum diset'}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       <Card variant="muted">
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="min-w-0">
@@ -480,11 +570,17 @@ export default function JadwalSidangPage() {
             </CardDescription>
           </div>
           <span className="w-fit rounded-md border border-[var(--line)] bg-[var(--surface-raised)] px-2.5 py-1 text-xs font-mono font-medium tabular-nums text-[var(--text-body)]">
-            {groupedJadwal.length} sesi
+            {visibleJadwal.length} sesi
           </span>
         </CardHeader>
         <CardContent>
-          {groupedJadwal.length === 0 ? (
+          {loadError ? (
+            <ErrorState
+              title="Gagal memuat daftar jadwal sidang"
+              description="Data jadwal sidang belum dapat diambil dari server."
+              onRetry={loadData}
+            />
+          ) : visibleJadwal.length === 0 ? (
             <EmptyState
               icon={CalendarClock}
               title="Belum ada jadwal sidang"
@@ -492,7 +588,7 @@ export default function JadwalSidangPage() {
             />
           ) : (
             <div className="space-y-3">
-              {groupedJadwal.map((j, i) => (
+              {visibleJadwal.map((j, i) => (
                 <div
                   key={`${j.kelompok_id || 'mhs'}:${j.id || i}:${j.tanggal || ''}:${j.waktu || ''}`}
                   className="rounded-xl border border-[var(--line)] bg-[var(--surface-raised)] p-4"
