@@ -7,8 +7,17 @@ import {
 } from '@/components/ui/accordion';
 
 export const metadata = {
-  title: 'FAQ Sistem - Kavana',
-  description: 'Pertanyaan yang sering diajukan terkait penggunaan sistem Kavana.',
+  title: 'FAQ Sistem',
+  description:
+    'Pertanyaan yang sering diajukan seputar alur bimbingan, pemilihan track, minimal sesi bimbingan, dan validasi dokumen di Kavana.',
+  alternates: { canonical: '/faq-sistem' },
+  openGraph: {
+    type: 'article',
+    url: '/faq-sistem',
+    title: 'FAQ Sistem | Kavana',
+    description:
+      'Jawaban atas pertanyaan umum penggunaan sistem bimbingan online Kavana.',
+  },
 };
 
 const FAQ_ITEMS = [
@@ -40,8 +49,26 @@ const FAQ_ITEMS = [
 ];
 
 export default function FaqSistemPage() {
+  const faqJsonLd = {
+    '@context': 'https://schema.org',
+    '@type': 'FAQPage',
+    mainEntity: FAQ_ITEMS.map((item) => ({
+      '@type': 'Question',
+      name: item.question,
+      acceptedAnswer: {
+        '@type': 'Answer',
+        text: item.answer,
+      },
+    })),
+  };
+
   return (
-    <ResourcePageShell
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(faqJsonLd) }}
+      />
+      <ResourcePageShell
       title="FAQ Sistem"
       subtitle="Daftar pertanyaan dan jawaban umum seputar operasional platform bimbingan akademik Kavana."
       updatedLabel="26 Februari 2026"
@@ -66,6 +93,7 @@ export default function FaqSistemPage() {
           </AccordionItem>
         ))}
       </Accordion>
-    </ResourcePageShell>
+      </ResourcePageShell>
+    </>
   );
 }

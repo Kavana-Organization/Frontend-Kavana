@@ -1,8 +1,17 @@
 import ResourcePageShell from '@/components/public/resource-page-shell';
 
 export const metadata = {
-  title: 'Panduan Pengguna - Kavana',
-  description: 'Panduan ringkas penggunaan Kavana untuk mahasiswa, dosen, koordinator, dan kaprodi.',
+  title: 'Panduan Pengguna',
+  description:
+    'Panduan ringkas penggunaan Kavana untuk mahasiswa, dosen pembimbing, koordinator, dan kaprodi: alur bimbingan, proposal, laporan sidang, dan revisi.',
+  alternates: { canonical: '/panduan-pengguna' },
+  openGraph: {
+    type: 'article',
+    url: '/panduan-pengguna',
+    title: 'Panduan Pengguna | Kavana',
+    description:
+      'Panduan ringkas penggunaan Kavana untuk mahasiswa, dosen pembimbing, koordinator, dan kaprodi: alur bimbingan, proposal, laporan sidang, dan revisi.',
+  },
 };
 
 export default function PanduanPenggunaPage() {

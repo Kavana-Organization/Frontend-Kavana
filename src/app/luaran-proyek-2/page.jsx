@@ -4,8 +4,17 @@ import { Badge } from '@/components/ui/badge';
 import { PROJECT_OUTPUTS } from '@/lib/constants';
 
 export const metadata = {
-  title: 'Luaran Proyek 2 - Kavana',
-  description: 'Representasi luaran Proyek 2 untuk aplikasi Kavana.',
+  title: 'Luaran Proyek 2',
+  description:
+    'Luaran Proyek 2 Kavana: implementasi basis data, API, dan integrasi modul bimbingan.',
+  alternates: { canonical: '/luaran-proyek-2' },
+  openGraph: {
+    type: 'article',
+    url: '/luaran-proyek-2',
+    title: 'Luaran Proyek 2 | Kavana',
+    description:
+      'Luaran Proyek 2 Kavana: implementasi basis data, API, dan integrasi modul bimbingan.',
+  },
 };
 
 const OUTPUT_ICONS = [Database, BookOpenText, FileText, Megaphone];

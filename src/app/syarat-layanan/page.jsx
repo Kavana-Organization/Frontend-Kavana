@@ -1,8 +1,17 @@
 import ResourcePageShell from '@/components/public/resource-page-shell';
 
 export const metadata = {
-  title: 'Syarat Layanan - Kavana',
-  description: 'Ketentuan penggunaan platform Kavana untuk seluruh pengguna.',
+  title: 'Syarat Layanan',
+  description:
+    'Ketentuan penggunaan platform bimbingan online Kavana bagi mahasiswa, dosen, koordinator, kaprodi, dan admin.',
+  alternates: { canonical: '/syarat-layanan' },
+  openGraph: {
+    type: 'article',
+    url: '/syarat-layanan',
+    title: 'Syarat Layanan | Kavana',
+    description:
+      'Ketentuan penggunaan platform bimbingan online Kavana bagi mahasiswa, dosen, koordinator, kaprodi, dan admin.',
+  },
 };
 
 export default function SyaratLayananPage() {

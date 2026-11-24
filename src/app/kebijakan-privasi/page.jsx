@@ -1,8 +1,17 @@
 import ResourcePageShell from '@/components/public/resource-page-shell';
 
 export const metadata = {
-  title: 'Kebijakan Privasi - Kavana',
-  description: 'Kebijakan privasi penggunaan data pada platform Kavana.',
+  title: 'Kebijakan Privasi',
+  description:
+    'Kebijakan privasi Kavana: data apa yang dikumpulkan, dasar pemrosesan, masa simpan, dan hak pengguna atas data akademik.',
+  alternates: { canonical: '/kebijakan-privasi' },
+  openGraph: {
+    type: 'article',
+    url: '/kebijakan-privasi',
+    title: 'Kebijakan Privasi | Kavana',
+    description:
+      'Kebijakan privasi Kavana: data apa yang dikumpulkan, dasar pemrosesan, masa simpan, dan hak pengguna atas data akademik.',
+  },
 };
 
 export default function KebijakanPrivasiPage() {
