@@ -34,13 +34,15 @@ import { useAuthStore } from '@/store/auth-store';
 import { adminAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
 
-const FALLBACK_ROLE_DISTRIBUTION = [
-  { name: 'Admin', v: 2 },
-  { name: 'Kaprodi', v: 1 },
-  { name: 'Koordinator', v: 3 },
-  { name: 'Dosen', v: 12 },
-  { name: 'Mahasiswa', v: 148 },
-];
+const ROLE_LABELS = {
+  mahasiswa: 'Mahasiswa',
+  dosen: 'Dosen',
+  kaprodi: 'Kaprodi',
+  koordinator: 'Koordinator',
+  penguji: 'Penguji',
+  admin: 'Admin',
+  developer: 'Developer',
+};
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -96,6 +98,23 @@ export default function AdminDashboard() {
   const totalUsers = stats?.total_users || users.length || 0;
   const totalMahasiswa = stats?.total_mahasiswa || 0;
   const totalDosen = stats?.total_dosen || 0;
+
+  const roleDistribution = useMemo(() => {
+    const dist = stats?.role_distribution;
+    if (dist && typeof dist === 'object') {
+      return Object.entries(dist)
+        .map(([key, v]) => ({ name: ROLE_LABELS[key] || key, v: Number(v) || 0 }))
+        .filter((d) => d.v > 0);
+    }
+    const counts = users.reduce((acc, u) => {
+      const key = u?.role || 'lainnya';
+      acc[key] = (acc[key] || 0) + 1;
+      return acc;
+    }, {});
+    return Object.entries(counts)
+      .map(([key, v]) => ({ name: ROLE_LABELS[key] || key, v }))
+      .filter((d) => d.v > 0);
+  }, [stats, users]);
 
   const filteredUsers = useMemo(() => {
     return users.filter((u) => {
@@ -163,7 +182,7 @@ export default function AdminDashboard() {
               Cari dan filter pengguna lintas peran, atau buka Kelola Users untuk aksi edit profil dan reset password.
             </CardDescription>
             <div className="flex flex-wrap gap-1.5 pt-1" role="group" aria-label="Filter cepat role">
-              {['all', 'mahasiswa', 'dosen', 'koordinator', 'kaprodi', 'admin'].map((r) => (
+              {['all', 'mahasiswa', 'dosen', 'koordinator', 'kaprodi', 'penguji', 'admin'].map((r) => (
                 <Button
                   key={r}
                   type="button"
@@ -269,11 +288,15 @@ export default function AdminDashboard() {
           <CardContent>
             {widgetErrors.stats ? (
               <ErrorState title="Statistik distribusi role gagal dimuat" onRetry={loadDashboard} />
+            ) : roleDistribution.length === 0 ? (
+              <div className="flex h-[240px] items-center justify-center rounded-xl border border-dashed border-[var(--line)] text-sm text-[var(--text-muted)]">
+                Belum ada pengguna terdaftar
+              </div>
             ) : (
               <>
                 <div className="h-[240px] w-full">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={FALLBACK_ROLE_DISTRIBUTION} margin={{ left: 4, right: 4, top: 10, bottom: 0 }}>
+                    <BarChart data={roleDistribution} margin={{ left: 4, right: 4, top: 10, bottom: 0 }}>
                       <CartesianGrid vertical={false} />
                       <XAxis
                         dataKey="name"
@@ -291,7 +314,10 @@ export default function AdminDashboard() {
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
-                <p className="mt-2 text-xs text-[var(--text-muted)]">Contoh data</p>
+                <p className="mt-2 text-xs text-[var(--text-muted)]">
+                  Total {roleDistribution.reduce((sum, d) => sum + d.v, 0)} pengguna. Dosen dihitung sekali sesuai role utamanya
+                  (kaprodi &gt; koordinator &gt; penguji &gt; dosen).
+                </p>
               </>
             )}
           </CardContent>
