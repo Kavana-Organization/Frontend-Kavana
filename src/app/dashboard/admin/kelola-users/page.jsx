@@ -49,6 +49,7 @@ import { ConfirmActionDialog } from '@/components/shared/confirm-action-dialog';
 import { useAuthStore } from '@/store/auth-store';
 import { adminAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
+import { isActiveFlag } from '@/lib/utils';
 
 const ROLE_COLORS = {
   mahasiswa: 'ctp-blue',
@@ -171,13 +172,14 @@ export default function KelolaUsersPage() {
   );
 
   const handleToggle = async (user) => {
+    const currentlyActive = isActiveFlag(user.is_active);
     try {
-      const res = await adminAPI.updateUserStatus(user.id, user.role, user.is_active === false);
+      const res = await adminAPI.updateUserStatus(user.id, user.role, !currentlyActive);
       if (!res.ok) {
         toast.error(res.error || 'Gagal mengubah status user');
         return;
       }
-      toast.success(`User ${user.is_active === false ? 'diaktifkan' : 'dinonaktifkan'}`);
+      toast.success(`User ${currentlyActive ? 'dinonaktifkan' : 'diaktifkan'}`);
       await loadData();
     } catch (err) {
       console.error(err);
@@ -374,7 +376,7 @@ export default function KelolaUsersPage() {
               <TableBody>
                 {filtered.map((user, index) => {
                   const color = ROLE_COLORS[user.role] || 'ctp-overlay1';
-                  const isActive = user.is_active !== false;
+                  const isActive = isActiveFlag(user.is_active);
                   return (
                     <TableRow key={user.id || index}>
                       <TableCell data-label="Pengguna" className="min-w-0">

@@ -33,6 +33,7 @@ import { StatusBadge } from '@/components/shared/status-badge';
 import { useAuthStore } from '@/store/auth-store';
 import { adminAPI } from '@/lib/api';
 import { TITLE_MAP } from '@/lib/constants';
+import { isActiveFlag } from '@/lib/utils';
 
 const ROLE_LABELS = {
   mahasiswa: 'Mahasiswa',
@@ -259,8 +260,8 @@ export default function AdminDashboard() {
                     </TableCell>
                     <TableCell data-label="Status">
                       <StatusBadge
-                        status={u.is_active !== false ? 'active' : 'revoked'}
-                        label={u.is_active !== false ? 'Aktif' : 'Nonaktif'}
+                        status={isActiveFlag(u.is_active) ? 'active' : 'revoked'}
+                        label={isActiveFlag(u.is_active) ? 'Aktif' : 'Nonaktif'}
                       />
                     </TableCell>
                     <TableCell data-label="Aksi" className="sm:text-right">
