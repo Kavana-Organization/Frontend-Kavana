@@ -16,16 +16,11 @@ import {
 } from '@/lib/status-tone';
 
 const TONE_STYLES = {
-  success:
-    'border-[hsl(var(--ctp-green)/0.35)] bg-[hsl(var(--ctp-green)/0.12)] text-emerald-800 dark:border-[hsl(var(--ctp-green)/0.3)] dark:bg-[hsl(var(--ctp-green)/0.15)] dark:text-emerald-200',
-  warning:
-    'border-[hsl(var(--ctp-peach)/0.35)] bg-[hsl(var(--ctp-peach)/0.12)] text-amber-900 dark:border-[hsl(var(--ctp-peach)/0.3)] dark:bg-[hsl(var(--ctp-peach)/0.15)] dark:text-amber-200',
-  danger:
-    'border-[hsl(var(--ctp-red)/0.35)] bg-[hsl(var(--ctp-red)/0.12)] text-red-800 dark:border-[hsl(var(--ctp-red)/0.3)] dark:bg-[hsl(var(--ctp-red)/0.15)] dark:text-red-200',
-  info:
-    'border-[hsl(var(--ctp-blue)/0.35)] bg-[hsl(var(--ctp-blue)/0.12)] text-blue-800 dark:border-[hsl(var(--ctp-blue)/0.3)] dark:bg-[hsl(var(--ctp-blue)/0.15)] dark:text-blue-200',
-  neutral:
-    'border-[var(--line)] bg-[var(--surface-sunken)] text-[var(--text-muted)]',
+  success: 'status-stamp--success',
+  warning: 'status-stamp--warning',
+  danger: 'status-stamp--danger',
+  info: 'status-stamp--info',
+  neutral: 'status-stamp--neutral',
 };
 
 const REVISI_STATUS_KEYS = new Set(['revisi', 'needs_revision', 'lulus_revisi']);
@@ -76,7 +71,7 @@ export function StatusBadge({
       data-status={status}
       data-tone={tone}
       className={cn(
-        'inline-flex items-center gap-1.5 rounded-md border px-2 py-0.5 text-xs font-medium w-fit shrink-0 select-none',
+        'status-stamp',
         TONE_STYLES[tone] ?? TONE_STYLES.neutral,
         className
       )}

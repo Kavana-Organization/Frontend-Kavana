@@ -16,7 +16,7 @@ const buttonVariants = cva(
           "border border-[var(--line)] bg-[var(--surface-raised)] hover:bg-[var(--surface-sunken)] hover:text-accent-foreground dark:bg-input/30 dark:border-input dark:hover:bg-input/50",
         secondary: "bg-[var(--surface-sunken)] text-secondary-foreground hover:bg-[var(--surface-sunken)]/80",
         ghost:
-          "hover:bg-accent hover:text-accent-foreground dark:hover:bg-accent/50",
+          "hover:bg-[var(--surface-sunken)] hover:text-[var(--text-strong)] dark:hover:bg-[var(--surface-sunken)]",
         link: "text-primary underline-offset-4 hover:underline",
       },
       size: {

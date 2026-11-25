@@ -50,6 +50,25 @@ Bukan soal selera, tapi tiga pertanyaan pengguna yang sekarang belum dijawab cep
 
 Arah desain di bawah ini menjawab ketiganya secara struktural.
 
+## 2.1 Yang dipertahankan: shell aplikasi
+
+Keputusan pemilik produk (24 Nov 2026): **konsep shell yang ada sekarang tidak
+diganti**. Perombakan hanya menyentuh token, tipografi, jarak, warna, dan state di
+dalamnya.
+
+Yang **tetap** seperti sekarang:
+- Header atas (topbar): judul halaman, aksi global, tombol tema, menu profil.
+- Sidebar dengan perilaku collapse dan grup menu yang bisa dibuka-tutup (dropdown).
+- Struktur menu per peran dari `src/lib/menu-groups.js` dan `getMenuHref`.
+- Breadcrumb, `PageHeader` (judul + subjudul), dan pola halaman daftar-ke-detail.
+- Tombol WhatsApp mengambang dan letak notifikasi.
+
+Yang **boleh** berubah: warna, jenis huruf, radius, ketebalan garis, jarak, gaya
+tombol dan tabel, label status, serta cara state kosong/memuat/galat ditampilkan.
+
+Konsekuensi: tidak ada perubahan struktur informasi, tidak ada menu baru, tidak ada
+pola navigasi baru. Pengguna yang sudah hafal letak menu tidak perlu belajar ulang.
+
 ---
 
 ## 3. Dials (wajib, dipegang dari halaman pertama sampai terakhir)

@@ -110,6 +110,9 @@ lolos uji.
 - Landing publik diselaraskan dengan bahasa visual baru.
 
 **Tidak disentuh di fase ini**
+- **Shell aplikasi**: header atas, sidebar beserta collapse dan dropdown grup menu,
+  breadcrumb, dan struktur menu per peran di `src/lib/menu-groups.js`. Konsepnya
+  dipertahankan, hanya gayanya yang mengikuti token baru (lihat `DESIGN.md` §2.1).
 - Logika API, otorisasi, dan struktur rute. Perubahan hanya presentasi.
 - Alur backend (SSO, upload file, backup). Itu rencana terpisah.
 - SEO teknis yang sudah selesai (`robots`, `sitemap`, metadata, JSON-LD).
@@ -136,6 +139,20 @@ Tidak ada fase yang boleh menumpuk utang ke fase berikutnya.
 
 **Terima:** halaman lama tetap berjalan dengan token baru, tidak ada regresi build,
 kontras AA lolos di kedua tema.
+
+**Status pelaksanaan P0 (24 Nov 2026)**
+
+| Item | Status | Bukti |
+|---|---|---|
+| Perbaiki guard `raw-hex` di `opengraph-image.jsx` | Selesai | `npm run guard`: 0 temuan, 0 file |
+| Token palet kertas-tinta di `globals.css` | Selesai | 20 pasangan warna diuji, semua lolos AA (terendah 4,60:1 pada aksen ochre) |
+| Radius 6/10/12 dan token kepadatan tabel | Selesai | `--radius: .625rem`, `--radius-control`, `--table-row-staff/student` |
+| Kamus status tunggal | Sudah ada | `src/lib/status-tone.js` (STATUS_TONE, DEFAULT_STATUS_LABELS) diperluas menjadi dasar `StatusStamp` |
+| Cap status dengan teks dan bentuk | Selesai | `.status-stamp--*` di `globals.css`, dipakai `src/components/shared/status-badge.jsx`; menunggu = garis putus-putus |
+| Hapus utilitas mati | Selesai | `ctp-ring`, `soft-card`, `soft-panel`, `soft-section-title`, `--font-ui` (0 pemakaian) |
+| Pemeriksaan build | Selesai | `npm run build` lolos, 86 halaman |
+| Primitif `Section`, `DataTable`, `ActionPanel`, `FormShell` | Belum | Dikerjakan berikutnya di P0 |
+| Serif untuk halaman publik | Belum | Dijadwalkan di P3 sesuai D-3 |
 
 ### Fase P1: Dashboard lima peran
 

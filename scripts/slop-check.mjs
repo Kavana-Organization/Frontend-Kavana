@@ -22,10 +22,19 @@ const ALLOWED_BACKDROP_BLUR = [
   path.normalize('src/components/ui/alert-dialog.jsx'),
 ];
 
+// Satori (ImageResponse) tidak mengenal CSS variable, jadi warna di gambar OG
+// harus berupa nilai literal. Ini bukan pelanggaran token, melainkan batasan
+// teknologi renderer-nya. Nilainya tetap disamakan dengan palet DESIGN.md.
+const ALLOWED_RAW_HEX = [path.normalize('src/app/opengraph-image.jsx')];
+
 function isAllowedFile(filePath, patternId) {
   if (patternId === 'backdrop-blur') {
     const normalized = path.normalize(filePath);
     return ALLOWED_BACKDROP_BLUR.some((allowed) => normalized.endsWith(allowed));
+  }
+  if (patternId === 'raw-hex') {
+    const normalized = path.normalize(filePath);
+    return ALLOWED_RAW_HEX.some((allowed) => normalized.endsWith(allowed));
   }
   return false;
 }
