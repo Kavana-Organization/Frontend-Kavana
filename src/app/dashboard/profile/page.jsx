@@ -6,7 +6,7 @@ import Image from 'next/image';
 import {
   User, Mail, Phone, GraduationCap, Hash, Camera, Save,
   Shield, Briefcase, Calendar, Pencil, X, Key, Sun, Moon,
-  LogOut, ChevronRight,
+  LogOut, ChevronRight, ShieldCheck, BadgeCheck, Fingerprint,
 } from 'lucide-react';
 import { toast } from '@/lib/alert';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -83,6 +83,7 @@ export default function ProfilePage() {
   const { role, setUser, logout } = useAuthStore();
   const { theme, setTheme, mounted } = useThemeLocal();
   const fileInputRef = useRef(null);
+  const kodeDosenRef = useRef(null);
 
   const [profile, setProfile] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -91,17 +92,18 @@ export default function ProfilePage() {
   const [uploading, setUploading] = useState(false);
 
   // Edit form
-  const [form, setForm] = useState({ nama: '', email: '', no_wa: '' });
+  const [form, setForm] = useState({ nama: '', email: '', no_wa: '', kode_dosen: '', nik: '' });
 
   // Password form
   const [pwForm, setPwForm] = useState({ oldPw: '', newPw: '', confirmPw: '' });
   const [pwSaving, setPwSaving] = useState(false);
 
   const isMahasiswa = role === 'mahasiswa';
+  const isDosenBased = ['dosen', 'koordinator', 'kaprodi', 'penguji'].includes(role);
   const roleDisplay = ROLE_LABEL[role] || role || '-';
 
-  const loadProfile = useCallback(async () => {
-    setLoading(true);
+  const loadProfile = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const fetchProfile = getProfileAPI(role);
       const res = await fetchProfile();
@@ -112,6 +114,9 @@ export default function ProfilePage() {
           nama: res.data.nama || '',
           email: res.data.email || '',
           no_wa: res.data.no_wa || res.data.whatsapp || '',
+          kode_dosen: res.data.kode_dosen || '',
+          // NIK tidak pernah dikirim penuh; field edit selalu mulai kosong
+          nik: '',
         });
       }
     } catch {
@@ -129,10 +134,18 @@ export default function ProfilePage() {
       toast.error('Nama dan email wajib diisi');
       return;
     }
+    if (isDosenBased && form.nik && !/^\d{16}$/.test(form.nik.trim())) {
+      toast.error('NIK harus 16 digit angka');
+      return;
+    }
     setSaving(true);
     try {
       const payload = { nama: form.nama.trim(), email: form.email.trim() };
       if (isMahasiswa && form.no_wa) payload.whatsapp = form.no_wa.trim();
+      if (isDosenBased) {
+        payload.kode_dosen = form.kode_dosen.trim();
+        if (form.nik.trim()) payload.nik = form.nik.trim();
+      }
 
       const res = await authAPI.updateProfile(payload);
       if (res.ok) {
@@ -140,6 +153,7 @@ export default function ProfilePage() {
         setUser({ ...profile, ...payload });
         setEditing(false);
         toast.success('Profil berhasil disimpan!');
+        if (isDosenBased) await loadProfile(true);
       } else {
         toast.error(res.error || 'Gagal menyimpan');
       }
@@ -210,8 +224,18 @@ export default function ProfilePage() {
       nama: profile?.nama || '',
       email: profile?.email || '',
       no_wa: profile?.no_wa || profile?.whatsapp || '',
+      kode_dosen: profile?.kode_dosen || '',
+      nik: '',
     });
     setEditing(false);
+  };
+
+  const startEditingSignature = () => {
+    setEditing(true);
+    setTimeout(() => {
+      kodeDosenRef.current?.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      kodeDosenRef.current?.focus();
+    }, 60);
   };
 
   const handleLogout = () => {
@@ -234,6 +258,7 @@ export default function ProfilePage() {
 
   const p = profile || {};
   const avatarUrl = p.foto_profil || p.avatar || p.profile_image || null;
+  const signatureReady = Boolean(p.signature_ready);
   const dosenPembimbingDisplay =
     p.dosen_pembimbing ||
     p.pembimbing ||
@@ -370,6 +395,46 @@ export default function ProfilePage() {
                       )}
                     </Field>
                   )}
+                  {isDosenBased && (
+                    <>
+                      <Field
+                        label="Kode Dosen"
+                        hint="Dicetak pada tanda tangan QR formulir bimbingan."
+                      >
+                        {(a11y) => (
+                          <Input
+                            {...a11y}
+                            ref={kodeDosenRef}
+                            name="kode_dosen"
+                            value={form.kode_dosen}
+                            onChange={(e) => setForm((f) => ({ ...f, kode_dosen: e.target.value }))}
+                            placeholder="Contoh: ULBI-D4TI-001"
+                            maxLength={20}
+                            className="font-mono"
+                          />
+                        )}
+                      </Field>
+                      <Field
+                        label="NIK"
+                        hint="Kosongkan jika tidak ingin mengubah. NIK lengkap hanya disimpan di server."
+                      >
+                        {(a11y) => (
+                          <Input
+                            {...a11y}
+                            name="nik"
+                            value={form.nik}
+                            onChange={(e) =>
+                              setForm((f) => ({ ...f, nik: e.target.value.replace(/\D/g, '').slice(0, 16) }))
+                            }
+                            placeholder={p.nik_masked || '16 digit'}
+                            inputMode="numeric"
+                            maxLength={16}
+                            className="font-mono tabular-nums"
+                          />
+                        )}
+                      </Field>
+                    </>
+                  )}
                   <div className="flex flex-wrap items-center gap-2 pt-1">
                     <Button type="submit" disabled={saving}>
                       <Save className="h-4 w-4" aria-hidden="true" />
@@ -405,6 +470,40 @@ export default function ProfilePage() {
               )}
             </CardContent>
           </Card>
+
+          {isDosenBased && (
+            <Card variant="muted" className="bg-[var(--surface-raised)]">
+              <CardHeader className="border-b border-[var(--line)]">
+                <CardTitle className="flex items-center gap-2 text-base">
+                  <ShieldCheck className="h-4 w-4 text-[var(--text-muted)] shrink-0" aria-hidden="true" />
+                  <span>Identitas Tanda Tangan</span>
+                </CardTitle>
+                <CardDescription>
+                  Kode Dosen dan NIK dicetak pada QR setiap sesi bimbingan yang Anda setujui.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <StatusBadge
+                  status={signatureReady ? 'active' : 'waiting'}
+                  label={signatureReady ? 'Tanda tangan aktif' : 'Belum lengkap'}
+                />
+                <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <InfoRow icon={BadgeCheck} label="Kode Dosen" value={p.kode_dosen} mono />
+                  <InfoRow icon={Fingerprint} label="NIK" value={p.nik_masked} mono />
+                </dl>
+                <p className="text-xs text-[var(--text-muted)]">
+                  Tanpa data ini, QR tetap terbit tetapi identitas resmi tidak ditampilkan saat
+                  formulir diverifikasi.
+                </p>
+                {!signatureReady && (
+                  <Button variant="outline" size="sm" onClick={startEditingSignature}>
+                    <Pencil className="h-3.5 w-3.5" aria-hidden="true" />
+                    <span>Lengkapi sekarang</span>
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+          )}
         </div>
 
         {/* ===================== RIGHT COLUMN: SECURITY & PREFERENCES ===================== */}
