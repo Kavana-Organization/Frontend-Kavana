@@ -134,8 +134,8 @@ export default function ProfilePage() {
       toast.error('Nama dan email wajib diisi');
       return;
     }
-    if (isDosenBased && form.nik && !/^\d{16}$/.test(form.nik.trim())) {
-      toast.error('NIK harus 16 digit angka');
+    if (isDosenBased && form.nik && !/^[A-Za-z0-9.\-/]{4,32}$/.test(form.nik.trim())) {
+      toast.error('NIK harus 4-32 karakter, hanya huruf, angka, titik, garis miring, atau tanda hubung');
       return;
     }
     setSaving(true);
@@ -415,21 +415,19 @@ export default function ProfilePage() {
                         )}
                       </Field>
                       <Field
-                        label="NIK"
-                        hint="Kosongkan jika tidak ingin mengubah. NIK lengkap hanya disimpan di server."
+                        label="NIK Kepegawaian"
+                        hint="Nomor identitas kepegawaian, bukan NIK kependudukan. Kosongkan jika tidak ingin mengubah."
                       >
                         {(a11y) => (
                           <Input
                             {...a11y}
                             name="nik"
                             value={form.nik}
-                            onChange={(e) =>
-                              setForm((f) => ({ ...f, nik: e.target.value.replace(/\D/g, '').slice(0, 16) }))
-                            }
-                            placeholder={p.nik_masked || '16 digit'}
-                            inputMode="numeric"
-                            maxLength={16}
-                            className="font-mono tabular-nums"
+                            onChange={(e) => setForm((f) => ({ ...f, nik: e.target.value.slice(0, 32) }))}
+                            placeholder={p.nik_masked || 'Contoh: ULBI-2024/001'}
+                            maxLength={32}
+                            autoComplete="off"
+                            className="font-mono"
                           />
                         )}
                       </Field>
@@ -479,7 +477,8 @@ export default function ProfilePage() {
                   <span>Identitas Tanda Tangan</span>
                 </CardTitle>
                 <CardDescription>
-                  Kode Dosen dan NIK dicetak pada QR setiap sesi bimbingan yang Anda setujui.
+                  Kode Dosen dan NIK kepegawaian dicetak pada QR setiap sesi bimbingan yang Anda
+                  setujui.
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
@@ -489,7 +488,7 @@ export default function ProfilePage() {
                 />
                 <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                   <InfoRow icon={BadgeCheck} label="Kode Dosen" value={p.kode_dosen} mono />
-                  <InfoRow icon={Fingerprint} label="NIK" value={p.nik_masked} mono />
+                  <InfoRow icon={Fingerprint} label="NIK Kepegawaian" value={p.nik_masked} mono />
                 </dl>
                 <p className="text-xs text-[var(--text-muted)]">
                   Tanpa data ini, QR tetap terbit tetapi identitas resmi tidak ditampilkan saat
