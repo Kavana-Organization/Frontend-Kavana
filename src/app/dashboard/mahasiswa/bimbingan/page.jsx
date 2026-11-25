@@ -196,7 +196,13 @@ export default function BimbinganPage() {
   const isScheduleCompleted = String(bimbinganScheduleStatus || '').toLowerCase() === 'completed';
   const isScheduleEnded = Boolean(bimbinganEndDate && todayDateInputValue() > bimbinganEndDate);
   const canAddBimbingan = activeSessionCount < MAX_SESSIONS && !isScheduleEnded && !isScheduleCompleted;
-  const canExport = hasPembimbing && Boolean(judulProyek) && approvedCount > 0;
+  const canExport = hasPembimbing && Boolean(judulProyek) && approvedCount >= MAX_SESSIONS;
+  const remainingSessionsToExport = Math.max(0, MAX_SESSIONS - approvedCount);
+  const exportBlockedReason = !hasPembimbing
+    ? 'Export tersedia setelah dosen pembimbing ditetapkan'
+    : !judulProyek
+      ? 'Export tersedia setelah judul proyek disetujui'
+      : `Kartu bimbingan bisa diunduh setelah ${MAX_SESSIONS} sesi disetujui. Saat ini ${approvedCount} dari ${MAX_SESSIONS} sesi`;
 
   const handleExport = async (format) => {
     if (!canExport || exporting) return;
@@ -274,6 +280,11 @@ export default function BimbinganPage() {
                 />
               ))}
             </div>
+            <p className="mt-2 text-xs text-[var(--text-muted)]">
+              {canExport
+                ? 'Kartu bimbingan sudah bisa diunduh.'
+                : `Kartu bimbingan bisa diunduh setelah ${MAX_SESSIONS} sesi disetujui. Kurang ${remainingSessionsToExport} sesi lagi.`}
+            </p>
           </CardContent>
         </Card>
       </div>
@@ -297,7 +308,7 @@ export default function BimbinganPage() {
                   variant="outline"
                   disabled={!canExport || exporting}
                   className="min-h-[44px]"
-                  title={!canExport ? 'Perlu pembimbing, judul, dan minimal 1 bimbingan disetujui' : 'Export formulir bimbingan'}
+                  title={!canExport ? exportBlockedReason : 'Unduh kartu bimbingan (PDF)'}
                 >
                   <Download className="h-4 w-4 mr-1.5" />
                   <span>{exporting ? 'Mengunduh...' : 'Export'}</span>
