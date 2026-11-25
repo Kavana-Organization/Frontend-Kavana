@@ -4,7 +4,9 @@ Status: **rencana, belum ada implementasi**. Tidak ada satu pun komponen aplikas
 yang diubah. Dokumen arah desain ada di `docs/DESIGN.md`.
 
 Tanggal: 2026-11-24
-Basis kode: `New-Frontend` branch `main` (commit `46eacbd`)
+Basis dokumen: `docs/UIUX_RESEARCH.md` (pedoman GOV.UK, W3C, IBM Carbon, Microsoft
+Fluent, NN/g, dan dua studi dasbor akademik). Rujukan temuan dipakai sebagai T-1
+sampai T-6 di seluruh dokumen ini.
 
 ---
 
@@ -44,7 +46,7 @@ tanpa identitas. Keduanya salah arah, dan itu sebabnya arah desain terasa bingun
 |---|---|---|---|
 | Metafora | Berkas dan papan kerja prodi | Perpustakaan yang tenang | Majalah editorial |
 | Dials | ENERGY 1 / RHYTHM 2 / MOTION 1 | ENERGY 1 / RHYTHM 1 / MOTION 1 | ENERGY 3 / RHYTHM 3 / MOTION 2 |
-| Tipografi | Serif untuk judul, sans humanis untuk isi | Sans saja, sangat tenang | Tipografi besar, kontras ekstrem |
+| Tipografi | Serif untuk halaman publik dan dokumen, sans di dalam aplikasi | Sans saja, sangat tenang | Tipografi besar, kontras ekstrem |
 | Struktur | Tahap akademik sebagai tulang punggung | Daftar dan teks panjang | Blok warna, komposisi asimetris |
 | Kekuatan | Cepat menjawab "tahap mana" dan "apa berikutnya" | Nyaman untuk membaca lama | Berkesan, cocok untuk landing |
 | Kelemahan | Butuh disiplin komponen baru | Terasa steril, lambat untuk entri data | Melelahkan untuk kerja 8 jam |
@@ -54,6 +56,16 @@ tanpa identitas. Keduanya salah arah, dan itu sebabnya arah desain terasa bingun
 memakai kepadatan dan kelegaan ala B (tetap satu sistem warna dan tipografi).
 Landing publik boleh meminjam energi C sebatas tipografi dan komposisi, tanpa
 memakai pola slop.
+
+Dasar bukti pilihan ini:
+- T-1: staf sistem administrasi perlu berpindah tugas cepat, jadi satu layar dengan
+  antrean lebih tepat daripada wizard bertahap (GOV.UK Service Manual).
+- T-2: dasbor operasional (dosen, mahasiswa, admin) tidak butuh grafik; yang analitis
+  (koordinator, kaprodi) butuh (NN/g).
+- T-3: studi APMIS mendapat SUS 95/86/92 dengan menempatkan pemantauan tahap sebagai
+  inti sistem, bukan grafik bisnis yang rumit.
+- T-6: serif tidak terbukti lebih mudah dibaca, tetapi familiaritas berpengaruh, jadi
+  serif dibatasi pada halaman yang dibaca seperti dokumen.
 
 Alasan penolakan:
 - B murni: admin dan koordinator butuh kepadatan tabel, bukan ruang kosong.
@@ -126,16 +138,33 @@ Tidak ada fase yang boleh menumpuk utang ke fase berikutnya.
 kontras AA lolos di kedua tema.
 
 ### Fase P1: Dashboard lima peran
-1. Susun ulang dashboard dengan urutan: panel "Perlu tindakan Anda", garis tahap
-   akademik, lalu ringkasan.
-2. Mahasiswa: tahap saat ini, sesi bimbingan menuju 8, dokumen yang kurang.
-3. Dosen: antrean persetujuan bimbingan dan laporan, daftar mahasiswa bimbingan.
-4. Koordinator: proposal menunggu validasi, periode aktif, kesiapan sidang.
-5. Kaprodi: distribusi mahasiswa per tahap, mahasiswa siap sidang, penugasan penguji.
-6. Admin: kesehatan data (akun nonaktif, data tidak lengkap), bukan metrik pemasaran.
 
-**Terima:** pengguna baru bisa menyebut aksi berikutnya dalam 10 detik; dasbor tidak
-memakai angka contoh; semua angka berasal dari API yang ada.
+P1 dipecah dua karena hasil audit kode: keempat endpoint `/stats` yang ada
+(`admin`, `dosen`, `koordinator`, `kaprodi`) **hanya mengembalikan angka**, belum ada
+daftar item untuk antrean tugas.
+
+**P1a: susun ulang dengan data yang sudah ada** (frontend saja, tanpa perubahan API)
+1. Urutan halaman: panel "Perlu tindakan Anda", garis tahap akademik, lalu ringkasan.
+2. Mahasiswa: tahap saat ini, sesi bimbingan menuju 8, dokumen yang kurang.
+3. Dosen: angka antrean (`bimbingan_pending`, `laporan_pending`) sebagai pintu masuk
+   ke daftar, ditambah daftar mahasiswa bimbingan.
+4. Koordinator: `proposal_pending`, `menunggu_pembimbing`, `siap_sidang` sebagai
+   antrean dengan tautan langsung ke daftar terfilter.
+5. Kaprodi: distribusi tahap, `siap_sidang`, sebaran angkatan, ekspor.
+6. Admin: kesehatan data (akun nonaktif, data tidak lengkap), bukan metrik pemasaran.
+7. Grafik hanya di halaman koordinator dan kaprodi, maksimal dua per halaman (T-2).
+
+**P1b: tiga endpoint daftar read-only** (backend, tanpa perubahan skema)
+1. `GET /api/dosen/pending-bimbingan`: baris bimbingan menunggu, dengan nama
+   mahasiswa, judul, tanggal, dan aksi.
+2. `GET /api/koordinator/pending-proposals`: proposal menunggu validasi.
+3. `GET /api/kaprodi/mahasiswa-siap-sidang`: mahasiswa yang sudah memenuhi 8 sesi.
+
+Aturan untuk P1b: hanya `SELECT`, memakai `requireRole` yang sudah ada, memakai
+`cacheGet` pendek, dan tanpa mengubah tabel.
+
+**Terima:** pengguna baru bisa menyebut aksi berikutnya dalam 10 detik; tidak ada
+angka contoh; setiap angka di dasbor bisa ditelusuri ke daftar asalnya dalam satu klik.
 
 ### Fase P2: Tabel, form, dan pencarian
 1. Ganti tabel per halaman dengan `DataTable`: pengurutan, filter, kolom status,
@@ -183,29 +212,37 @@ berbeda antar halaman; navigasi keyboard penuh.
 | Fase | Perkiraan | Hasil terlihat |
 |---|---|---|
 | P0 Fondasi | 1 sampai 2 hari | Token dan primitif baru, tampilan belum berubah banyak |
-| P1 Dashboard per peran | 3 sampai 4 hari | Perubahan paling terasa bagi pengguna |
+| P1a Dashboard, data yang ada | 2 sampai 3 hari | Perubahan paling terasa bagi pengguna |
+| P1b Tiga endpoint daftar read-only | 1 hari | Antrean berisi nama dan aksi, bukan hanya angka |
 | P2 Tabel, form, pencarian | 4 sampai 6 hari | Pekerjaan harian jauh lebih cepat |
 | P3 Halaman publik | 2 hari | Satu bahasa visual dari landing sampai dashboard |
 | P4 Verifikasi | 1 sampai 2 hari | Bukti uji dan laporan gate |
 
-Total 11 sampai 16 hari kerja, bisa dipotong: P0 + P1 saja sudah menyelesaikan dua
+Total 11 sampai 17 hari kerja, bisa dipotong: P0 + P1a saja sudah menyelesaikan dua
 dari tiga pertanyaan pengguna di §2.
 
 ---
 
-## 9. Keputusan yang saya butuh sebelum mulai
+## 9. Keputusan yang sudah dikunci
 
-1. **Arah**: setuju opsi A (Papan Kerja Akademik) dengan pengecualian halaman
-   mahasiswa yang lebih lapang, atau ada yang ingin diubah?
-2. **Palet**: setuju aksen "penanda" ochre untuk hal yang menunggu tindakan, atau
-   prodi punya warna resmi yang wajib dipakai? (Kalau ada warna resmi ULBI, saya
-   pakai itu sebagai aksen dan menyesuaikan seluruh tabel warna.)
-3. **Tipografi**: setuju menambah serif hanya untuk judul (Newsreader), atau tetap
-   sans semuanya demi keseragaman?
-4. **Urutan**: mulai dari P0 + P1 (dashboard, dampak tercepat) atau P0 + P2 (tabel
-   dan form, lebih banyak halaman tersentuh)?
-5. **Uji pengguna**: siapa satu dosen dan satu mahasiswa yang bisa mencoba hasil P1
-   sebelum kita lanjut ke P2?
+Diambil berdasarkan `docs/UIUX_RESEARCH.md`. Kalau ada yang ingin diubah, sebutkan
+nomornya.
 
-Setelah empat jawaban pertama, saya mulai dari P0 dan berhenti lagi sebelum P1 untuk
-menunjukkan hasil fondasi.
+| # | Keputusan | Dasar |
+|---|---|---|
+| D-1 | Arah **A. Papan Kerja Akademik** untuk seluruh aplikasi; halaman mahasiswa lebih lapang; landing publik meminjam tipografi editorial | T-1, T-2, T-3 |
+| D-2 | Palet kertas-tinta. Tombol utama memakai tinta navy, aksen ochre `#B4551F` hanya untuk hal yang menunggu tindakan. Kalau prodi punya warna resmi, warna itu menggantikan ochre dan sisanya menyesuaikan | T-2, T-4 |
+| D-3 | **Sans di dalam aplikasi** (Public Sans + JetBrains Mono untuk NPM/NIDN/tanggal). Serif (Newsreader) hanya di halaman publik dan dokumen | T-6 |
+| D-4 | Status wajib teks + bentuk, warna hanya lapis ketiga. Hijau kebiruan dan merah kecokelatan, bukan hijau dan merah murni | T-4 |
+| D-5 | Kepadatan: header tabel 40px, baris staf 40px, baris mahasiswa 56px, padding sel 12px, ponsel minimal 44px, tanpa geser horizontal | T-5, T-4 |
+| D-6 | Grafik hanya di dasbor koordinator dan kaprodi, maksimal dua per halaman. Dosen, mahasiswa, dan admin mendapat daftar dan status | T-2, T-3 |
+| D-7 | Urutan kerja: **P0, P1a, P1b, P2, P3, P4**. P1a tidak butuh backend, P1b hanya tiga endpoint `SELECT` | Audit kode `/stats` |
+| D-8 | Pencarian global ditulis sendiri dengan Dialog Radix yang sudah ada, tanpa menambah dependensi | Bobot jaringan kampus |
+| D-9 | Tidak ada perubahan logika API, otorisasi, atau struktur rute pada P0 sampai P3 | Risiko regresi alur akademik |
+
+Satu hal yang masih saya butuh darimu: **satu dosen dan satu mahasiswa** yang bisa
+mencoba hasil P1a sebelum P2 dimulai. Kalau belum ada, P1a tetap bisa jalan dan uji
+pengguna digeser sebelum P2.
+
+Langkah berikutnya: saya mulai P0 (token, primitif, kamus status, perbaikan guard)
+dan berhenti sebelum P1a untuk menunjukkan fondasinya.

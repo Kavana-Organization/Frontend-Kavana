@@ -3,6 +3,10 @@
 Dokumen ini adalah sumber arah desain (R-37 antislop). Semua pekerjaan UI membaca
 dokumen ini lebih dulu, lalu `antislop` sebagai filter.
 
+Dasar keputusan: `docs/UIUX_RESEARCH.md` (pedoman GOV.UK, W3C, Carbon, Fluent, dan
+riset dasbor akademik). Setiap aturan di bawah yang berasal dari rujukan diberi
+penanda nomor temuan (T-1 sampai T-6).
+
 Status: **draft arah**, menunggu persetujuan pemilik produk sebelum implementasi.
 
 ---
@@ -56,6 +60,10 @@ Arah desain di bawah ini menjawab ketiganya secara struktural.
 | **RHYTHM** | 2 (konsisten dengan beberapa jeda) | Konsistensi membantu pengguna berpindah antar peran; variasi hanya pada halaman yang memang beda tujuan (landing, verifikasi publik) |
 | **MOTION** | 1 (hanya umpan balik) | Animasi hanya untuk menjelaskan perubahan state, bukan dekorasi |
 
+Catatan T-2: dasbor operasional (dosen, mahasiswa, admin) berbeda dari dasbor
+analitis (koordinator, kaprodi). Yang operasional menampilkan antrean dan status;
+yang analitis boleh memakai maksimal dua grafik.
+
 Landing publik memakai **ENERGY 2 / RHYTHM 2 / MOTION 2** karena tugasnya berbeda:
 menjelaskan produk kepada orang luar.
 
@@ -74,7 +82,9 @@ Motif yang membuat Kavana tidak bisa ditukar dengan produk lain:
    dekoratif, tanpa pola grid di latar.
 3. **Cap status.** Status ditampilkan sebagai label kecil dengan huruf kapital
    terbatas, seperti stempel berkas: `MENUNGGU`, `DISETUJUI`, `REVISI`. Bukan pill
-   berwarna-warni dengan ikon.
+   berwarna-warni dengan ikon. Status tidak pernah dibedakan hanya oleh warna
+   (WCAG 1.4.1, T-4): teks status dan bentuk garis tepi adalah pembeda utama, warna
+   hanya lapis ketiga.
 4. **Satu aksen yang berarti "perlu tindakan".** Warna aksen hanya muncul pada hal
    yang menunggu keputusan pengguna. Kalau tidak ada yang perlu dikerjakan, halaman
    terlihat tenang. Ini membuat warna punya arti, bukan sekadar merek.
@@ -113,6 +123,9 @@ Aturan pakai:
 - Aksen tidak dipakai untuk tombol utama. Tombol utama memakai tinta, supaya aksen
   tetap berarti "ini menunggu kamu".
 - Warna status hanya untuk status, tidak untuk dekorasi.
+- Hijau dan merah tidak dipakai dalam bentuk murni. Sukses memakai hijau kebiruan,
+  bahaya memakai merah kecokelatan, agar tetap terbedakan oleh buta warna merah-hijau
+  (WCAG 1.4.1, T-4).
 - Setiap pasangan teks/latar wajib lolos WCAG AA (4.5:1 teks normal, 3:1 teks besar),
   diuji di kedua tema.
 
@@ -120,14 +133,19 @@ Aturan pakai:
 
 ## 6. Tipografi
 
+Batasan dari T-6: serif bukan faktor keterbacaan yang terbukti, tetapi familiaritas
+berpengaruh. Karena itu serif **hanya** dipakai di tempat teks dibaca sebagai
+dokumen, bukan di tempat tabel dan form dipindai setiap hari.
+
 | Peran | Font | Alasan |
 |---|---|---|
-| Judul halaman, nama tahap | **Newsreader** (serif) | Memberi bobot institusional dan membedakan "judul dokumen" dari isi; dipakai terbatas agar tidak terasa seperti koran |
-| Teks isi, tabel, form | **Public Sans** | Humanis, terbaca di 13-14px, netral untuk teks panjang berbahasa Indonesia |
-| Angka identitas (NPM, NIDN, tanggal, kredit sesi) | **JetBrains Mono** | Angka sejajar kolom dan tidak tertukar 0/O, 1/l |
+| Judul di halaman publik dan dokumen (landing, panduan, luaran, laporan) | **Newsreader** (serif) | Memberi bobot institusional pada teks yang dibaca, bukan dipindai; T-6 |
+| Seluruh teks aplikasi: judul halaman, tabel, form, tombol | **Public Sans** | Familiar, netral, terbaca di 13-14px, konsisten untuk pengguna harian; T-6 |
+| Angka identitas (NPM, NIDN, tanggal, kredit sesi) | **JetBrains Mono** | Angka sejajar kolom dan tidak tertukar 0/O, 1/l; praktik Carbon dan Fluent |
 
 Aturan:
 - Skala terbatas: 12, 13, 14, 16, 20, 26, 34 px. Tidak ada ukuran di luar skala.
+- Judul halaman aplikasi dibedakan lewat ukuran dan bobot, bukan lewat keluarga font.
 - Huruf kapital berjarak lebar hanya untuk label bagian (maksimal 1 baris per bagian).
 - Tanpa `font-black`. Bobot maksimum 700 untuk judul, 600 untuk label.
 - Angka penting memakai `tabular-nums` agar kolom tidak bergoyang.
@@ -139,11 +157,15 @@ Aturan:
 - Skala spasi kelipatan 4: 4, 8, 12, 16, 24, 32, 48.
 - Radius: kontrol 6px, panel 10px, dialog 12px. Tidak ada elemen berbentuk pill,
   kecuali chip filter yang memang satu baris.
-- Dua tingkat kepadatan, dipilih berdasarkan tugas, bukan selera:
-  - **Padat** (dosen, koordinator, kaprodi, admin): tinggi baris tabel 40px,
-    padding sel 12px, teks 13px.
+- Dua tingkat kepadatan, dipilih berdasarkan tugas, bukan selera (angka mengikuti
+  praktik tabel Carbon dan Fluent, T-5):
+  - **Padat** (dosen, koordinator, kaprodi, admin): tinggi baris tabel 40px, header
+    tabel 40px, padding sel horizontal 12px, teks 13px.
   - **Lapang** (mahasiswa, halaman publik): tinggi baris 56px, padding 16-24px,
     teks 14-16px.
+- Di ponsel, tidak ada tabel yang digeser horizontal: tabel menjadi daftar baris
+  dengan label per field, tinggi baris minimal 44px (T-4, T-5).
+- Target sentuh: minimal 32px di desktop, 44px di ponsel (WCAG 2.2 SC 2.5.8).
 
 ---
 
@@ -157,7 +179,13 @@ Aturan:
 - **Panel "Perlu tindakan Anda"** selalu berada di posisi yang sama pada halaman
   peran, berisi maksimal 5 item teratas dengan tombol langsung ke aksinya.
 - **Status memakai satu kamus.** Daftar status, label Indonesia, dan warnanya
-  didefinisikan sekali di kode dan dipakai semua halaman.
+  didefinisikan sekali di kode (`src/lib/status.js`) dan dipakai semua halaman.
+- **Status tidak boleh bergantung pada warna.** `StatusStamp` selalu berisi teks
+  (misalnya `MENUNGGU`) dan bentuk pembeda: garis tepi penuh untuk status final,
+  garis putus-putus untuk status yang menunggu, tanpa tepi untuk status netral.
+  Ini syarat WCAG 1.4.1 dan tetap terbaca saat dicetak hitam putih (T-4).
+- **Badge tidak interaktif.** Badge status tidak bisa difokus atau diklik; aksi
+  selalu berupa tombol terpisah dengan nama objek ("Setujui bimbingan Ani").
 - **Formulir**: label di atas field, teks bantuan di bawah label, pesan galat di
   bawah field, tombol utama di kanan bawah, dan ringkasan galat di atas form saat
   submit gagal.
@@ -208,3 +236,6 @@ inversi kertas-tinta dengan kontras yang sama. Toggle tema yang ada dipertahanka
 3. Apakah setiap status punya arti yang sama di semua halaman?
 4. Apakah halaman bertahan pada 360px, 768px, 1280px, keyboard saja, dan kedua tema?
 5. Apakah setiap angka yang tampil berasal dari data nyata?
+6. Apakah status masih terbaca benar saat dicetak hitam putih atau dilihat oleh
+   pengguna buta warna (T-4)?
+7. Apakah tabel bertahan pada 360px tanpa geser horizontal (T-5)?
