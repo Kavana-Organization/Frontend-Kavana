@@ -694,7 +694,7 @@ export default function KelolaUsersPage() {
         title="Hapus User"
         description={
           selectedUser
-            ? `Hapus user ${selectedUser.nama}? Aksi ini tidak dapat dibatalkan.`
+            ? `Hapus permanen ${selectedUser.nama}? Hanya akun tanpa riwayat akademik yang bisa dihapus. Jika akun ini pernah bimbingan atau sidang, sistem akan menolak dan kamu sebaiknya memakai tombol Nonaktifkan.`
             : 'Hapus user ini?'
         }
         confirmLabel="Hapus"
